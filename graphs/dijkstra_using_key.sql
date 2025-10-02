@@ -2,7 +2,7 @@ WITH RECURSIVE dijkstra (
     node_id,
     dist,
     prev
-) AS (
+) USING KEY (node_id) AS (
     -- initial case
     (
         SELECT 
@@ -21,7 +21,7 @@ WITH RECURSIVE dijkstra (
     -- we can thus remove it in the next step already.
     -- => the intermediate table can be used as dijkstra's 'Q'
 
-    UNION ALL
+    UNION 
 
     (
         -- recursion
@@ -46,7 +46,7 @@ WITH RECURSIVE dijkstra (
         SELECT
             d.node_id,
             IF(n.dist < d.dist, n.dist, d.dist), -- d.dist is also selected if n.dist = NULL 
-            IF(n.dist < d.dist, n.prev, d.prev)
+            IF(n.dist < d.dist, n.prev, d.prev)  -- same here
         FROM 
             dijkstra AS d LEFT OUTER JOIN 
             neighbors AS n 
@@ -57,15 +57,5 @@ WITH RECURSIVE dijkstra (
     )
 )
 
-SELECT DISTINCT d.node_id, d.dist, d.prev
-FROM 
-    dijkstra d JOIN 
-    (
-        SELECT 
-            node_id, 
-            min(dist) AS dist,
-        FROM dijkstra
-        GROUP BY node_id
-    ) res 
-    ON d.node_id = res.node_id AND d.dist = res.dist
-ORDER BY d.node_id;
+FROM dijkstra
+ORDER BY node_id;
