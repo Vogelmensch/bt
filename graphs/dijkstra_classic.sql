@@ -1,20 +1,27 @@
-WITH RECURSIVE dijkstra (
+WITH RECURSIVE
+start_node (id) AS (
+    SELECT 0
+),
+goal_node (id) AS (
+    SELECT 189
+),
+dijkstra (
     node_id,
     dist,
     prev
 ) AS (
     -- initial case
     (
-        SELECT 
-            id,
+        SELECT DISTINCT
+            node_from,
             CAST('inf' AS DOUBLE),
             NULL
-        FROM nodes
-        WHERE id != 0
+        FROM graph
+        WHERE node_from != 0
 
         UNION
 
-        SELECT 0, 0, NULL
+        SELECT (FROM start_node), 0, NULL
     )
     -- the initial case is now already part of the union table.
     -- thus, the first node is already stored as a result!
@@ -52,8 +59,8 @@ WITH RECURSIVE dijkstra (
             neighbors AS n 
             ON d.node_id = n.node_id
         WHERE 
-            -- remove selected node
-            d.node_id != (SELECT id FROM min_node_id)
+            d.node_id != (SELECT id FROM min_node_id) AND -- remove selected node
+            EXISTS (FROM dijkstra WHERE node_id = (FROM goal_node))
     )
 )
 

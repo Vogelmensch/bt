@@ -1,27 +1,34 @@
-WITH RECURSIVE dijkstra (
+WITH RECURSIVE
+start_node (id) AS (
+    SELECT 0
+),
+goal_node (id) AS (
+    SELECT 189
+),
+dijkstra (
     node_id,
     dist,
     prev
 ) USING KEY (node_id) AS (
     -- initial case
     (
-        SELECT 
-            id,
+        SELECT DISTINCT
+            node_from,
             CAST('inf' AS DOUBLE),
             NULL
-        FROM nodes
-        WHERE id != 0
+        FROM graph
+        WHERE node_from != 0
 
         UNION
 
-        SELECT 0, 0, NULL
+        SELECT (FROM start_node), 0, NULL
     )
     -- the initial case is now already part of the union table.
     -- thus, the first node is already stored as a result!
     -- we can thus remove it in the next step already.
     -- => the intermediate table can be used as dijkstra's 'Q'
 
-    UNION 
+    UNION
 
     (
         -- recursion
@@ -46,16 +53,36 @@ WITH RECURSIVE dijkstra (
         SELECT
             d.node_id,
             IF(n.dist < d.dist, n.dist, d.dist), -- d.dist is also selected if n.dist = NULL 
-            IF(n.dist < d.dist, n.prev, d.prev)  -- same here
+            IF(n.dist < d.dist, n.prev, d.prev)
         FROM 
             dijkstra AS d LEFT OUTER JOIN 
             neighbors AS n 
             ON d.node_id = n.node_id
         WHERE 
-            -- remove selected node
-            d.node_id != (SELECT id FROM min_node_id)
+            d.node_id != (SELECT id FROM min_node_id) AND -- remove selected node
+            EXISTS (FROM dijkstra WHERE node_id = (FROM goal_node))
     )
+),
+path_as_string (
+    new_node,
+    path_string,
+) AS (
+    SELECT 
+        (FROM goal_node), 
+        (SELECT '' || (FROM goal_node)),
+
+    UNION ALL
+
+    SELECT 
+        d.prev,
+        d.prev || ' -> ' || p.path_string,
+
+    FROM path_as_string AS p JOIN dijkstra AS d ON p.new_node = d.node_id
 )
 
-FROM dijkstra
-ORDER BY node_id;
+SELECT 
+    path_string AS 'Path',
+    (SELECT dist FROM dijkstra WHERE node_id = (FROM goal_node)) AS 'Distance'
+FROM 
+    path_as_string
+WHERE new_node = (FROM start_node);
