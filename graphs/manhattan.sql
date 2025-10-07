@@ -7,7 +7,7 @@
 
 CREATE OR REPLACE TABLE graph AS (
     WITH RECURSIVE width AS (
-        SELECT 15 AS width
+        SELECT 100 AS width
     ),
     manhattan_rights (
         node_from,

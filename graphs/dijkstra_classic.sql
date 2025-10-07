@@ -3,7 +3,7 @@ start_node (id) AS (
     SELECT 0
 ),
 goal_node (id) AS (
-    SELECT 189
+    SELECT 4242
 ),
 dijkstra (
     node_id,
