@@ -1,63 +1,58 @@
 CREATE OR REPLACE MACRO start_node() AS 0;
-CREATE OR REPLACE MACRO goal_node() AS 42;
+CREATE OR REPLACE MACRO goal_node() AS 6;
 
 WITH RECURSIVE
 dijkstra (
     node_id,
     dist,
-    prev
+    prev,
+    visited
 ) USING KEY (node_id) AS (
     -- initial case
-    (
-        SELECT DISTINCT
-            node_from,
-            CAST('inf' AS DOUBLE),
-            NULL
-        FROM graph
-        WHERE node_from != 0
-
-        UNION
-
-        SELECT start_node(), 0, NULL
-    )
-    -- the initial case is now already part of the union table.
-    -- thus, the first node is already stored as a result!
-    -- we can thus remove it in the next step already.
-    -- => the intermediate table can be used as dijkstra's 'Q'
+    SELECT start_node(), 0, NULL, false
+    
+    -- Recurring Table (recurring.dijkstra):
+    --      Holds all the nodes that have been seen (but not necessarily visited)
 
     UNION
 
     (
-        -- recursion
-        WITH 
-        -- select one node with minimal dist
-        min_node_id AS (
-            SELECT node_id AS id
-            FROM dijkstra 
-            WHERE dist = (SELECT min(dist) FROM dijkstra)
-            LIMIT 1
-        ),
-        -- get neighbors of minimal node
-        neighbors AS (
-            SELECT 
-                g.node_to AS node_id, 
-                (SELECT min(dist) FROM dijkstra) + g.weight AS dist,
-                node_from AS prev
-            FROM graph AS g
-            WHERE node_from = (SELECT id FROM min_node_id)
-        )
+    -- set "visited" for smallest-dist-node(s) to TRUE
+    SELECT 
+        node_id, 
+        dist, 
+        prev, 
+        true
+    FROM recurring.dijkstra
+    WHERE 
+        NOT visited AND
+        dist = (SELECT min(dist) FROM recurring.dijkstra WHERE NOT visited)
 
-        SELECT
-            d.node_id,
-            IF(n.dist < d.dist, n.dist, d.dist), -- d.dist is also selected if n.dist = NULL 
-            IF(n.dist < d.dist, n.prev, d.prev)
-        FROM 
-            dijkstra AS d LEFT OUTER JOIN 
-            neighbors AS n 
-            ON d.node_id = n.node_id
-        WHERE 
-            d.node_id != (SELECT id FROM min_node_id) AND -- remove selected node
-            EXISTS (FROM dijkstra WHERE node_id = goal_node())
+    UNION
+
+    -- update neighbors of smallest node(s)
+    SELECT
+        -- id of neighbor
+        nbs.node_to,
+        -- new distance
+        sml.dist + nbs.weight,
+        -- new prev
+        sml.node_id,
+        -- still unvisited
+        false
+    FROM
+        recurring.dijkstra AS sml JOIN -- smallest
+        graph              AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN -- neighbors
+        recurring.dijkstra AS old ON nbs.node_to = old.node_id -- old dist and prev
+    WHERE 
+        -- not visited yet -> part of the front
+        NOT sml.visited AND
+        -- sml is the smallest node in the front
+        sml.dist = (SELECT min(dist) FROM recurring.dijkstra WHERE NOT visited) AND 
+        -- modify only neighbors with smaller distances
+        sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND 
+        -- stop when path to goal node has been found
+        sml.node_id != goal_node()
     )
 ),
 path_as_string (
