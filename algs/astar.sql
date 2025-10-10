@@ -1,17 +1,22 @@
 CREATE OR REPLACE MACRO start_node() AS 0;
 CREATE OR REPLACE MACRO goal_node() AS 4242;
 
+CREATE OR REPLACE MACRO width() AS 10;
+CREATE OR REPLACE MACRO h(x) AS sqrt(((x % width()) - (goal_node() % width()))^2 + ((x / width()) - (goal_node() / width()))^2);
+
 WITH RECURSIVE
 dijkstra (
     node_id,
     dist,
+    f,
     prev,
     visited
 ) USING KEY (node_id) AS (
     -- initial case
     SELECT 
         start_node(), 
-        0, 
+        0,
+        h(start_node()),
         NULL, 
         false
     
@@ -25,12 +30,13 @@ dijkstra (
     SELECT 
         node_id, 
         dist, 
+        f,
         prev, 
         true
     FROM recurring.dijkstra
     WHERE 
         NOT visited AND
-        dist = (SELECT min(dist) FROM recurring.dijkstra WHERE NOT visited)
+        f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited)
 
     UNION
 
@@ -40,6 +46,8 @@ dijkstra (
         nbs.node_to,
         -- new distance
         sml.dist + nbs.weight,
+        -- f-value: distance + heuristic of node
+        sml.dist + nbs.weight + h(nbs.node_to),
         -- new prev
         sml.node_id,
         -- still unvisited
@@ -52,7 +60,7 @@ dijkstra (
         -- not visited yet -> part of the front
         NOT sml.visited AND
         -- sml is the smallest node in the front
-        sml.dist = (SELECT min(dist) FROM recurring.dijkstra WHERE NOT visited) AND 
+        sml.f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited) AND 
         -- modify only neighbors with smaller distances
         sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND 
         -- stop when path to goal node has been found
