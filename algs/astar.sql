@@ -1,8 +1,11 @@
 CREATE OR REPLACE MACRO start_node() AS 0;
 CREATE OR REPLACE MACRO goal_node() AS 4242;
 
-CREATE OR REPLACE MACRO width() AS 10;
-CREATE OR REPLACE MACRO h(x) AS sqrt(((x % width()) - (goal_node() % width()))^2 + ((x / width()) - (goal_node() / width()))^2);
+CREATE OR REPLACE MACRO width() AS 100;
+CREATE OR REPLACE MACRO h(x) AS cast(
+    sqrt(((x % width()) - (goal_node() % width()))^2 + 
+         ((x / width()) - (goal_node() / width()))^2) 
+    as int);
 
 WITH RECURSIVE
 dijkstra (
