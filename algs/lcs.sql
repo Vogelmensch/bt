@@ -47,11 +47,27 @@ WITH RECURSIVE lcs (
     UNION
 
     -- Case 2: Letters are unequal
+
+    -- WITH next_symbol AS (
+    --     SELECT 
+    --         xsym, xidx,
+    --         ysym, yidx
+    --     FROM letters AS nxt
+    --     WHERE 
+    --         NOT EXISTS (SELECT len FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and
+    --         l.len IS NOT NULL and
+    --         u.len IS NOT NULL and
+    --         nxt.xsym != nxt.ysym 
+    -- )
+    -- FROM next_symbol
+    -- JOIN recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx 
+    -- JOIN recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
+
+    -- l.len > u.len
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
-        IF(l.len > u.len, l.strings, IF(l.len < u.len, u.strings, l.strings || u.strings)),
-        greatest(l.len, u.len)
+        l.strings, l.len
     FROM 
         letters AS nxt JOIN 
         recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx JOIN
@@ -60,7 +76,44 @@ WITH RECURSIVE lcs (
         NOT EXISTS (SELECT len FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and
         l.len IS NOT NULL and
         u.len IS NOT NULL and
-        nxt.xsym != nxt.ysym
+        nxt.xsym != nxt.ysym and
+        l.len > u.len
+
+    UNION
+
+    -- l.len < u.len
+    SELECT
+        nxt.xsym, nxt.xidx,
+        nxt.ysym, nxt.yidx,
+        u.strings, u.len
+    FROM 
+        letters AS nxt JOIN 
+        recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx JOIN
+        recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1     
+    WHERE 
+        NOT EXISTS (SELECT len FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and
+        l.len IS NOT NULL and
+        u.len IS NOT NULL and
+        nxt.xsym != nxt.ysym and
+        l.len < u.len
+
+    UNION
+
+    -- l.len = u.len
+    SELECT
+        nxt.xsym, nxt.xidx,
+        nxt.ysym, nxt.yidx,
+        l.strings || u.strings, l.len
+    FROM 
+        letters AS nxt JOIN 
+        recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx JOIN
+        recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1     
+    WHERE 
+        NOT EXISTS (SELECT len FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and
+        l.len IS NOT NULL and
+        u.len IS NOT NULL and
+        nxt.xsym != nxt.ysym and
+        l.len = u.len
     )
 )
 SELECT list_transform(list_distinct(strings), lambda s: reverse(s)) AS 'Longest Common Subsequence'
