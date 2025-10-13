@@ -50,7 +50,7 @@ WITH RECURSIVE lcs (
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
-        IF(l.len > u.len, l.strings, IF(l.len < u.len, u.strings, l.strings || u.strings)),
+        IF(l.len > u.len, l.strings, IF(l.len < u.len, u.strings, list_distinct(l.strings || u.strings))),
         greatest(l.len, u.len)
     FROM 
         letters AS nxt JOIN 
@@ -63,6 +63,6 @@ WITH RECURSIVE lcs (
         nxt.xsym != nxt.ysym
     )
 )
-SELECT list_transform(list_distinct(strings), lambda s: reverse(s)) AS 'Longest Common Subsequence'
+SELECT list_transform(strings, lambda s: reverse(s)) AS 'Longest Common Subsequence'
 FROM lcs
 WHERE xidx = length(s1()) and yidx = length(s2());
