@@ -1,7 +1,7 @@
 CREATE OR REPLACE MACRO width() AS 17;
 CREATE OR REPLACE MACRO height() AS 9;
 
-CREATE OR REPLACE MACRO bitlist() AS ['00', '11', '11', '11', '00', '01', '01', '10', '00', '00', '11', '10', '01', '00', '00', '11'];
+CREATE OR REPLACE MACRO bitlist() AS {};
 
 WITH RECURSIVE bishop (
     x, 
