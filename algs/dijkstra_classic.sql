@@ -1,11 +1,7 @@
-WITH RECURSIVE
-start_node (id) AS (
-    SELECT 0
-),
-goal_node (id) AS (
-    SELECT 4242
-),
-dijkstra (
+CREATE OR REPLACE MACRO start_node() AS 0;
+CREATE OR REPLACE MACRO goal_node() AS 4242;
+
+WITH RECURSIVE dijkstra (
     node_id,
     dist,
     prev
@@ -21,7 +17,7 @@ dijkstra (
 
         UNION
 
-        SELECT (FROM start_node), 0, NULL
+        SELECT start_node(), 0, NULL
     )
     -- the initial case is now already part of the union table.
     -- thus, the first node is already stored as a result!
@@ -60,7 +56,7 @@ dijkstra (
             ON d.node_id = n.node_id
         WHERE 
             d.node_id != (SELECT id FROM min_node_id) AND -- remove selected node
-            EXISTS (FROM dijkstra WHERE node_id = (FROM goal_node))
+            EXISTS (FROM dijkstra WHERE node_id = goal_node())
     )
 )
 
