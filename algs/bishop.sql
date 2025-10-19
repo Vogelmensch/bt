@@ -47,6 +47,4 @@ WITH RECURSIVE bishop (
    )
 )
 SELECT x, y, sym_id
-FROM bishop
-ORDER BY x, y
-;
+FROM bishop;
