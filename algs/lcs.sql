@@ -1,8 +1,19 @@
--- see https://en.wikipedia.org/wiki/Longest_common_subsequence#Worked_example
+-- This query implements the 'longest common subsequence'-algorithm
+-- It finds the longest subsequence common to two strings
+-- Subsequences are not required to occupy consecutive positions within the original sequences
+-- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
+-- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
+-- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
+-- ❹ Case 1: Letters are equal; add the letter to the solutions
+-- ❺ Case 2: Letters are unequal; select the best solution to continue with
+-- Recurring Table: Holds the solutions for (growing) substrings of the input strings
+
+-- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Worked_example
 
 CREATE OR REPLACE MACRO s1() AS 'Never gonna give you up';
 CREATE OR REPLACE MACRO s2() AS 'Never gonna let you down';
 
+-- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
     SELECT s1()[m], m, s2()[n], n
     FROM 
@@ -11,12 +22,12 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
 );
 
 WITH RECURSIVE lcs (
-    xsym, xidx, 
-    ysym, yidx, 
-    strings, len
+    xsym, xidx,     -- one letter and its index from the first strings
+    ysym, yidx,     -- one letter and its index from the second strings
+    strings, len    -- current solutions and their length
     ) USING KEY (xidx, yidx) AS (
 
-    -- initial case
+    -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
     SELECT 
         xsym, xidx,
         ysym, yidx,
@@ -26,15 +37,14 @@ WITH RECURSIVE lcs (
     
     UNION
 
+    -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (
-    -- in every iteration, fill out every letter that has a left and upper OR diagonal predecessor
-    
-    -- Case 1: Letters are equal
+    -- ❹ Case 1: Letters are equal; add the letter to the solutions
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
-        list_transform(diag.strings, lambda s: nxt.xsym || s), 
-        diag.len + 1 -- concat letter for every element in list
+        list_transform(diag.strings, lambda s: nxt.xsym || s),  -- add the letter to every solution
+        diag.len + 1                                            -- the solution's length is increased by one
     FROM 
         letters AS nxt
         JOIN recurring.lcs AS diag ON nxt.xidx = diag.xidx+1 and 
@@ -42,16 +52,18 @@ WITH RECURSIVE lcs (
         LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and
                                                  nxt.yidx = this.yidx
     WHERE 
-        this.strings IS NULL and
-        diag.strings IS NOT NULL and -- diagonal neighbor is not empty
-        nxt.xsym = nxt.ysym -- letters are equal
+        this.strings IS NULL and        -- this field is empty
+        diag.strings IS NOT NULL and    -- diagonal neighbor is not empty
+        nxt.xsym = nxt.ysym             -- letters are equal
 
     UNION
 
-    -- Case 2: Letters are unequal
+    -- ❺ Case 2: Letters are unequal; select the best solution to continue with
     SELECT
         nxt.xsym, nxt.xidx,
-        nxt.ysym, nxt.yidx,       
+        nxt.ysym, nxt.yidx,
+        -- Select the solution with the longest strings.
+        -- If the lengths are equal, concatenate both.
         CASE 
             WHEN l.len > u.len THEN l.strings 
             ELSE CASE 
@@ -66,10 +78,10 @@ WITH RECURSIVE lcs (
         JOIN recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
         LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
     WHERE 
-        this.strings IS NULL and
-        l.strings IS NOT NULL and
-        u.strings IS NOT NULL and
-        nxt.xsym != nxt.ysym
+        this.strings IS NULL and    -- this field is empty
+        l.strings IS NOT NULL and   -- left neighbor is not empty
+        u.strings IS NOT NULL and   -- upper neighbor is not empty
+        nxt.xsym != nxt.ysym        -- letters are unequal
     )
 )
 SELECT list_transform(strings, lambda s: reverse(s)) AS 'Longest Common Subsequence'
