@@ -36,11 +36,13 @@ WITH RECURSIVE lcs (
         list_transform(diag.strings, lambda s: nxt.xsym || s), 
         diag.len + 1 -- concat letter for every element in list
     FROM 
-        letters AS nxt JOIN
-        recurring.lcs AS diag ON nxt.xidx = diag.xidx+1 and 
-                                 nxt.yidx = diag.yidx+1
+        letters AS nxt
+        JOIN recurring.lcs AS diag ON nxt.xidx = diag.xidx+1 and 
+                                      nxt.yidx = diag.yidx+1 
+        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and
+                                                 nxt.yidx = this.yidx
     WHERE 
-        NOT EXISTS (SELECT strings FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and -- field is empty
+        this.strings IS NULL and
         diag.strings IS NOT NULL and -- diagonal neighbor is not empty
         nxt.xsym = nxt.ysym -- letters are equal
 
@@ -49,17 +51,24 @@ WITH RECURSIVE lcs (
     -- Case 2: Letters are unequal
     SELECT
         nxt.xsym, nxt.xidx,
-        nxt.ysym, nxt.yidx,
-        IF(l.len > u.len, l.strings, IF(l.len < u.len, u.strings, list_distinct(l.strings || u.strings))),
+        nxt.ysym, nxt.yidx,       
+        CASE 
+            WHEN l.len > u.len THEN l.strings 
+            ELSE CASE 
+                WHEN l.len < u.len THEN u.strings 
+                ELSE list_distinct(l.strings || u.strings) 
+            END 
+        END,
         greatest(l.len, u.len)
     FROM 
-        letters AS nxt JOIN 
-        recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx JOIN
-        recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1     
+        letters AS nxt 
+        JOIN recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx 
+        JOIN recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
+        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
     WHERE 
-        NOT EXISTS (SELECT len FROM recurring.lcs AS r WHERE r.xidx = nxt.xidx and r.yidx = nxt.yidx) and
-        l.len IS NOT NULL and
-        u.len IS NOT NULL and
+        this.strings IS NULL and
+        l.strings IS NOT NULL and
+        u.strings IS NOT NULL and
         nxt.xsym != nxt.ysym
     )
 )
