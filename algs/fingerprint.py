@@ -51,9 +51,16 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     
 
 if __name__ == '__main__':
-    if len(argv) != 2:
+    if len(argv) < 2 or len(argv) > 3:
         print('Wrong number of arguments.')
         exit(1)
+
+    if '-c' in argv or '--classic' in argv:
+        script = 'bishop_classic.sql'
+        print('classic query')
+    else:
+        script = 'bishop.sql'
+        print('USING KEY')
 
     symbols = [' ', '.', 'o', '+', '=', '*', 'B', 'O', 'X', '@', '%', '&', '#', '/', '^']
 
@@ -63,7 +70,7 @@ if __name__ == '__main__':
     
     bitlist = list(chain.from_iterable(many_lists))
 
-    with open('bishop.sql') as f:
+    with open(script) as f:
         query = f.read()
 
     res = duckdb.sql(query.format(str(bitlist))).fetchall()
