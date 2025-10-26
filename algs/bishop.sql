@@ -10,6 +10,7 @@
 -- ❹ Repeat until the bitlist is empty
 -- Recurring table: Stores sym_id for all coordinates
 -- Working Table: Stores current coordinates of agent and current bitlist
+
 CREATE OR REPLACE MACRO width() AS 17;
 CREATE OR REPLACE MACRO height() AS 9;
 

@@ -8,7 +8,7 @@
 -- ❺ Case 2: Letters are unequal; select the best solution to continue with
 -- Recurring Table: Holds the solutions for (growing) substrings of the input strings
 
--- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Worked_example
+-- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Solution_for_two_sequences
 
 CREATE OR REPLACE MACRO s1() AS 'Never gonna give you up';
 CREATE OR REPLACE MACRO s2() AS 'Never gonna let you down';
@@ -26,7 +26,6 @@ WITH RECURSIVE lcs (
     ysym, yidx,     -- one letter and its index from the second strings
     strings, len    -- current solutions and their length
     ) USING KEY (xidx, yidx) AS (
-
     -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
     SELECT 
         xsym, xidx,
@@ -39,11 +38,11 @@ WITH RECURSIVE lcs (
 
     -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (
-    -- ❹ Case 1: Letters are equal; add the letter to the solutions
+    -- ❹ Case 1: Letters are equal; add letter to the solutions
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
-        list_transform(diag.strings, lambda s: nxt.xsym || s),  -- add the letter to every solution
+        list_transform(diag.strings, lambda s: nxt.xsym || s),  -- add letter to every solution
         diag.len + 1                                            -- the solution's length is increased by one
     FROM 
         letters AS nxt
@@ -53,7 +52,6 @@ WITH RECURSIVE lcs (
                                                  nxt.yidx = this.yidx
     WHERE 
         this.strings IS NULL and        -- this field is empty
-        diag.strings IS NOT NULL and    -- diagonal neighbor is not empty
         nxt.xsym = nxt.ysym             -- letters are equal
 
     UNION
@@ -79,8 +77,6 @@ WITH RECURSIVE lcs (
         LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
     WHERE 
         this.strings IS NULL and    -- this field is empty
-        l.strings IS NOT NULL and   -- left neighbor is not empty
-        u.strings IS NOT NULL and   -- upper neighbor is not empty
         nxt.xsym != nxt.ysym        -- letters are unequal
     )
 )
