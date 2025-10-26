@@ -4,9 +4,11 @@
 -- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
 -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
--- ❹ Case 1: Letters are equal; add the letter to the solutions
--- ❺ Case 2: Letters are unequal; select the best solution to continue with
--- Recurring Table: Holds the solutions for (growing) substrings of the input strings
+-- ❹ Carry the entire working table until the entire table has been filled
+-- ❺ Case 1: Letters are equal; add letter to the solutions
+-- ❻ Case 2: Letters are unequal; select the best solution to continue with
+-- Working Table: Holds the solutions for (growing) substrings of the input strings
+-- Union Table: Every iteration's solution gets dumped here
 
 -- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Solution_for_two_sequences
 
@@ -21,11 +23,17 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
         range(length(s2())+1) AS r(n)
 );
 
-WITH RECURSIVE lcs (
+WITH RECURSIVE 
+ -- largest possible y-value
+max_row (y) AS (
+    SELECT max(yidx)
+    FROM letters
+),
+lcs (
     xsym, xidx,     -- one letter and its index from the first strings
     ysym, yidx,     -- one letter and its index from the second strings
     strings, len    -- current solutions and their length
-    ) USING KEY (xidx, yidx) AS (
+) AS (
     -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
     SELECT 
         xsym, xidx,
@@ -33,12 +41,27 @@ WITH RECURSIVE lcs (
         [''], 0
     FROM letters
     WHERE xidx = 0 or yidx = 0
-    
-    UNION
+
+    UNION ALL
 
     -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (
-    -- ❹ Case 1: Letters are equal; add letter to the solutions
+    -- ❹ Carry the entire working table until the entire table has been filled
+
+    -- `current_row` is the highest "full" row's yidx plus one
+    WITH current_row(y) AS ( 
+        SELECT max(yidx) + 1
+        FROM lcs
+        WHERE xidx = length(s1())
+    ) 
+    FROM lcs
+    WHERE 
+        -- when the current row number is larger than the maximal row number, then terminate
+        (SELECT y FROM current_row) <= (SELECT y FROM max_row) 
+
+    UNION
+
+    -- ❺ Case 1: Letters are equal; add letter to the solutions
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
@@ -46,9 +69,9 @@ WITH RECURSIVE lcs (
         diag.len + 1                                            -- the solution's length is increased by one
     FROM 
         letters AS nxt
-        JOIN recurring.lcs AS diag ON nxt.xidx = diag.xidx+1 and 
+        JOIN lcs AS diag ON nxt.xidx = diag.xidx+1 and 
                                       nxt.yidx = diag.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and
+        LEFT OUTER JOIN lcs AS this ON nxt.xidx = this.xidx and
                                                  nxt.yidx = this.yidx
     WHERE 
         this.strings IS NULL and        -- this field is empty
@@ -56,7 +79,7 @@ WITH RECURSIVE lcs (
 
     UNION
 
-    -- ❺ Case 2: Letters are unequal; select the best solution to continue with
+    -- ❻ Case 2: Letters are unequal; select the best solution to continue with
     SELECT
         nxt.xsym, nxt.xidx,
         nxt.ysym, nxt.yidx,
@@ -72,9 +95,9 @@ WITH RECURSIVE lcs (
         greatest(l.len, u.len)
     FROM 
         letters AS nxt 
-        JOIN recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx 
-        JOIN recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
+        JOIN lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx 
+        JOIN lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
+        LEFT OUTER JOIN lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
     WHERE 
         this.strings IS NULL and    -- this field is empty
         nxt.xsym != nxt.ysym        -- letters are unequal
