@@ -1,3 +1,12 @@
+-- This query implements The A* Search Algorithm, or just 'A*' for short
+-- It finds the shortest path between a start- and a goal-node in a graph
+-- The graph can be directed or undirected
+-- The graph can be weighted, but all weights must be non-negative
+-- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
+-- ❷ Initial Case: Add every node to the working table with initial values; 
+--                  select different values for start node 
+
+
 CREATE OR REPLACE MACRO start_node() AS 0;
 CREATE OR REPLACE MACRO goal_node() AS 6969;
 
@@ -10,11 +19,12 @@ CREATE OR REPLACE MACRO h(x) AS cast(
 
 WITH RECURSIVE dijkstra (
     node_id,
-    dist,
-    f,
-    prev
+    dist,   -- shortest distance to this node
+    f,      -- f = dist + h, where h is the heuristic function (estimated distance to the goal)
+    prev    -- previous node; backtrack to find the shortest path
 ) AS (
-    -- initial case
+    -- ❷ Initial Case: Add every node to the working table with initial values; 
+    --                  select different values for start node 
     (
         SELECT DISTINCT
             node_from,
@@ -28,9 +38,6 @@ WITH RECURSIVE dijkstra (
 
         SELECT start_node(), 0, h(start_node()), NULL
     )
-    -- the initial case is now already part of the union table.
-    -- thus, the first node is already stored as a result!
-    -- we can thus remove it in the next step already.
     -- => the intermediate table can be used as dijkstra's 'Q'
 
     UNION ALL
