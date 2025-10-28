@@ -3,9 +3,12 @@
 -- The graph can be directed or undirected
 -- The graph can be weighted, but all weights must be non-negative
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
--- ❷ Initial Case: Add every node to the working table with initial values; 
---                  select different values for start node 
-
+-- ❷ Initial Case: The start node has a distance of zero, no parent and has not been visited yet.
+-- ❸ Set 'visited' to TRUE for the unvisited node with smallest distance
+-- ❹ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
+-- ❺ Carry all the other nodes in the table (those that have not been updated in this step)
+-- Working Table: Holds all the nodes that have been seen (but not necessarily visited)
+-- Union Table: Holds every value that has ever been calculated for every node
 
 CREATE OR REPLACE MACRO start_node() AS 0;
 CREATE OR REPLACE MACRO goal_node() AS 4242;
@@ -49,7 +52,7 @@ WITH RECURSIVE dijkstra (
 
         UNION
 
-        -- Smaller ones
+        -- ❹ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
         SELECT
             nbs.node_to,                            -- id of neighbor
             sml.dist + nbs.weight,                  -- new distance
@@ -57,29 +60,31 @@ WITH RECURSIVE dijkstra (
             sml.node_id,                            -- new prev
             false                                   -- still unvisited
         FROM 
-            dijkstra AS sml JOIN
-            graph    AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN 
-            dijkstra AS old ON nbs.node_to = old.node_id
+            dijkstra AS sml JOIN                                            -- smallest node
+            graph    AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN  -- neighbors of smallest node
+            dijkstra AS old ON nbs.node_to = old.node_id                    -- old dist and prev of neighbors
         WHERE 
-            NOT sml.visited AND
-            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND
+            NOT sml.visited AND                                                     -- not visited yet -> part of the front
+            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND             -- sml is the smallest node in the front
             sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND    -- modify only neighbors with smaller distances
-            sml.node_id != goal_node()
+            sml.node_id != goal_node()                                              -- stop when path to goal node has been found
 
         UNION
 
-        -- Carry values that do not get updated
+        -- ❺ Carry all the other nodes in the table (those that have not been updated in this step)
         SELECT old.*
         FROM 
-            dijkstra AS sml JOIN
-            graph    AS nbs ON sml.node_id = nbs.node_from RIGHT OUTER JOIN 
-            dijkstra AS old ON nbs.node_to = old.node_id
+            dijkstra AS sml JOIN                                                -- smallest node
+            graph    AS nbs ON sml.node_id = nbs.node_from RIGHT OUTER JOIN     -- neighbor of smallest node
+            dijkstra AS old ON nbs.node_to = old.node_id                        -- old dist and prev of every node
+            -- notice the RIGHT outer join, in contrast to the LEFT outer join in the previous set operand
+            -- => every node is selected for `old`, even those which are no neighbors
         WHERE 
-            old.node_id != sml.node_id AND 
-            NOT sml.visited AND
-            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND
-            coalesce(sml.dist + nbs.weight, CAST('inf' AS FLOAT)) >= old.dist AND  
-            sml.node_id != goal_node()
+            old.node_id != sml.node_id AND                                          -- do not select the smallest node
+            NOT sml.visited AND                                                     -- not visited yet -> part of the front
+            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND             -- sml is the smallest node in the front
+            coalesce(sml.dist + nbs.weight, CAST('inf' AS FLOAT)) >= old.dist AND   -- modify only the nodes that have not been modified in the previous set operand
+            sml.node_id != goal_node()                                              -- stop when path to goal node has been found
     )
 ), 
 solution (
