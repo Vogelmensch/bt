@@ -8,7 +8,7 @@
 
 
 CREATE OR REPLACE MACRO start_node() AS 0;
-CREATE OR REPLACE MACRO goal_node() AS 6969;
+CREATE OR REPLACE MACRO goal_node() AS 4242;
 
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
 CREATE OR REPLACE MACRO width() AS 100;
@@ -19,79 +19,81 @@ CREATE OR REPLACE MACRO h(x) AS cast(
 
 WITH RECURSIVE dijkstra (
     node_id,
-    dist,   -- shortest distance to this node
-    f,      -- f = dist + h, where h is the heuristic function (estimated distance to the goal)
-    prev    -- previous node; backtrack to find the shortest path
+    dist,       -- shortest distance to this node
+    f,          -- f = dist + h, where h is the heuristic function (estimated distance to the goal)
+    prev,       -- previous node; backtrack to find the shortest path
+    visited     -- type: boolean; has the node already been visited?
 ) AS (
-    -- ❷ Initial Case: Add every node to the working table with initial values; 
-    --                  select different values for start node 
-    (
-        SELECT DISTINCT
-            node_from,
-            CAST('inf' AS DOUBLE),
-            CAST('inf' AS DOUBLE),
-            NULL
-        FROM graph
-        WHERE node_from != 0
-
-        UNION
-
-        SELECT start_node(), 0, h(start_node()), NULL
-    )
-    -- => the intermediate table can be used as dijkstra's 'Q'
+    -- ❷ Initial Case: The start node has a distance of zero, no parent and has not been visited yet.
+    SELECT 
+        start_node(), 
+        0,
+        h(start_node()),
+        NULL, 
+        false
 
     UNION ALL
 
     (
-        -- recursion
-        WITH 
-        -- select one node with minimal dist
-        min_node_id AS (
-            SELECT node_id AS id
-            FROM dijkstra 
-            WHERE dist = (SELECT min(dist) FROM dijkstra)
-            LIMIT 1
-        ),
-        -- get neighbors of minimal node
-        neighbors AS (
-            SELECT 
-                g.node_to AS node_id, 
-                (SELECT min(dist) FROM dijkstra) + g.weight AS dist,
-                (SELECT min(dist) FROM dijkstra) + g.weight + h(g.node_to) AS f,
-                node_from AS prev
-            FROM graph AS g
-            WHERE node_from = (SELECT id FROM min_node_id)
-        )
-
-        SELECT
-            d.node_id,
-            IF(n.dist < d.dist, n.dist, d.dist), -- d.dist is also selected if n.dist = NULL 
-            IF(n.dist < d.dist, n.f, d.f),
-            IF(n.dist < d.dist, n.prev, d.prev)
-        FROM 
-            dijkstra AS d LEFT OUTER JOIN 
-            neighbors AS n 
-            ON d.node_id = n.node_id
+        -- ❸ Set 'visited' to TRUE for the unvisited node with smallest distance
+        SELECT 
+            node_id, 
+            dist, 
+            f,
+            prev, 
+            true
+        FROM dijkstra
         WHERE 
-            d.node_id != (SELECT id FROM min_node_id) AND -- remove selected node
-            EXISTS (FROM dijkstra WHERE node_id = goal_node())
+            NOT visited AND
+            f = (SELECT min(f) FROM dijkstra WHERE NOT visited)
+
+        UNION
+
+        -- Smaller ones
+        SELECT
+            nbs.node_to,                            -- id of neighbor
+            sml.dist + nbs.weight,                  -- new distance
+            sml.dist + nbs.weight + h(nbs.node_to), -- f-value: distance + estimated distance to the goal
+            sml.node_id,                            -- new prev
+            false                                   -- still unvisited
+        FROM 
+            dijkstra AS sml JOIN
+            graph    AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN 
+            dijkstra AS old ON nbs.node_to = old.node_id
+        WHERE 
+            NOT sml.visited AND
+            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND
+            sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND    -- modify only neighbors with smaller distances
+            sml.node_id != goal_node()
+
+        UNION
+
+        -- Carry values that do not get updated
+        SELECT old.*
+        FROM 
+            dijkstra AS sml JOIN
+            graph    AS nbs ON sml.node_id = nbs.node_from RIGHT OUTER JOIN 
+            dijkstra AS old ON nbs.node_to = old.node_id
+        WHERE 
+            old.node_id != sml.node_id AND 
+            NOT sml.visited AND
+            sml.f = (SELECT min(f) FROM dijkstra WHERE NOT visited) AND
+            coalesce(sml.dist + nbs.weight, CAST('inf' AS FLOAT)) >= old.dist AND  
+            sml.node_id != goal_node()
     )
 ), 
-solution(node_id, dist, prev) AS (
-    SELECT DISTINCT d.node_id, d.dist, d.prev
-    FROM 
-        dijkstra d JOIN 
-        (
-            SELECT 
-                node_id, 
-                min(dist) AS dist,
-            FROM dijkstra
-            GROUP BY node_id
-        ) res 
-        ON d.node_id = res.node_id AND d.dist = res.dist
-    WHERE prev IS NOT NULL
+solution (
+    node_id,
+    dist,
+    prev,
+) AS (
+    SELECT 
+        node_id,
+        min(dist),
+        argmin(prev, dist)
+    FROM dijkstra
+    GROUP BY node_id
 ),
-
 -- Pretty-Printing
 path_as_string (
     new_node,
