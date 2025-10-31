@@ -1,9 +1,13 @@
-from sys import argv, exit
+from sys import exit
+import argparse
 from itertools import chain
 import duckdb
 
 def to_bit_reversed(hex_str):
-    bit_str = format(int(hex_str, base=16), 'b')
+    hex_num = int(hex_str, base=16)
+    assert(hex_num >= 0 and hex_num < 256)
+    
+    bit_str = format(hex_num, 'b')
     # fill with zeros
     while len(bit_str) < 8:
         bit_str = '0' + bit_str
@@ -54,20 +58,21 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     
 
 if __name__ == '__main__':
-    if '-c' in argv or '--classic' in argv:
+    parser = argparse.ArgumentParser(description='Perform lcs query.')
+    parser.add_argument('fingerprint', type=str, help='hex-string, e.g. 42:f2:bb:02')
+    parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
+    parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
+    args = parser.parse_args()
+
+    if args.classic:
         script = 'queries/bishop_classic.sql'
         print('classic query')
     else:
         script = 'queries/bishop.sql'
         print('USING KEY')
 
-    if '-s' in argv:
-        idx = argv.index('-s')
-        try:
-            scale = float(argv[idx+1])
-        except:
-            print('Invalid Input')
-            exit(1)
+    if args.scale:
+        scale = args.scale        
     else:
         scale = 1
 
@@ -76,11 +81,15 @@ if __name__ == '__main__':
 
     symbols = [' ', '.', 'o', '+', '=', '*', 'B', 'O', 'X', '@', '%', '&', '#', '/', '^']
 
-    fingerprint = argv[1]
-    fp_list = fingerprint.split(':')
-    many_lists = map(to_bit_reversed, fp_list)
-    
-    bitlist = list(chain.from_iterable(many_lists))
+    try:
+        fingerprint = args.fingerprint
+        fp_list = fingerprint.split(':')
+        many_lists = map(to_bit_reversed, fp_list)
+        
+        bitlist = list(chain.from_iterable(many_lists))
+    except:
+        print('Invalid Input')
+        exit(1)
 
     with open(script) as f:
         query = f.read()

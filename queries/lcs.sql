@@ -10,8 +10,8 @@
 
 -- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Solution_for_two_sequences
 
-CREATE OR REPLACE MACRO s1() AS 'Never gonna give you up';
-CREATE OR REPLACE MACRO s2() AS 'Never gonna let you down';
+CREATE OR REPLACE MACRO s1() AS {string1};
+CREATE OR REPLACE MACRO s2() AS {string2};
 
 -- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
