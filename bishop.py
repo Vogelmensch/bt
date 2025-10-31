@@ -55,10 +55,10 @@ def print_fingerprint(fp, symbols, height=9, width=17):
 
 if __name__ == '__main__':
     if '-c' in argv or '--classic' in argv:
-        script = 'algs/bishop_classic.sql'
+        script = 'queries/bishop_classic.sql'
         print('classic query')
     else:
-        script = 'algs/bishop.sql'
+        script = 'queries/bishop.sql'
         print('USING KEY')
 
     if '-s' in argv:
