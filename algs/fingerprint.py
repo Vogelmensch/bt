@@ -36,7 +36,11 @@ def print_fingerprint(fp, symbols, height=9, width=17):
                 continue
             t = fp[0] # current list element (type: tuple)
             if t[0] == x and t[1] == y:
-                print(symbols[t[2]], end='')
+                try:
+                    print(symbols[t[2]], end='')
+                except IndexError:
+                    print('\n\nError: Dimensions are too low for this hex-string.')
+                    exit(1)
                 fp.pop(0)
             else:
                 print(symbols[0], end='')
@@ -51,16 +55,25 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     
 
 if __name__ == '__main__':
-    if len(argv) < 2 or len(argv) > 3:
-        print('Wrong number of arguments.')
-        exit(1)
-
     if '-c' in argv or '--classic' in argv:
-        script = 'bishop_classic.sql'
+        script = 'algs/bishop_classic.sql'
         print('classic query')
     else:
-        script = 'bishop.sql'
+        script = 'algs/bishop.sql'
         print('USING KEY')
+
+    if '-s' in argv:
+        idx = argv.index('-s')
+        try:
+            scale = float(argv[idx+1])
+        except:
+            print('Invalid Input')
+            exit(1)
+    else:
+        scale = 1
+
+    HEIGHT = int(9*scale)
+    WIDTH = int(17*scale)
 
     symbols = [' ', '.', 'o', '+', '=', '*', 'B', 'O', 'X', '@', '%', '&', '#', '/', '^']
 
@@ -73,7 +86,7 @@ if __name__ == '__main__':
     with open(script) as f:
         query = f.read()
 
-    res = duckdb.sql(query.format(str(bitlist))).fetchall()
-    res.sort(key = lambda t: t[1] * 10 + t[0]) # sort by y, then by x
+    res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
+    res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
-    print_fingerprint(res, symbols)
+    print_fingerprint(res, symbols, height=HEIGHT, width=WIDTH)
