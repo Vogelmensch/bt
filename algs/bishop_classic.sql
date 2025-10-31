@@ -14,7 +14,7 @@
 CREATE OR REPLACE MACRO width() AS {width};
 CREATE OR REPLACE MACRO height() AS {height};
 
-CREATE OR REPLACE MACRO bitlist() AS {};
+CREATE OR REPLACE MACRO bitlist() AS {bitlist};
 
 WITH RECURSIVE bishop (
     x,      -- x and y coordinates defining the grid

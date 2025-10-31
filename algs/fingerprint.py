@@ -39,8 +39,7 @@ def print_fingerprint(fp, symbols, height=9, width=17):
                 try:
                     print(symbols[t[2]], end='')
                 except IndexError:
-                    print('\n\nError: Dimensions are too low for this hex-string.')
-                    exit(1)
+                    print('M', end='')
                 fp.pop(0)
             else:
                 print(symbols[0], end='')
