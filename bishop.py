@@ -64,13 +64,6 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
     args = parser.parse_args()
 
-    if args.classic:
-        script = 'queries/bishop_classic.sql'
-        print('classic query')
-    else:
-        script = 'queries/bishop.sql'
-        print('USING KEY')
-
     if args.scale:
         scale = args.scale        
     else:
@@ -90,6 +83,13 @@ if __name__ == '__main__':
     except:
         print('Invalid Input')
         exit(1)
+
+    if args.classic:
+        script = 'queries/bishop_classic.sql'
+        print('classic query')
+    else:
+        script = 'queries/bishop.sql'
+        print('USING KEY')
 
     with open(script) as f:
         query = f.read()

@@ -10,15 +10,11 @@
 -- Working Table: Holds all the nodes that have been seen (but not necessarily visited)
 -- Union Table: Holds every value that has ever been calculated for every node
 
-CREATE OR REPLACE MACRO start_node() AS 0;
-CREATE OR REPLACE MACRO goal_node() AS 4242;
+CREATE OR REPLACE MACRO start_node() AS {start_node};
+CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
-CREATE OR REPLACE MACRO width() AS 100;
-CREATE OR REPLACE MACRO h(x) AS cast(
-    sqrt(((x % width()) - (goal_node() % width()))^2 + 
-         ((x / width()) - (goal_node() / width()))^2) 
-    as int);
+CREATE OR REPLACE MACRO h(x) AS {heuristic}
 
 WITH RECURSIVE dijkstra (
     node_id,
@@ -61,7 +57,7 @@ WITH RECURSIVE dijkstra (
             false                                   -- still unvisited
         FROM 
             dijkstra AS sml JOIN                                            -- smallest node
-            graph    AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN  -- neighbors of smallest node
+            {grap}   AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN  -- neighbors of smallest node
             dijkstra AS old ON nbs.node_to = old.node_id                    -- old dist and prev of neighbors
         WHERE 
             NOT sml.visited AND                                                     -- not visited yet -> part of the front
@@ -75,7 +71,7 @@ WITH RECURSIVE dijkstra (
         SELECT old.*
         FROM 
             dijkstra AS sml JOIN                                                -- smallest node
-            graph    AS nbs ON sml.node_id = nbs.node_from RIGHT OUTER JOIN     -- neighbor of smallest node
+            {graph}  AS nbs ON sml.node_id = nbs.node_from RIGHT OUTER JOIN     -- neighbor of smallest node
             dijkstra AS old ON nbs.node_to = old.node_id                        -- old dist and prev of every node
             -- notice the RIGHT outer join, in contrast to the LEFT outer join in the previous set operand
             -- => every node is selected for `old`, even those which are no neighbors

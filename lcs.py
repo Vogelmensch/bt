@@ -15,8 +15,6 @@ if __name__ == '__main__':
         script = 'queries/lcs.sql'
         print('USING KEY')
 
-    
-
     with open(script) as f:
         query = f.read()
 
