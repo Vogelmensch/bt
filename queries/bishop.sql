@@ -11,10 +11,10 @@
 -- Recurring table: Stores sym_id for all coordinates
 -- Working Table: Stores current coordinates of agent and current bitlist
 
-CREATE OR REPLACE MACRO width() AS 17;
-CREATE OR REPLACE MACRO height() AS 9;
+CREATE OR REPLACE MACRO width() AS {width};
+CREATE OR REPLACE MACRO height() AS {height};
 
-CREATE OR REPLACE MACRO bitlist() AS {};
+CREATE OR REPLACE MACRO bitlist() AS {bitlist};
 
 WITH RECURSIVE bishop (
     x,      -- x and y coordinates defining the grid
@@ -37,12 +37,12 @@ WITH RECURSIVE bishop (
         SELECT
             CASE 
                 WHEN bitlist[1][2] == '0' 
-                THEN greatest(0, x-1)      -- don't move past borders
+                THEN greatest(0, x-1)       -- don't move past borders
                 ELSE least(width()-1, x+1)
             END AS x,
             CASE 
                 WHEN bitlist[1][1] == '0' 
-                THEN greatest(0, y-1)
+                THEN greatest(0, y-1)       -- don't move past borders
                 ELSE least(height()-1, y+1)
             END AS y,
             array_pop_front(bitlist)
@@ -60,7 +60,7 @@ WITH RECURSIVE bishop (
         LEFT OUTER JOIN recurring.bishop AS field_to
         ON field_to.x = new.x AND field_to.y = new.y
     -- ❹ Repeat until the bitlist is empty
-    WHERE length(new.bitlist) > 0
+    WHERE length((SELECT bitlist FROM bishop)) > 0
    )
 )
 SELECT x, y, sym_id
