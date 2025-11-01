@@ -21,7 +21,7 @@ INSERT INTO edges VALUES
     (4, 5, 2),
     (5, 6, 1);
 
-CREATE OR REPLACE TABLE graph AS (
+CREATE OR REPLACE TABLE simple AS (
     SELECT node_from, node_to, weight
     FROM edges 
 

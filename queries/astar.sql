@@ -12,7 +12,7 @@ CREATE OR REPLACE MACRO start_node() AS {start_node};
 CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
-CREATE OR REPLACE MACRO h(x) AS {heuristic}
+CREATE OR REPLACE MACRO h(x) AS {heuristic};
 
 WITH RECURSIVE
 dijkstra (

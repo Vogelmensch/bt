@@ -14,7 +14,7 @@ CREATE OR REPLACE MACRO start_node() AS {start_node};
 CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
-CREATE OR REPLACE MACRO h(x) AS {heuristic}
+CREATE OR REPLACE MACRO h(x) AS {heuristic};
 
 WITH RECURSIVE dijkstra (
     node_id,
@@ -57,7 +57,7 @@ WITH RECURSIVE dijkstra (
             false                                   -- still unvisited
         FROM 
             dijkstra AS sml JOIN                                            -- smallest node
-            {grap}   AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN  -- neighbors of smallest node
+            {graph}  AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN  -- neighbors of smallest node
             dijkstra AS old ON nbs.node_to = old.node_id                    -- old dist and prev of neighbors
         WHERE 
             NOT sml.visited AND                                                     -- not visited yet -> part of the front
