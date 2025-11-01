@@ -58,7 +58,7 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Perform lcs query.')
+    parser = argparse.ArgumentParser(description='Perform Drunken-Bishop query.')
     parser.add_argument('fingerprint', type=str, help='hex-string, e.g. 42:f2:bb:02')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
     parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
