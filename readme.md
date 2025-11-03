@@ -65,7 +65,7 @@ Never gonna e you
 
 Create and ASCII-image based on a string of hexadecimal numbers.
 ```
-bishop.py [-h] [-c] [-s SCALE] fingerprint
+bishop.py [-h] [-p] [-c] [-s SCALE] fingerprint
 ```
 The argument `fingerprint` is a string of hexadecimal numbers, separated by `:`.
 
