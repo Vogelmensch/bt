@@ -60,6 +60,7 @@ def print_fingerprint(fp, symbols, height=9, width=17):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform Drunken-Bishop query.')
     parser.add_argument('fingerprint', type=str, help='hex-string, e.g. 42:f2:bb:02')
+    parser.add_argument('-p', '--print_result', action='store_true', help='print the pure result list')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
     parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
     args = parser.parse_args()
@@ -96,5 +97,8 @@ if __name__ == '__main__':
 
     res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
     res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
+
+    if args.print_result:
+        print(res)
 
     print_fingerprint(res, symbols, height=HEIGHT, width=WIDTH)

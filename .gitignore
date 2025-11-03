@@ -2,3 +2,4 @@ graphs/social-network*
 graphs.db*
 *.tar*
 activate-venv
+__pycache__
