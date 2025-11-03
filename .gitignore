@@ -1,3 +1,4 @@
 graphs/social-network*
 graphs.db*
 *.tar*
+activate-venv
