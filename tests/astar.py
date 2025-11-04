@@ -13,7 +13,7 @@ def run_test(query, graph, start, goal, expected, heuristic='0'):
     if expected == res:
         print('✅ Success')
     else:
-        print('❌ Failure  for inputs \'{}\', \'{}\', \'{}\' and \'{}\':'.format(graph, start, goal, heuristic))
+        print('❌ Failure for inputs \'{}\', \'{}\', \'{}\' and \'{}\':'.format(graph, start, goal, heuristic))
         print('Expected \'{e}\' but got \'{r}\''.format(e=expected, r=res))
 
 if __name__ == '__main__':
@@ -32,6 +32,7 @@ if __name__ == '__main__':
         with open(script) as f:
             query = f.read()
     
+        # --- DEFINE TESTS HERE ---
         run_test(query, 'simple', 0, 0, ('0', 0))
         run_test(query, 'simple', 0, 6, ('0 -> 1 -> 3 -> 5 -> 6', 5))
         run_test(query, 'simple', 0, 7, '')

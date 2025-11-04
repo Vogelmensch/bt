@@ -35,7 +35,7 @@ def run_test(query, hexstring, scale, expected):
     if res == expected:
         print('✅ Success')
     else:
-        print('❌ Failure  for input \'{hex}\':'.format(hex=hexstring))
+        print('❌ Failure for input \'{hex}\':'.format(hex=hexstring))
         print('Expected \'{e}\' but got \'{r}\''.format(e=expected, r=res))
 
 

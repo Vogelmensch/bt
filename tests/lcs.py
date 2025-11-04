@@ -7,7 +7,7 @@ def run_test(query, string1, string2, expected):
     if expected in res:
         print('✅ Success')
     else:
-        print('❌ Failure  for inputs \'{s1}\' and \'{s2}\':'.format(s1=string1, s2=string2))
+        print('❌ Failure for inputs \'{s1}\' and \'{s2}\':'.format(s1=string1, s2=string2))
         print('Expected \'{e}\' but got \'{r}\''.format(e=expected, r=res))
 
 
