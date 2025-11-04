@@ -28,10 +28,10 @@ WITH RECURSIVE dijkstra (
 ) AS (
     -- ❷ Initial Case: The start node has a distance of zero, no parent and has not been visited yet.
     SELECT 
-        start_node(), 
+        start_node() :: UINT128, 
         0,
         h(start_node()),
-        NULL, 
+        NULL :: UINT128, 
         false
 
     UNION ALL
