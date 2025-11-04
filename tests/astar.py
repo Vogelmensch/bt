@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
     args = parser.parse_args()
 
-    with duckdb.connect('graphs.db') as con:
+    with duckdb.connect('example.db') as con:
         if args.classic:
             script = 'queries/astar_classic.sql'
             print('classic query')
@@ -37,3 +37,4 @@ if __name__ == '__main__':
         run_test(query, 'simple', 0, 0, ('0', 0))
         run_test(query, 'simple', 0, 6, ('0 -> 1 -> 3 -> 5 -> 6', 5))
         run_test(query, 'simple', 0, 7, '')
+        run_test(query, 'simple', 7, 8, ('7 -> 8', 1))
