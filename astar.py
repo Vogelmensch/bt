@@ -33,5 +33,9 @@ if __name__ == '__main__':
         res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
         print()
-        print('Path:\t {}'.format(res[0][0]))
-        print('Length:\t {}'.format(res[0][1]))
+
+        if (len(res) == 0):
+            print('Nothing found.')
+        else:
+            print('Path:\t {}'.format(res[0][0]))
+            print('Length:\t {}'.format(res[0][1]))
