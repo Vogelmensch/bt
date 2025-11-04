@@ -4,8 +4,10 @@
 -- The graph can be weighted, but all weights must be non-negative
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
 -- ❷ Initial Case: The start node has a distance of zero, no parent and has not been visited yet.
--- ❸ Set 'visited' to TRUE for the unvisited node with smallest distance
--- ❹ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
+-- ❸ Select the node with minimal f-value; choose one at random if multiple exist
+-- If this node is the goal node, then stop the recursion
+-- ❹ Set 'visited' to TRUE for the unvisited node with smallest distance
+-- ❺ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
 -- Recurring Table: Holds all the nodes that have been seen (but not necessarily visited)
 
 CREATE OR REPLACE MACRO start_node() AS {start_node};
@@ -33,7 +35,17 @@ dijkstra (
     UNION
 
     (
-    -- ❸ Set 'visited' to TRUE for the unvisited node with smallest distance
+    -- ❸ Select the node with minimal f-value; choose one at random if multiple exist
+    WITH min_node(id) AS (
+        SELECT node_id
+        FROM recurring.dijkstra
+        WHERE 
+            NOT visited AND 
+            f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited)
+        LIMIT 1
+    )
+
+    -- ❹ Set 'visited' to TRUE for the unvisited node with smallest distance
     SELECT 
         node_id, 
         dist, 
@@ -42,12 +54,12 @@ dijkstra (
         true
     FROM recurring.dijkstra
     WHERE 
-        NOT visited AND
-        f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited)
+        node_id = (SELECT id FROM min_node) AND 
+        node_id != goal_node()
 
     UNION
 
-    -- ❹ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
+    -- ❺ If the distance from the smallest node to their neighbor(s) is smaller then previously, then update the neighbor(s)
     SELECT
         nbs.node_to,                            -- id of neighbor
         sml.dist + nbs.weight,                  -- new distance
@@ -60,7 +72,7 @@ dijkstra (
         recurring.dijkstra AS old ON nbs.node_to = old.node_id                      -- old dist and prev of neighbors
     WHERE 
         NOT sml.visited AND                                                     -- not visited yet -> part of the front
-        sml.f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited) AND   -- sml is the smallest node in the front
+        sml.node_id = (SELECT id FROM min_node) AND                             -- sml is the smallest node in the front
         sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND    -- modify only neighbors with smaller distances
         sml.node_id != goal_node()                                              -- stop when path to goal node has been found
     )
