@@ -32,6 +32,7 @@ if __name__ == '__main__':
         with open(script) as f:
             query = f.read()
     
+    
         # --- DEFINE TESTS HERE ---
         run_test(query, 'simple', 0, 0, ('0', 0))
         run_test(query, 'simple', 0, 6, ('0 -> 1 -> 3 -> 5 -> 6', 5))

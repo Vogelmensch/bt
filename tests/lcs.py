@@ -26,7 +26,7 @@ if __name__ == '__main__':
     with open(script) as f:
         query = f.read()
 
-    
+
     # --- DEFINE TESTS HERE ---
     run_test(query, '', '', '')
     run_test(query, 'some arbitrary string', '', '')

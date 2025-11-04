@@ -55,6 +55,5 @@ if __name__ == '__main__':
         query = f.read()
 
 
-    
     # --- DEFINE TESTS HERE ---
     run_test(query, '00', 1, [(4, 0, 1), (5, 1, 1), (6, 2, 1), (7, 3, 1), (8, 4, 1)])

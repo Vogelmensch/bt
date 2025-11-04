@@ -86,6 +86,11 @@ USING KEY
 +-----------------+
 ```
 
-## Notes
-- Currently, the classic version of A* is flawed
-- There are no unit tests yet
+## Unit testing
+
+Unit tests are defined in `/tests`. Run the `.py`-files to test the queries directly. Additional tests can be defined at the bottom of the `.py`-files, marked with an according comment.
+
+Example:
+```
+python tests/astar.py
+```
