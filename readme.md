@@ -94,3 +94,57 @@ Example:
 ```
 python tests/astar.py
 ```
+
+
+## Measurements
+
+A protocol of inputs for the different algorithms and my observations.
+
+### A*
+
+Works out of the box, but no performance difference is observable:
+```bash
+python astar.py example.db simple 0 6
+```
+
+Requires an additional ![graph](https://repository.surfsara.nl/datasets/cwi/lsqb), but performance difference is observable. 
+
+The graph `person_knows_person` has 
+- 162,059 nodes
+- 7,273,036 edges
+- a mean branching factor of ~45.
+
+```bash
+python astar.py graphs.db person_knows_person 14 2199023256081
+```
+
+- My Laptop (Acer Spin 5) finds the solution in... 
+    - USING KEY: 1m 18s
+    - Classic query: 40s 🤨
+
+
+Observe memory use of the following query.
+
+```bash
+python astar.py graphs.db person_knows_person 14 37383395527996
+```
+
+### LCS
+
+```bash
+python lcs.py 'Houston, we have a problem' 'Oberpfaffenhofen, wir haben ein Problem'
+```
+
+- My Laptop (Acer Spin 5) finds the solution in... 
+    - USING KEY: ~330 ms
+    - Classic query: > 10 min
+
+### Bishop
+
+```bash
+python bishop.py -s 4 -r 400
+```
+
+- My Laptop (Acer Spin 5) finds the solution in... 
+    - USING KEY: 10 s
+    - Classic query: 180 ms 🤨
