@@ -2,6 +2,7 @@ from sys import exit
 import argparse
 from itertools import chain
 import duckdb
+import generators.hexstring as hexgen
 
 def to_bit_reversed(hex_str):
     hex_num = int(hex_str, base=16)
@@ -59,11 +60,22 @@ def print_fingerprint(fp, symbols, height=9, width=17):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform Drunken-Bishop query.')
-    parser.add_argument('fingerprint', type=str, help='hex-string, e.g. 42:f2:bb:02')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-f', '--fingerprint', type=str, help='hex-string, e.g. 42:f2:bb:02')
+    group.add_argument('-r', '--random', type=int, help='use randomly generated hexstring of given length')
+
     parser.add_argument('-p', '--print_result', action='store_true', help='print the pure result list')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
     parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
+    
     args = parser.parse_args()
+
+
+    if not args.fingerprint and not args.random:
+        print('Provide either -f FINGERPRINT or -r INTEGER.')
+        print('Type -h for help.')
+        exit()
 
     if args.scale:
         scale = args.scale        
@@ -76,7 +88,12 @@ if __name__ == '__main__':
     symbols = [' ', '.', 'o', '+', '=', '*', 'B', 'O', 'X', '@', '%', '&', '#', '/', '^']
 
     try:
-        fingerprint = args.fingerprint
+        if args.random:
+            fingerprint = hexgen.generate(args.random)
+            print('Generated {}'.format(fingerprint))
+        else:
+            fingerprint = args.fingerprint
+
         fp_list = fingerprint.split(':')
         many_lists = map(to_bit_reversed, fp_list)
         
