@@ -2,7 +2,7 @@ from sys import exit
 import argparse
 from itertools import chain
 import duckdb
-import generators.hexstring as hexgen
+from generators.hexstring import generate
 
 def to_bit_reversed(hex_str):
     hex_num = int(hex_str, base=16)
@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     try:
         if args.random:
-            fingerprint = hexgen.generate(args.random)
+            fingerprint = generate(args.random)
             print('Generated {}'.format(fingerprint))
         else:
             fingerprint = args.fingerprint
