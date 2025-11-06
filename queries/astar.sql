@@ -16,8 +16,7 @@ CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
 CREATE OR REPLACE MACRO h(x) AS {heuristic};
 
-WITH RECURSIVE
-dijkstra (
+WITH RECURSIVE astar (
     node_id,
     dist,       -- shortest distance to this node
     f,          -- f = dist + h, where h is the heuristic function (estimated distance to the goal)
@@ -38,10 +37,10 @@ dijkstra (
     -- ❸ Select the node with minimal f-value; choose one at random if multiple exist
     WITH min_node(id) AS (
         SELECT node_id
-        FROM recurring.dijkstra
+        FROM recurring.astar
         WHERE 
             NOT visited AND 
-            f = (SELECT min(f) FROM recurring.dijkstra WHERE NOT visited)
+            f = (SELECT min(f) FROM recurring.astar WHERE NOT visited)
         LIMIT 1
     )
 
@@ -52,7 +51,7 @@ dijkstra (
         f,
         prev, 
         true
-    FROM recurring.dijkstra
+    FROM recurring.astar
     WHERE 
         node_id = (SELECT id FROM min_node) AND 
         node_id != goal_node()
@@ -67,9 +66,9 @@ dijkstra (
         sml.node_id,                            -- new prev
         false                                   -- still unvisited
     FROM
-        recurring.dijkstra AS sml JOIN                                              -- smallest node
-        {graph}            AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN    -- neighbors of smallest node
-        recurring.dijkstra AS old ON nbs.node_to = old.node_id                      -- old dist and prev of neighbors
+        recurring.astar AS sml JOIN                                              -- smallest node
+        {graph}         AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN    -- neighbors of smallest node
+        recurring.astar AS old ON nbs.node_to = old.node_id                      -- old dist and prev of neighbors
     WHERE 
         NOT sml.visited AND                                                     -- not visited yet -> part of the front
         sml.node_id = (SELECT id FROM min_node) AND                             -- sml is the smallest node in the front
@@ -77,6 +76,7 @@ dijkstra (
         sml.node_id != goal_node()                                              -- stop when path to goal node has been found
     )
 ),
+
 
 -- Pretty-Printing
 path_as_string (
@@ -93,12 +93,12 @@ path_as_string (
         d.prev,
         d.prev || ' -> ' || p.path_string,
 
-    FROM path_as_string AS p JOIN dijkstra AS d ON p.new_node = d.node_id
+    FROM path_as_string AS p JOIN astar AS d ON p.new_node = d.node_id
 )
 
 SELECT 
     path_string AS 'Path',
-    (SELECT dist FROM dijkstra WHERE node_id = goal_node()) AS 'Distance'
+    (SELECT dist FROM astar WHERE node_id = goal_node()) AS 'Distance'
 FROM 
     path_as_string
 WHERE new_node = start_node();

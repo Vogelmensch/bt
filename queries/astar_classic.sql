@@ -19,7 +19,7 @@ CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
 CREATE OR REPLACE MACRO h(x) AS {heuristic};
 
-WITH RECURSIVE dijkstra (
+WITH RECURSIVE astar (
     node_id,
     dist,       -- shortest distance to this node
     f,          -- f = dist + h, where h is the heuristic function (estimated distance to the goal)
@@ -38,7 +38,7 @@ WITH RECURSIVE dijkstra (
 
     (
         -- ❸ Filter out old nodes if last iteration returned new values (this step is not needed in USING KEY version)
-        WITH filtered_dijkstra (
+        WITH filtered_astar (
             node_id,
             dist,
             f,
@@ -51,17 +51,17 @@ WITH RECURSIVE dijkstra (
                 argmin(f, dist),
                 argmin(prev, dist),
                 bool_or(visited)
-            FROM dijkstra
+            FROM astar
             GROUP BY node_id
         ),
         -- ❹ Select the node with minimal f-value; choose one at random if multiple exist
         -- If this node is the goal node, then stop the recursion
         min_node (id) AS (
             SELECT node_id
-            FROM filtered_dijkstra
+            FROM filtered_astar
             WHERE 
                 NOT visited AND 
-                f = (SELECT min(f) FROM filtered_dijkstra WHERE NOT visited)
+                f = (SELECT min(f) FROM filtered_astar WHERE NOT visited)
             LIMIT 1
         )
 
@@ -72,7 +72,7 @@ WITH RECURSIVE dijkstra (
             f,
             prev, 
             true
-        FROM filtered_dijkstra
+        FROM filtered_astar
         WHERE 
             node_id = (SELECT id FROM min_node) AND 
             node_id != goal_node()
@@ -87,9 +87,9 @@ WITH RECURSIVE dijkstra (
             sml.node_id,                            -- new prev
             false                                   -- still unvisited
         FROM
-            filtered_dijkstra AS sml JOIN                                           -- smallest node
-            {graph}           AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN -- neighbors of smallest node
-            filtered_dijkstra AS old ON nbs.node_to = old.node_id                   -- old dist and prev of neighbors
+            filtered_astar AS sml JOIN                                           -- smallest node
+            {graph}        AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN -- neighbors of smallest node
+            filtered_astar AS old ON nbs.node_to = old.node_id                   -- old dist and prev of neighbors
         WHERE 
             NOT sml.visited AND                                                     -- not visited yet -> part of the front
             sml.node_id = (SELECT id FROM min_node) AND                             -- sml is the smallest node in the front
@@ -100,10 +100,12 @@ WITH RECURSIVE dijkstra (
 
         -- ❼ Carry all values from previous iteration
         SELECT *
-        FROM filtered_dijkstra
+        FROM filtered_astar
         WHERE (SELECT id FROM min_node) != goal_node()
     )
 ), 
+
+
 solution (
     node_id,
     dist,
@@ -113,7 +115,7 @@ solution (
         node_id,
         min(dist),
         argmin(prev, dist)
-    FROM dijkstra
+    FROM astar
     GROUP BY node_id
 ),
 -- Pretty-Printing
