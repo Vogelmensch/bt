@@ -21,7 +21,7 @@ if __name__ == '__main__':
             heuristic = 0
 
         if args.classic:
-            script = 'queries/astar_classic.sql'
+            script = 'queries/astar-classic.sql'
             print('classic query')
         else:
             script = 'queries/astar.sql'

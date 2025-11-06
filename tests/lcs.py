@@ -17,7 +17,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.classic:
-        script = 'queries/lcs_classic.sql'
+        script = 'queries/lcs-classic.sql'
         print('classic query')
     else:
         script = 'queries/lcs.sql'

@@ -21,7 +21,7 @@ if __name__ == '__main__':
         print('String1: {}\nString2: {}'.format(string1, string2))
 
     if args.classic:
-        script = 'queries/lcs_classic.sql'
+        script = 'queries/lcs-classic.sql'
         print('classic query')
     else:
         script = 'queries/lcs.sql'

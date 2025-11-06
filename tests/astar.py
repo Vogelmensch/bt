@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     with duckdb.connect('example.db') as con:
         if args.classic:
-            script = 'queries/astar_classic.sql'
+            script = 'queries/astar-classic.sql'
             print('classic query')
         else:
             script = 'queries/astar.sql'
