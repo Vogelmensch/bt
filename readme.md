@@ -132,7 +132,13 @@ python astar.py graphs.db person_knows_person 14 37383395527996
 ### LCS
 
 ```bash
-python lcs.py 'Houston, we have a problem' 'Oberpfaffenhofen, wir haben ein Problem'
+python lcs.py -s 'Never gonna give you up' 'Never gonna let you down'
+```
+- Only slight differences in execution time are observable
+
+
+```bash
+python lcs.py -s 'Houston, we have a problem' 'Oberpfaffenhofen, wir haben ein Problem'
 ```
 
 - My Laptop (Acer Spin 5) finds the solution in... 
