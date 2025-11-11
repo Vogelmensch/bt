@@ -3,6 +3,7 @@ import argparse
 from itertools import chain
 import duckdb
 from generators.hexstring import generate
+from measure.time import Timer
 
 def to_bit_reversed(hex_str):
     hex_num = int(hex_str, base=16)
@@ -68,9 +69,9 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--print_result', action='store_true', help='print the pure result list')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
     parser.add_argument('-s', '--scale', type=float, help='scale image dimensions')
+    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     
     args = parser.parse_args()
-
 
     if not args.fingerprint and not args.random:
         print('Provide either -f FINGERPRINT or -r INTEGER.')
@@ -112,10 +113,21 @@ if __name__ == '__main__':
     with open(script) as f:
         query = f.read()
 
+    if args.time:
+        timer = Timer()
+        timer.start()
+
     res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
+
+    if args.time:
+        timer.stop()
+
     res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
     if args.print_result:
         print(res)
 
     print_fingerprint(res, symbols, height=HEIGHT, width=WIDTH)
+
+    if args.time:
+        timer.print_elapsed()

@@ -1,5 +1,6 @@
 import duckdb
 import argparse
+from measure.time import Timer
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -11,6 +12,7 @@ if __name__ == '__main__':
     parser.add_argument('goal', type=int, help='id of the goal node')
     parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
+    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     args = parser.parse_args()
 
     with duckdb.connect(args.db) as con:
@@ -30,8 +32,15 @@ if __name__ == '__main__':
         with open(script) as f:
             query = f.read()
 
+        if args.time:
+            timer = Timer()
+            timer.start()
+
         res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
+        if args.time:
+            timer.stop()
+            
         print()
 
         if (len(res) == 0):
@@ -39,3 +48,6 @@ if __name__ == '__main__':
         else:
             print('Path:\t {}'.format(res[0][0]))
             print('Length:\t {}'.format(res[0][1]))
+
+        if args.time:
+            timer.print_elapsed()

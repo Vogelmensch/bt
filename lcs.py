@@ -1,14 +1,17 @@
 import duckdb
 import argparse
 from generators.string import generate
+from measure.time import Timer
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform lcs query.')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
+    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--strings', type=str, nargs=2, help='String arguments to compare')
     group.add_argument('-r', '--random', type=int, nargs=2, help='use randomly generated strings of given lengths')
+    
 
     args = parser.parse_args()
 
@@ -30,7 +33,17 @@ if __name__ == '__main__':
     with open(script) as f:
         query = f.read()
 
+    if args.time:
+        timer = Timer()
+        timer.start()
+
     res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
+
+    if args.time:
+        timer.stop()
 
     for s in res:
         print(s)
+
+    if args.time:
+        timer.print_elapsed()
