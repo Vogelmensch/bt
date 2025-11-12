@@ -17,10 +17,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.classic:
-        script = 'queries/lcs-classic.sql'
+        script = 'queries/lcs/classic.sql'
         print('classic query')
     else:
-        script = 'queries/lcs.sql'
+        script = 'queries/lcs/using-key.sql'
         print('USING KEY')
 
     with open(script) as f:

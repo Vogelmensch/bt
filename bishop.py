@@ -104,10 +104,10 @@ if __name__ == '__main__':
         exit(1)
 
     if args.classic:
-        script = 'queries/bishop-classic.sql'
+        script = 'queries/bishop/classic.sql'
         print('classic query')
     else:
-        script = 'queries/bishop.sql'
+        script = 'queries/bishop/using-key.sql'
         print('USING KEY')
 
     with open(script) as f:
