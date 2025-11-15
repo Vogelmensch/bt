@@ -32,7 +32,7 @@ WITH RECURSIVE needleman_wunsch (
     (
         WITH coords(x, y) AS (
             SELECT
-                nw.xidx % length(s1()) + 1,
+                (nw.xidx + 1) % (length(s1()) + 1),
                 CASE 
                     WHEN nw.xidx < length(s1())
                     THEN nw.yidx
@@ -51,9 +51,9 @@ WITH RECURSIVE needleman_wunsch (
                 END
             FROM 
                 coords AS c JOIN
-                letters AS l ON c.x = l.xidx AND c.y = l.yidx JOIN
-                recurring.needleman_wunsch AS lft ON lft.xidx = c.x-1 AND lft.yidx = c.y JOIN
-                recurring.needleman_wunsch AS up   ON up.xidx = c.x AND up.yidx = c.y-1 JOIN
+                letters AS l ON c.x = l.xidx AND c.y = l.yidx LEFT OUTER JOIN
+                recurring.needleman_wunsch AS lft  ON lft.xidx = c.x-1 AND lft.yidx = c.y LEFT OUTER JOIN
+                recurring.needleman_wunsch AS up   ON up.xidx = c.x AND up.yidx = c.y-1 LEFT OUTER JOIN
                 recurring.needleman_wunsch AS diag ON diag.xidx = c.x-1 AND diag.yidx = c.y-1
         ),
         scores(lft, up, diag, max) AS (
