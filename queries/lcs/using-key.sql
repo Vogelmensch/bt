@@ -40,26 +40,26 @@ WITH RECURSIVE lcs (
     (
     -- ❹ Case 1: Letters are equal; add letter to the solutions
     SELECT
-        nxt.xsym, nxt.xidx,
-        nxt.ysym, nxt.yidx,
-        list_transform(diag.strings, lambda s: nxt.xsym || s),  -- add letter to every solution
+        ltrs.xsym, ltrs.xidx,
+        ltrs.ysym, ltrs.yidx,
+        list_transform(diag.strings, lambda s: ltrs.xsym || s),  -- add letter to every solution
         diag.len + 1                                            -- the solution's length is increased by one
     FROM 
-        letters AS nxt
-        JOIN recurring.lcs AS diag ON nxt.xidx = diag.xidx+1 and 
-                                      nxt.yidx = diag.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and
-                                                 nxt.yidx = this.yidx
+        letters AS ltrs
+        JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
+                                      ltrs.yidx = diag.yidx+1 
+        LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and
+                                                 ltrs.yidx = this.yidx
     WHERE 
         this.strings IS NULL and        -- this field is empty
-        nxt.xsym = nxt.ysym             -- letters are equal
+        ltrs.xsym = ltrs.ysym             -- letters are equal
 
     UNION
 
     -- ❺ Case 2: Letters are unequal; select the best solution to continue with
     SELECT
-        nxt.xsym, nxt.xidx,
-        nxt.ysym, nxt.yidx,
+        ltrs.xsym, ltrs.xidx,
+        ltrs.ysym, ltrs.yidx,
         -- select the solution with the longest strings.
         -- if the lengths are equal, concatenate both.
         CASE 
@@ -71,13 +71,13 @@ WITH RECURSIVE lcs (
         END,
         greatest(l.len, u.len)
     FROM 
-        letters AS nxt 
-        JOIN recurring.lcs AS l ON nxt.xidx = l.xidx+1 and nxt.yidx = l.yidx 
-        JOIN recurring.lcs AS u ON nxt.xidx = u.xidx and nxt.yidx = u.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON nxt.xidx = this.xidx and nxt.yidx = this.yidx    
+        letters AS ltrs 
+        JOIN recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and ltrs.yidx = l.yidx 
+        JOIN recurring.lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1 
+        LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
     WHERE 
         this.strings IS NULL and    -- this field is empty
-        nxt.xsym != nxt.ysym        -- letters are unequal
+        ltrs.xsym != ltrs.ysym        -- letters are unequal
     )
 )
 SELECT list_transform(strings, lambda s: reverse(s)) AS 'Longest Common Subsequence'
