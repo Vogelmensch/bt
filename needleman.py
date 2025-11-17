@@ -4,10 +4,9 @@ from generators.string import generate
 from measure.time import Timer
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Perform lcs query.')
+    parser = argparse.ArgumentParser(description='Perform needleman-wunsch query.')
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
-    parser.add_argument('-i', '--indices', action='store_true', help='alternatiev version of USING KEY, using indices')
     parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     parser.add_argument('-T', '--time_suppress_solution', action='store_true', help='measure time and suppress print of solution')
 
@@ -29,14 +28,13 @@ if __name__ == '__main__':
     scripts = []
 
     if args.using_key:
-        scripts.append('queries/lcs/using-key.sql')
+        scripts.append('queries/needleman-wunsch/using-key.sql')
     if args.classic:
-        scripts.append('queries/lcs/classic.sql')
-    if args.indices:
-        scripts.append('queries/lcs/indices-using-key.sql')
+        raise NotImplementedError('Classic Query not implemented yet.')
+        # scripts.append('queries/needleman-wunsch/classic.sql')
 
     if len(scripts) == 0:
-        scripts.append('queries/lcs/using-key.sql')
+        scripts.append('queries/needleman-wunsch/using-key.sql')
 
     for script in scripts:
         script_name = script.split('/')[-1]
@@ -50,14 +48,18 @@ if __name__ == '__main__':
             timer = Timer()
             timer.start()
 
-        res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
+        res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0]
 
         if args.time or args.time_suppress_solution:
             timer.stop()
 
         if not args.time_suppress_solution:
-            for s in res:
-                print(s)
+            l1 = res[0]
+            l2 = res[1]
+            for s1, s2 in zip(l1, l2):
+                print(s1)
+                print(s2)
+                print()
 
         if args.time or args.time_suppress_solution:
             timer.print_elapsed()

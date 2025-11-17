@@ -1,6 +1,6 @@
 -- Input Strings
-CREATE OR REPLACE MACRO s1() AS 'GCATGCG';
-CREATE OR REPLACE MACRO s2() AS 'GATTACA';
+CREATE OR REPLACE MACRO s1() AS {string1};
+CREATE OR REPLACE MACRO s2() AS {string2};
 
 -- Scoring System
 CREATE OR REPLACE MACRO match_score() AS 1;
@@ -74,51 +74,15 @@ WITH RECURSIVE needleman_wunsch (
     )
 ),
 backtrack(
-    x, y, 
+    xidx, yidx, 
     string1,
-    string2) AS (
+    string2
+) AS (
     -- Initial Case
-    (
-        SELECT 
-            nw.xidx-1, nw.yidx,
-            l.xsym,
-            '-'
-        FROM 
-            needleman_wunsch AS nw JOIN 
-            letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx
-        WHERE
-            nw.xidx = length(s1()) AND 
-            nw.yidx = length(s2()) AND
-            nw.from_lft
-        
-        UNION
-
-        SELECT 
-            nw.xidx, nw.yidx-1,
-            '-',
-            l.ysym
-        FROM 
-            needleman_wunsch AS nw JOIN 
-            letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx
-        WHERE
-            nw.xidx = length(s1()) AND 
-            nw.yidx = length(s2()) AND
-            nw.from_up
-        
-        UNION
-
-        SELECT 
-            nw.xidx-1, nw.yidx-1,
-            l.xsym,
-            l.ysym
-        FROM 
-            needleman_wunsch AS nw JOIN 
-            letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx
-        WHERE
-            nw.xidx = length(s1()) AND 
-            nw.yidx = length(s2()) AND
-            nw.from_diag
-    )
+    SELECT 
+        length(s1()), length(s2()),
+        '', 
+        ''
 
     UNION ALL 
 
@@ -129,7 +93,7 @@ backtrack(
             '-' || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.x = nw.xidx AND b.y = nw.yidx JOIN 
+            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_lft
@@ -142,7 +106,7 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.x = nw.xidx AND b.y = nw.yidx JOIN 
+            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_up
@@ -155,13 +119,15 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.x = nw.xidx AND b.y = nw.yidx JOIN 
+            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_diag
     )
 )
-
-SELECT string1, string2
-FROM backtrack
-WHERE x = 0 AND y = 0;
+SELECT list(string1), list(string2) 
+FROM (
+    SELECT DISTINCT string1, string2
+    FROM backtrack
+    WHERE xidx = 0 OR yidx = 0
+);
