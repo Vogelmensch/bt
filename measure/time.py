@@ -20,5 +20,4 @@ class Timer:
         else:
             unit = 's'
 
-        print()
         print('CPU time: {} {}'.format(time_elapsed, unit))
