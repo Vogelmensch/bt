@@ -5,9 +5,12 @@ from measure.time import Timer
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform lcs query.')
+
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
     parser.add_argument('-i', '--indices', action='store_true', help='alternatiev version of USING KEY, using indices')
+    parser.add_argument('-b', '--backtrack', action='store_true', help='alternative version of USING KEY, using backtracking')
+
     parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     parser.add_argument('-T', '--time_suppress_solution', action='store_true', help='measure time and suppress print of solution')
 
@@ -34,6 +37,8 @@ if __name__ == '__main__':
         scripts.append('queries/lcs/classic.sql')
     if args.indices:
         scripts.append('queries/lcs/indices-using-key.sql')
+    if args.backtrack:
+        scripts.append('queries/lcs/backtrack-using-key.sql')
 
     if len(scripts) == 0:
         scripts.append('queries/lcs/using-key.sql')
