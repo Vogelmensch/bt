@@ -1,7 +1,8 @@
 import duckdb
 import argparse
-from generators.string import generate
+import generators.dna as dna
 from measure.time import Timer
+from sys import exit
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform needleman-wunsch query.')
@@ -16,7 +17,9 @@ if __name__ == '__main__':
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--strings', type=str, nargs=2, help='String arguments to compare')
-    group.add_argument('-r', '--random', type=int, nargs=2, help='use randomly generated strings of given lengths')
+    group.add_argument('-r', '--random', type=int, nargs=1, help='use randomly generated string of given lengths')
+
+    parser.add_argument('-p', '--probability', type=float, help='Probability of changing a random letter in random string')
 
     args = parser.parse_args()
 
@@ -24,8 +27,11 @@ if __name__ == '__main__':
         string1 = args.strings[0]
         string2 = args.strings[1]
     elif args.random:
-        string1 = generate(args.random[0])
-        string2 = generate(args.random[1])
+        string1 = dna.generate(args.random[0])
+        if args.probability is None:
+            print('Bei Random Strings muss eine probability mit -p gegeben werden.')
+            exit(1)
+        string2 = dna.insert_diffs(string1, args.probability)
         print('String1: {}\nString2: {}'.format(string1, string2))
         print()
 

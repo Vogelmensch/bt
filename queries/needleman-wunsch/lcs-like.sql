@@ -50,35 +50,50 @@ WITH RECURSIVE needleman_wunsch (
 
     UNION
 
-    WITH scores (
-        xidx, yidx, 
-        diag, lft, right,
-        strings1_diag, strings1_lft, strings1_right,
-        strings2_diag, strings2_lft, strings2_right
-    ) AS (
+    (
+        WITH scores_intermediate (
+            xidx, yidx, 
+            lft, up, diag,
+            strings1_lft, strings1_up, strings1_diag,
+            strings2_lft, strings2_up, strings2_diag
+        ) AS (
+            SELECT 
+                ltrs.xidx, ltrs.yidx,
+                lft.score + indel_score(),
+                up.score + indel_score(),
+                CASE 
+                    WHEN ltrs.xsym = ltrs.ysym         
+                    THEN diag.score + match_score()
+                    ELSE diag.score + mismatch_score()
+                END,
+                lft.strings1, up.strings1, diag.strings1, 
+                lft.strings2, up.strings2, diag.strings2
+            FROM 
+                letters AS ltrs
+                JOIN recurring.needleman_wunsch AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
+                JOIN recurring.needleman_wunsch AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
+                JOIN recurring.needleman_wunsch AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
+                LEFT OUTER JOIN recurring.needleman_wunsch AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
+            WHERE 
+                this.score IS NULL
+        ),
+        scores(
+            xidx, yidx, 
+            lft, up, diag, max
+            strings1_lft, strings1_up, strings1_diag,
+            strings2_lft, strings2_up, strings2_diag
+        ) AS (
+            SELECT 
+                xidx, yidx, 
+                lft, up, diag, greatest(lft, up, diag),
+                strings1_lft, strings1_up, strings1_diag,
+                strings2_lft, strings2_up, strings2_diag
+            FROM scores_intermediate
+        )
         SELECT 
-            this.xidx, this.yidx,
-            CASE 
-                WHEN ltrs.xsym = ltrs.ysym         
-                THEN diag.score + match_score()
-                ELSE diag.score + mismatch_score()
-            END,
-            lft.score + indel_score(),
-            right.score + indel_score(),
-            diag.strings1, lft.strings1, right.strings1,
-            diag.strings2, lft.strings2, right.strings2
-        FROM 
-            letters AS ltrs
-            JOIN recurring.needleman_wunsch AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
-            JOIN recurring.needleman_wunsch AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
-            JOIN recurring.needleman_wunsch AS right ON right.xidx = ltrs.xidx AND right.yidx = ltrs.yidx-1
-            LEFT OUTER JOIN recurring.needleman_wunsch AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
-        WHERE 
-            this.score IS NULL
+            xidx, yidx,
+            max,
+            
+        FROM scores
     )
-    SELECT 
-        xidx, yidx,
-        greatest(diag, lft, right),
-
-    FROM score
 )

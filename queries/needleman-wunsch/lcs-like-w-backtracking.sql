@@ -1,13 +1,3 @@
--- Unfertiges File
-
--- Notiz: Unterschied zwischen Needleman-Wunsch und LCS
--- In Needleman-Wunsch muss man immer auf alle drei Richtungen zugreifen, unabhängig von den 
--- Buchstaben. Bei LCS Entscheidet der Vergleich zwischen den Buchstaben, ob man
--- diagonal oder "gerade" auswählt.
--- Bei LCS kann man den Letter-Vergleich daher im WHERE-Clause machen, was bei needleman nicht
--- geht, weil die Berechnung der scores ja erst ausgeführt werden muss, und dann
--- die Scores verglichen werden.
-
 -- Input Strings
 CREATE OR REPLACE MACRO s1() AS {string1};
 CREATE OR REPLACE MACRO s2() AS {string2};
