@@ -5,8 +5,12 @@ from measure.time import Timer
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform needleman-wunsch query.')
+
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
+    parser.add_argument('-b', '--lcs_like_w_backtracking', action='store_true', help='One variant of lcs like with backtracking')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
+
+
     parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     parser.add_argument('-T', '--time_suppress_solution', action='store_true', help='measure time and suppress print of solution')
 
@@ -29,6 +33,8 @@ if __name__ == '__main__':
 
     if args.using_key:
         scripts.append('queries/needleman-wunsch/using-key.sql')
+    if args.lcs_like_w_backtracking:
+        scripts.append('queries/needleman-wunsch/lcs-like-w-backtracking.sql')
     if args.classic:
         raise NotImplementedError('Classic Query not implemented yet.')
         # scripts.append('queries/needleman-wunsch/classic.sql')
