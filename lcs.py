@@ -1,6 +1,6 @@
 import duckdb
 import argparse
-from generators.string import generate
+from generators.rstring import generate
 from measure.time import Timer
 
 if __name__ == '__main__':
