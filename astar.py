@@ -11,8 +11,13 @@ if __name__ == '__main__':
     parser.add_argument('start', type=int, help='id of the start node')
     parser.add_argument('goal', type=int, help='id of the goal node')
     parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
+
+    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
+
     parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    parser.add_argument('-T', '--time_suppress_solution', action='store_true', help='measure time and suppress print of solution')
+
     args = parser.parse_args()
 
     with duckdb.connect(args.db) as con:
@@ -22,32 +27,41 @@ if __name__ == '__main__':
             # without a heuristic, A* reduces to dijkstra
             heuristic = 0
 
+        scripts = []
+
+        if args.using_key:
+            scripts.append('queries/astar/using-key.sql')
         if args.classic:
-            script = 'queries/astar/classic.sql'
-            print('classic query')
-        else:
-            script = 'queries/astar/using-key.sql'
-            print('USING KEY')
+            scripts.append('queries/astar/classic.sql')
 
-        with open(script) as f:
-            query = f.read()
+        if len(scripts) == 0:
+            scripts.append('queries/astar/using-key.sql')
 
-        if args.time:
-            timer = Timer()
-            timer.start()
+        for script in scripts:
+            script_name = script.split('/')[-1]
+            print(script_name) # Print script name
+            print('-' * len(script_name))
 
-        res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
+            with open(script) as f:
+                query = f.read()
 
-        if args.time:
-            timer.stop()
-            
-        print()
+            if args.time or args.time_suppress_solution:
+                timer = Timer()
+                timer.start()
 
-        if (len(res) == 0):
-            print('Nothing found.')
-        else:
-            print('Path:\t {}'.format(res[0][0]))
-            print('Length:\t {}'.format(res[0][1]))
+            res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
-        if args.time:
-            timer.print_elapsed()
+            if args.time:
+                timer.stop()
+                
+            if not args.time_suppress_solution:
+                if (len(res) == 0):
+                    print('Nothing found.')
+                else:
+                    print('Path:\t {}'.format(res[0][0]))
+                    print('Length:\t {}'.format(res[0][1]))
+
+            if args.time or args.time_suppress_solution:
+                timer.print_elapsed()
+            print()
+            print()
