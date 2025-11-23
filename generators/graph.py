@@ -4,6 +4,7 @@ import duckdb
 
 DEFAULT_DB_NAME = 'graphs.db'
 DEFAULT_GRAPH_NAME = 'pygraph'
+PROGRESS_INDICATOR = 1  
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate random Graph')
@@ -15,6 +16,8 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--name', type=str, help='Name of graph')
 
     parser.add_argument('-d', '--directed', action='store_true', help='Make graph directed')
+
+    parser.add_argument('-p', '--print_progress', action='store_true', help='Print progress of generation')
 
     args = parser.parse_args()
 
@@ -48,8 +51,16 @@ if __name__ == '__main__':
             except duckdb.CatalogException:
                 add_number += 1
         
+        progress = 0
         for node1 in range(args.nodes):
             for node2 in range(args.nodes):
+                if args.print_progress:
+                    current_progress = int(node1/args.nodes * 100)
+                    if current_progress - progress == PROGRESS_INDICATOR:
+                        print("{}%".format(current_progress))
+                        progress = current_progress
+
+
                 if node1 != node2 and random.random() < args.con_prob:
                     weight = random.randint(1, max_weight)
                     con.sql(
