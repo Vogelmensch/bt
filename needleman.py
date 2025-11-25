@@ -38,15 +38,15 @@ if __name__ == '__main__':
     scripts = []
 
     if args.using_key:
-        scripts.append('queries/needleman-wunsch/using-key.sql')
+        scripts.append('queries/needleman/using-key.sql')
     if args.lcs_like_w_backtracking:
-        scripts.append('queries/needleman-wunsch/lcs-like-w-backtracking.sql')
+        scripts.append('queries/needleman/lcs-like-w-backtracking.sql')
     if args.classic:
-        raise NotImplementedError('Classic Query not implemented yet.')
+        scripts.append('queries/needleman/classic.sql')
         # scripts.append('queries/needleman-wunsch/classic.sql')
 
     if len(scripts) == 0:
-        scripts.append('queries/needleman-wunsch/using-key.sql')
+        scripts.append('queries/needleman/using-key.sql')
 
     for script in scripts:
         script_name = script.split('/')[-1]
