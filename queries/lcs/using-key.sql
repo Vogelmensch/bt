@@ -24,13 +24,15 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
 WITH RECURSIVE lcs (
     xsym, xidx,     -- one letter and its index from the first strings
     ysym, yidx,     -- one letter and its index from the second strings
-    strings, len    -- current solutions and their length
+    len,
+    from_left, from_up, from_diag
     ) USING KEY (xidx, yidx) AS (
     -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
     SELECT 
         xsym, xidx,
         ysym, yidx,
-        [''], 0
+        0,
+        false, false, false
     FROM letters
     WHERE xidx = 0 or yidx = 0
     
@@ -38,48 +40,79 @@ WITH RECURSIVE lcs (
 
     -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (
-    -- ❹ Case 1: Letters are equal; add letter to the solutions
-    SELECT
-        ltrs.xsym, ltrs.xidx,
-        ltrs.ysym, ltrs.yidx,
-        list_transform(diag.strings, lambda s: ltrs.xsym || s),  -- add letter to every solution
-        diag.len + 1                                            -- the solution's length is increased by one
-    FROM 
-        letters AS ltrs
-        JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                      ltrs.yidx = diag.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and
-                                                 ltrs.yidx = this.yidx
-    WHERE 
-        this.strings IS NULL and        -- this field is empty
-        ltrs.xsym = ltrs.ysym             -- letters are equal
+        -- ❹ Case 1: Letters are equal; add letter to the solutions
+        SELECT
+            ltrs.xsym, ltrs.xidx,
+            ltrs.ysym, ltrs.yidx,
+            diag.len + 1,
+            false, false, true
+        FROM 
+            letters AS ltrs
+            JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
+                                        ltrs.yidx = diag.yidx+1 
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and
+                                                    ltrs.yidx = this.yidx
+        WHERE 
+            this.len IS NULL and        -- this field is empty
+            ltrs.xsym = ltrs.ysym             -- letters are equal
 
-    UNION
+        UNION
 
-    -- ❺ Case 2: Letters are unequal; select the best solution to continue with
-    SELECT
-        ltrs.xsym, ltrs.xidx,
-        ltrs.ysym, ltrs.yidx,
-        -- select the solution with the longest strings.
-        -- if the lengths are equal, concatenate both.
-        CASE 
-            WHEN l.len > u.len THEN l.strings 
-            ELSE CASE 
-                WHEN l.len < u.len THEN u.strings 
-                ELSE list_distinct(l.strings || u.strings) 
-            END 
-        END,
-        greatest(l.len, u.len)
-    FROM 
-        letters AS ltrs 
-        JOIN recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and ltrs.yidx = l.yidx 
-        JOIN recurring.lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1 
-        LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
-    WHERE 
-        this.strings IS NULL and    -- this field is empty
-        ltrs.xsym != ltrs.ysym        -- letters are unequal
+        -- ❺ Case 2: Letters are unequal; select the best solution to continue with
+        SELECT
+            ltrs.xsym, ltrs.xidx,
+            ltrs.ysym, ltrs.yidx,
+            greatest(l.len, u.len),
+            l.len >= u.len, u.len >= l.len, false
+        FROM 
+            letters AS ltrs 
+            JOIN recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and ltrs.yidx = l.yidx 
+            JOIN recurring.lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1 
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
+        WHERE 
+            this.len IS NULL and    -- this field is empty
+            ltrs.xsym != ltrs.ysym        -- letters are unequal
+    )
+),
+backtrack(
+    xidx, yidx,
+    word
+) AS (
+    SELECT 
+        length(s1()), length(s2()),
+        ''
+
+    UNION ALL
+
+    (
+        SELECT 
+            xidx-1, yidx-1,
+            xsym || word    -- expand word
+        FROM 
+            backtrack NATURAL JOIN lcs 
+                      NATURAL JOIN letters
+        WHERE from_diag
+
+        UNION 
+
+        SELECT 
+            xidx-1, yidx,
+            word
+        FROM backtrack NATURAL JOIN lcs
+        WHERE from_left
+
+        UNION
+
+        SELECT
+            xidx, yidx-1,
+            word
+        FROM backtrack NATURAL JOIN lcs
+        WHERE from_up
     )
 )
-SELECT list_transform(strings, lambda s: reverse(s)) AS 'Longest Common Subsequence'
-FROM lcs
-WHERE xidx = length(s1()) and yidx = length(s2());
+SELECT list(word) 
+FROM (
+    SELECT DISTINCT word
+    FROM backtrack
+    WHERE xidx = 0 OR yidx = 0
+)
