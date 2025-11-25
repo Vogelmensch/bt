@@ -8,7 +8,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform needleman-wunsch query.')
 
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
-    parser.add_argument('-b', '--lcs_like_w_backtracking', action='store_true', help='One variant of lcs like with backtracking')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
 
 
@@ -39,11 +38,8 @@ if __name__ == '__main__':
 
     if args.using_key:
         scripts.append('queries/needleman/using-key.sql')
-    if args.lcs_like_w_backtracking:
-        scripts.append('queries/needleman/lcs-like-w-backtracking.sql')
     if args.classic:
         scripts.append('queries/needleman/classic.sql')
-        # scripts.append('queries/needleman-wunsch/classic.sql')
 
     if len(scripts) == 0:
         scripts.append('queries/needleman/using-key.sql')

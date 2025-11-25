@@ -19,58 +19,65 @@ WITH RECURSIVE needleman_wunsch (
     score,
     from_lft, from_up, from_diag
 ) USING KEY (xidx, yidx) AS (
-    -- initial case: negative scores at the corner
+    -- Initial Case
+    (
+        SELECT 
+            xidx, yidx,
+            -xidx,
+            false, false, false
+        FROM letters
+        WHERE yidx = 0
 
-    -- TODO: The initial case produces many coordinates. In the first recursive iteration, the coordinates taken from the initial case are not unique.
-    SELECT 
-        0, 0,
-        0,
-        false, false, false
+        UNION   
 
-    UNION 
+        SELECT 
+            xidx, yidx,
+            -yidx,
+            false, false, false
+        FROM letters
+        WHERE xidx = 0
+    )
+
+    UNION
 
     (
-        WITH coords(x, y) AS (
-            SELECT
-                (nw.xidx + 1) % (length(s1()) + 1),
-                CASE 
-                    WHEN nw.xidx < length(s1())
-                    THEN nw.yidx
-                    ELSE yidx+1
-                END
-            FROM needleman_wunsch AS nw
-        ),
-        scores_intermediate(lft, up, diag) AS (
+        WITH scores_intermediate (
+            xidx, yidx, 
+            lft, up, diag
+        ) AS (
             SELECT 
+                ltrs.xidx, ltrs.yidx,
                 lft.score + indel_score(),
                 up.score + indel_score(),
                 CASE 
-                    WHEN l.xsym = l.ysym 
+                    WHEN ltrs.xsym = ltrs.ysym         
                     THEN diag.score + match_score()
                     ELSE diag.score + mismatch_score()
                 END
             FROM 
-                coords AS c JOIN
-                letters AS l ON c.x = l.xidx AND c.y = l.yidx LEFT OUTER JOIN
-                recurring.needleman_wunsch AS lft  ON lft.xidx = c.x-1 AND lft.yidx = c.y LEFT OUTER JOIN
-                recurring.needleman_wunsch AS up   ON up.xidx = c.x AND up.yidx = c.y-1 LEFT OUTER JOIN
-                recurring.needleman_wunsch AS diag ON diag.xidx = c.x-1 AND diag.yidx = c.y-1
+                letters AS ltrs
+                JOIN recurring.needleman_wunsch AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
+                JOIN recurring.needleman_wunsch AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
+                JOIN recurring.needleman_wunsch AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
+                LEFT OUTER JOIN recurring.needleman_wunsch AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
+            WHERE 
+                this.score IS NULL 
         ),
-        scores(lft, up, diag, max) AS (
+        scores (
+            xidx, yidx, 
+            lft, up, diag, max
+        ) AS (
             SELECT 
-                lft,
-                up,
-                diag,
-                greatest(lft, up, diag)
+                xidx, yidx,
+                lft, up, diag, greatest(lft, up, diag)
             FROM scores_intermediate
         )
-        SELECT
-            c.x, c.y,
-            s.max,
-            s.lft = s.max, s.up = s.max, s.diag = s.max
-        FROM 
-            coords AS c, 
-            scores AS s
+
+        SELECT 
+            xidx, yidx,
+            max,
+            lft = max, up = max, diag = max
+        FROM scores
     )
 ),
 backtrack(
