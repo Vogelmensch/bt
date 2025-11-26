@@ -8,7 +8,7 @@
 -- ❺ Case 1: Letters are equal; highlight diagonal path
 -- ❻ Case 2: Letters are unequal; highlight best path (left or up)
 -- ❼ Build the resulting strings in backtracking process, using the highlighted paths
--- Working Table: Holds solution for latest iteration
+-- Working Table: Holds solutions; manual carry necessary
 -- Union Table: Every iteration's solution gets dumped here
 
 -- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Solution_for_two_sequences

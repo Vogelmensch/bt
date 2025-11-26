@@ -1,3 +1,17 @@
+-- This query implements the 'needleman-wunsch'-algorithm
+-- It aligns two strings (most commonly DNA sequences) based on a scoring system
+-- The scoring system is being defined at the top of this query as macros
+-- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
+-- ❷ Initial Case: Aligning any letter with an empty sequence shifts the sequence, i.e. includes an indel
+-- ❸ Calculate the score for each of the three possible alignments for the next combination of letters
+-- ❹ Highlight the path(s) corresponding to the highest score
+-- ❺ Carry the working table
+-- ❻ Build the resulting strings in backtracking process, using the highlighted paths
+-- Working Table: Holds solutions; manual carry necessary
+-- Union Table: Every iteration's solution gets dumped here
+
+-- https://en.wikipedia.org/wiki/Needleman-Wunsch_algorithm
+
 -- Input Strings
 CREATE OR REPLACE MACRO s1() AS {string1};
 CREATE OR REPLACE MACRO s2() AS {string2};
@@ -7,6 +21,7 @@ CREATE OR REPLACE MACRO match_score() AS 1;
 CREATE OR REPLACE MACRO mismatch_score() AS -1;
 CREATE OR REPLACE MACRO indel_score() AS -1;
 
+-- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
     SELECT s1()[m], m, s2()[n], n
     FROM 
@@ -23,11 +38,11 @@ needleman_wunsch (
     score,
     from_lft, from_up, from_diag
 ) AS (
-    -- Initial Case
+    -- ❷ Initial Case: Aligning any letter with an empty sequence shifts the sequence, i.e. includes an indel
     (
         SELECT 
             xidx, yidx,
-            -xidx,
+            xidx * indel_score(),
             false, false, false
         FROM letters
         WHERE yidx = 0
@@ -36,7 +51,7 @@ needleman_wunsch (
 
         SELECT 
             xidx, yidx,
-            -yidx,
+            yidx * indel_score(),
             false, false, false
         FROM letters
         WHERE xidx = 0
@@ -44,6 +59,7 @@ needleman_wunsch (
 
     UNION ALL
 
+    -- ❸ Calculate the score for each of the three possible alignments for the next combination of letters
     (
         WITH current_row(yidx) AS (
             SELECT max(yidx) + 1
@@ -81,6 +97,7 @@ needleman_wunsch (
                 lft, up, diag, greatest(lft, up, diag)
             FROM scores_intermediate
         )
+        -- ❺ Carry the working table
         SELECT *
         FROM needleman_wunsch
         WHERE 
@@ -88,6 +105,7 @@ needleman_wunsch (
 
         UNION
 
+        -- ❹ Highlight the path(s) corresponding to the highest score
         SELECT 
             xidx, yidx,
             max,
@@ -95,12 +113,12 @@ needleman_wunsch (
         FROM scores
     )
 ),
+-- ❻ Build the resulting strings in backtracking process, using the highlighted paths
 backtrack(
     xidx, yidx, 
     string1,
     string2
 ) AS (
-    -- Initial Case
     SELECT 
         length(s1()), length(s2()),
         '', 
@@ -109,6 +127,7 @@ backtrack(
     UNION ALL 
 
     (
+        -- expand string1 and insert 'indel' into string2
         SELECT 
             nw.xidx-1, nw.yidx,
             l.xsym || b.string1,
@@ -122,6 +141,7 @@ backtrack(
         
         UNION
 
+        -- insert 'indel' into string1 and expand string2
         SELECT 
             nw.xidx, nw.yidx-1,
             '-' || b.string1,
@@ -135,6 +155,7 @@ backtrack(
         
         UNION
 
+        -- expand both strings
         SELECT 
             nw.xidx-1, nw.yidx-1,
             l.xsym || b.string1,
@@ -145,6 +166,8 @@ backtrack(
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_diag
+
+        -- notice that all paths can be taken simultaneously if scores are equal
     )
 )
 SELECT list(string1), list(string2) 
