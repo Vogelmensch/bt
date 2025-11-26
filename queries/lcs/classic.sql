@@ -5,9 +5,10 @@
 -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
 -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
 -- ❹ Carry the entire working table until the entire table has been filled
--- ❺ Case 1: Letters are equal; add letter to the solutions
--- ❻ Case 2: Letters are unequal; select the best solution to continue with
--- Working Table: Holds the solutions for (growing) substrings of the input strings
+-- ❺ Case 1: Letters are equal; highlight diagonal path
+-- ❻ Case 2: Letters are unequal; highlight best path (left or up)
+-- ❼ Build the resulting strings in backtracking process, using the highlighted paths
+-- Working Table: Holds solution for latest iteration
 -- Union Table: Every iteration's solution gets dumped here
 
 -- See https://en.wikipedia.org/wiki/Longest_common_subsequence#Solution_for_two_sequences
@@ -30,10 +31,10 @@ max_row (y) AS (
     FROM letters
 ),
 lcs (
-    xsym, xidx,     -- one letter and its index from the first strings
-    ysym, yidx,     -- one letter and its index from the second strings
-    len,    -- current solutions and their length
-    from_left, from_up, from_diag
+    xsym, xidx,                     -- one letter and its index from the first strings
+    ysym, yidx,                     -- one letter and its index from the second strings
+    len,                            -- current solution's length
+    from_left, from_up, from_diag   -- path the solution came from; needed for backtracking later
 ) AS (
     -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
     SELECT 
@@ -58,12 +59,12 @@ lcs (
     ) 
     FROM lcs
     WHERE 
-        -- when the current row number is larger than the maximal row number, then terminate
+        -- when the current row number is larger than the maximal row number, terminate
         (SELECT y FROM current_row) <= (SELECT y FROM max_row) 
 
     UNION
 
-    -- ❺ Case 1: Letters are equal; add letter to the solutions
+    -- ❺ Case 1: Letters are equal; highlight diagonal path
     SELECT
         ltrs.xsym, ltrs.xidx,
         ltrs.ysym, ltrs.yidx,
@@ -77,12 +78,12 @@ lcs (
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and
                                                  ltrs.yidx = this.yidx
     WHERE 
-        this.len IS NULL and        -- this field is empty
-        ltrs.xsym = ltrs.ysym             -- letters are equal
+        this.len IS NULL and    -- this field is empty
+        ltrs.xsym = ltrs.ysym   -- letters are equal
 
     UNION
 
-    -- ❻ Case 2: Letters are unequal; select the best solution to continue with
+    -- ❻ Case 2: Letters are unequal; highlight best path (left or up)
     SELECT
         ltrs.xsym, ltrs.xidx,
         ltrs.ysym, ltrs.yidx,
@@ -95,10 +96,10 @@ lcs (
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
     WHERE 
         this.len IS NULL and    -- this field is empty
-        ltrs.xsym != ltrs.ysym        -- letters are unequal
+        ltrs.xsym != ltrs.ysym  -- letters are unequal
     )
 ),
-
+-- ❻ Build the resulting strings in backtracking process, using the highlighted paths
 backtrack(
     xidx, yidx,
     word
@@ -109,10 +110,12 @@ backtrack(
 
     UNION ALL
 
+    -- which path has been highlighted?
     (
+        -- diagonal => expand word
         SELECT 
             xidx-1, yidx-1,
-            xsym || word    -- expand word
+            xsym || word
         FROM 
             backtrack NATURAL JOIN lcs 
                       NATURAL JOIN letters
@@ -120,6 +123,7 @@ backtrack(
 
         UNION 
 
+        -- left => continue left
         SELECT 
             xidx-1, yidx,
             word
@@ -128,11 +132,14 @@ backtrack(
 
         UNION
 
+        -- up => continue up
         SELECT
             xidx, yidx-1,
             word
         FROM backtrack NATURAL JOIN lcs
         WHERE from_up
+
+        -- notice that 'left' and 'up' can both be selected simultaneously
     )
 )
 SELECT list(word) 
