@@ -24,8 +24,9 @@ if __name__ == '__main__':
     elif args.random:
         string1 = generate(args.random[0])
         string2 = generate(args.random[1])
-        print('String1: {}\nString2: {}'.format(string1, string2))
-        print()
+        if not args.time_suppress_solution:
+            print('String1: {}\nString2: {}'.format(string1, string2))
+            print()
 
     scripts = []
 
