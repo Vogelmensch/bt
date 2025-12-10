@@ -52,10 +52,11 @@ def perform_query(args, timer):
             if args.time:
                 timer.print_elapsed()
 
-                # data to store in csv
+                # data to store to csv
                 if args.file != 'DONT STORE':
                     data = [script_name, args.graph, path, length]
                     timer.write_csv(data)
+
             print()
             print()
 
@@ -80,19 +81,23 @@ if __name__ == '__main__':
 
     parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
     parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
-    # const if -f without FILE, default if not -f
     parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
 
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
 
     args = parser.parse_args()
 
+    if args.file != 'DONT STORE' and not args.time:
+        print('REMEMBER TO PROVIDE -t TO MEASURE TIME')
+        print()
 
-    timer = Timer(args.file, header=['script','graph','path','length', 'time'])
+
+    timer = Timer('astar', args.file, header=['script','graph','path','length', 'time'])
 
     if args.extend:
         graph = args.graph
-        for extension in args.extend:
+        for idx, extension in enumerate(args.extend):
+            print(f'{idx+1}/{len(args.extend)}')
             args.graph = graph + extension
             perform_query(args, timer)
     else:

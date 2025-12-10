@@ -4,9 +4,11 @@ import time
 class Timer:
     def _generate_filename(self):
         now = time.localtime()
-        return f'measure/measurement_{time.strftime('%m%d_%H%M%S', now)}.csv'
+        return f'measure/{self.query_name}_{time.strftime('%m%d_%H%M%S', now)}.csv'
 
-    def __init__(self, filepath, header=None):
+    def __init__(self, query_name, filepath, header=None):
+        self.query_name = query_name
+        
         if filepath == 'NOT PROVIDED':
             self.filepath = self._generate_filename()
         else:
@@ -21,7 +23,7 @@ class Timer:
         self.time_stop = 0
 
     # Write data formatted as list and the current time
-    def write_csv(self, data: list):
+    def write_csv(self, data):
         time_elapsed = self.time_stop - self.time_start
 
         with open(self.filepath, 'a', newline='') as csvfile:
@@ -45,3 +47,4 @@ class Timer:
             unit = 's'
 
         print('CPU time: {0:.2f} {1}'.format(time_elapsed, unit))
+        print()

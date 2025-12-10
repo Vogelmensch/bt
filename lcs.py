@@ -1,32 +1,10 @@
 import duckdb
 import argparse
+import sys
 from generators.rstring import generate
-from measure.time import Timer
+from measure.measure import Timer
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Perform lcs query.')
-
-    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
-    parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
-
-    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
-    parser.add_argument('-T', '--time_suppress_solution', action='store_true', help='measure time and suppress print of solution')
-    parser.add_argument('-f', '--file', type=str, help='measure time and store result in FILE')
-
-    parser.add_argument('-n', '--repeat', type=int, help='repeat REPEAT times')
-    
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-s', '--strings', type=str, nargs=2, help='String arguments to compare')
-    group.add_argument('-r', '--random', type=int, nargs=2, help='use randomly generated strings of given lengths')
-
-    args = parser.parse_args()
-
-    # Use provided strings
-    # If -r is being used, strings get assigned below
-    if args.strings:
-        string1 = args.strings[0]
-        string2 = args.strings[1]
-
+def perform_query(timer, string1, string2, args):
     scripts = []
 
     if args.using_key:
@@ -37,59 +15,91 @@ if __name__ == '__main__':
     if len(scripts) == 0:
         scripts.append('queries/lcs/using-key.sql')
 
-    if args.file:
-        timer = Timer()
-        timer.connect(args.file, first_arg='length')
-    elif args.time or args.time_suppress_solution:
-        timer = Timer()
-    else:
-        timer = None
+    # Run all queries with the same inputs
+    for script in scripts:
+        script_name = script.split('/')[-1]
+        print(script_name) # Print script name
+        print('-' * len(script_name))
 
-    if args.repeat:
-        repeats = args.repeat
-    else:
-        repeats = 1
+        with open(script) as f:
+            query = f.read()
 
-    for i in range(repeats):
-        print(f'Running queries {i+1}/{repeats}')
+        if args.time:
+            timer.start()
 
-        # Generate random strings
-        if args.random:
-            string1 = generate(args.random[0])
-            string2 = generate(args.random[1])
-            if not args.time_suppress_solution and not args.file:
+        res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
+
+        if args.time:
+            timer.stop()
+
+        if not args.suppress_solution:
+            for s in res:
+                print(s)
+
+        if args.time:
+            timer.print_elapsed()
+
+            if args.file != 'DONT STORE':
+                data = [script_name, len(string1), len(string2)]
+                timer.write_csv(data)
+
+        if args.file == 'DONT STORE':
+            print()
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Perform lcs query.', 
+        epilog='To perform multiple measurements, provide multiple tuples for either -s or -r.')
+
+    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
+    parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
+
+    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
+    parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-s', '--strings', type=str, nargs='+', help='String arguments to compare')
+    group.add_argument('-r', '--random', type=int, nargs='+', help='use randomly generated strings of given lengths')
+
+    args = parser.parse_args()
+
+    if args.file != 'DONT STORE' and not args.time:
+        print('REMEMBER TO PROVIDE -t TO MEASURE TIME')
+        print()
+
+
+    timer = Timer('lcs', args.file, header=['script', 'length_string1', 'length_string2', 'time'])
+
+    # Use provided strings
+    if args.strings:
+        if len(args.strings) % 2 == 1:
+                print('Please provide an even amount of strings for -s.')
+                sys.exit(1)
+
+        while len(args.strings) > 0:
+            print(f'{int(len(args.strings)/2)} remaining')
+            string1 = args.strings.pop(0)
+            string2 = args.strings.pop(0)
+
+            perform_query(timer, string1, string2, args)
+
+            print()
+    
+    # Generate random strings with given lengths
+    if args.random:
+        if len(args.random) % 2 == 1:
+            print('Please provide an even amount of lengths for -r.')
+            sys.exit(1)
+
+        while len(args.random) > 0:
+            print(f'{int(len(args.random)/2)} remaining')
+            string1 = generate(args.random.pop(0))
+            string2 = generate(args.random.pop(0))
+            if not args.suppress_solution:
                 print('String1: {}\nString2: {}'.format(string1, string2))
                 print()
-
-        # Run all queries with the same inputs
-        for script in scripts:
-            script_name = script.split('/')[-1]
             
-            if not args.file:
-                print(script_name) # Print script name
-                print('-' * len(script_name))
+            perform_query(timer, string1, string2, args)
 
-            with open(script) as f:
-                query = f.read()
-
-            if timer:
-                timer.start()
-
-            res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
-
-            if timer:
-                timer.stop()
-
-            if not args.time_suppress_solution and not args.file:
-                for s in res:
-                    print(s)
-
-            if args.time or args.time_suppress_solution:
-                timer.print_elapsed()
-
-            if args.file:
-                timer.store_time(script_name, len(string1))
-
-            if not args.file:
-                print()
-                print()
+            print()
