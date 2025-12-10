@@ -29,13 +29,11 @@ def perform_query(args, timer):
             with open(script) as f:
                 query = f.read()
 
-            if args.time:
-                timer.start()
+            timer.start()
 
             res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
-            if args.time:
-                timer.stop()
+            timer.stop()
 
             if (len(res) > 0):
                 path, length = res[0]
@@ -52,10 +50,10 @@ def perform_query(args, timer):
             if args.time:
                 timer.print_elapsed()
 
-                # data to store to csv
-                if args.file != 'DONT STORE':
-                    data = [script_name, args.graph, path, length]
-                    timer.write_csv(data)
+            # data to store to csv
+            if args.file != 'DONT STORE':
+                data = [script_name, args.graph, path, length]
+                timer.write_csv(data)
 
             print()
             print()
@@ -86,11 +84,6 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
 
     args = parser.parse_args()
-
-    if args.file != 'DONT STORE' and not args.time:
-        print('REMEMBER TO PROVIDE -t TO MEASURE TIME')
-        print()
-
 
     timer = Timer('astar', args.file, header=['script','graph','path','length', 'time'])
 

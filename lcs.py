@@ -1,6 +1,5 @@
 import duckdb
 import argparse
-import sys
 from generators.rstring import generate
 from measure.measure import Timer
 
@@ -24,13 +23,11 @@ def perform_query(timer, string1, string2, args):
         with open(script) as f:
             query = f.read()
 
-        if args.time:
-            timer.start()
+        timer.start()
 
         res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
 
-        if args.time:
-            timer.stop()
+        timer.stop()
 
         if not args.suppress_solution:
             for s in res:
@@ -39,9 +36,9 @@ def perform_query(timer, string1, string2, args):
         if args.time:
             timer.print_elapsed()
 
-            if args.file != 'DONT STORE':
-                data = [script_name, len(string1), len(string2)]
-                timer.write_csv(data)
+        if args.file != 'DONT STORE':
+            data = [script_name, len(string1), len(string2), len(res)]
+            timer.write_csv(data)
 
         if args.file == 'DONT STORE':
             print()
@@ -64,18 +61,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.file != 'DONT STORE' and not args.time:
-        print('REMEMBER TO PROVIDE -t TO MEASURE TIME')
-        print()
-
-
-    timer = Timer('lcs', args.file, header=['script', 'length_string1', 'length_string2', 'time'])
+    timer = Timer('lcs', args.file, header=['script', 'length_string1', 'length_string2', 'solutions_count', 'time'])
 
     # Use provided strings
     if args.strings:
         if len(args.strings) % 2 == 1:
-                print('Please provide an even amount of strings for -s.')
-                sys.exit(1)
+                parser.exit(status=1, message='Please provide an even amount of strings for -s.')
 
         while len(args.strings) > 0:
             print(f'{int(len(args.strings)/2)} remaining')
@@ -87,10 +78,9 @@ if __name__ == '__main__':
             print()
     
     # Generate random strings with given lengths
-    if args.random:
+    elif args.random:
         if len(args.random) % 2 == 1:
-            print('Please provide an even amount of lengths for -r.')
-            sys.exit(1)
+            parser.exit(status=1, message='Please provide an even amount of lengths for -r.')
 
         while len(args.random) > 0:
             print(f'{int(len(args.random)/2)} remaining')
@@ -103,3 +93,7 @@ if __name__ == '__main__':
             perform_query(timer, string1, string2, args)
 
             print()
+
+    else:
+        print('Provide either -s STRINGS or -r INTEGER')
+        print('Type -h for help')

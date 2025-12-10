@@ -14,7 +14,7 @@ class Timer:
         else:
             self.filepath = filepath
 
-        if header:
+        if header and filepath != 'DONT STORE':
             with open(self.filepath, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow(header)
@@ -24,6 +24,9 @@ class Timer:
 
     # Write data formatted as list and the current time
     def write_csv(self, data):
+        if self.filepath == 'DONT STORE':
+            return
+
         time_elapsed = self.time_stop - self.time_start
 
         with open(self.filepath, 'a', newline='') as csvfile:

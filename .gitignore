@@ -3,3 +3,4 @@ graphs.db*
 *.tar*
 activate-venv
 __pycache__
+*.csv
