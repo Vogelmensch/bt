@@ -30,7 +30,7 @@ class Timer:
         time_elapsed = self.time_stop - self.time_start
 
         with open(self.filepath, 'a', newline='') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer = csv.writer(csvfile, delimiter=',', quotechar='"')
             writer.writerow(data + [time_elapsed])
 
     def start(self):

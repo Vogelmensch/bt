@@ -82,16 +82,37 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
 
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
+    parser.add_argument('-g', '--goals', type=int, nargs='+', help='Override provided goal with a list goals to perform MULTIPLE queries')
+    parser.add_argument('-r', '--repeat', '--repeats', type=int, help='Repeat the entire query')
 
     args = parser.parse_args()
 
     timer = Timer('astar', args.file, header=['script','graph','path','length', 'time'])
 
-    if args.extend:
-        graph = args.graph
-        for idx, extension in enumerate(args.extend):
-            print(f'{idx+1}/{len(args.extend)}')
-            args.graph = graph + extension
-            perform_query(args, timer)
+    if args.goals:
+        goals = args.goals
     else:
-        perform_query(args, timer)
+        goals = [args.goal]
+
+    if args.repeat:
+        repeats = args.repeat
+    else:
+        repeats = 1
+
+    for _ in range(repeats):
+        if args.extend:
+            # loop over graphs
+            graph = args.graph
+            for idx, extension in enumerate(args.extend):
+                print(f'{idx+1}/{len(args.extend)}')
+                args.graph = graph + extension
+
+                # loop over goals
+                for goal in goals:
+                    args.goal = goal
+                    perform_query(args, timer)
+        else:
+            # loop over goals
+            for goal in goals:
+                args.goal = goal
+                perform_query(args, timer)

@@ -59,9 +59,17 @@ if __name__ == '__main__':
     group.add_argument('-s', '--strings', type=str, nargs='+', help='String arguments to compare')
     group.add_argument('-r', '--random', type=int, nargs='+', help='use randomly generated strings of given lengths')
 
+    parser.add_argument('--repeat', '--repeats', type=int, help='repeat the entire query')
+
     args = parser.parse_args()
 
     timer = Timer('lcs', args.file, header=['script', 'length_string1', 'length_string2', 'solutions_count', 'time'])
+
+    # Repeat by expanding input by given length
+    if args.repeat and args.strings:
+        args.strings *= args.repeat
+    if args.repeat and args.random:
+        args.random *= args.repeat
 
     # Use provided strings
     if args.strings:
