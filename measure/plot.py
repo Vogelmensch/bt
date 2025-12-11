@@ -19,6 +19,9 @@ class Plot:
     def lcs(self, file):
         self.default('length_string1', file)
 
+    def needleman(self, file):
+        self.default('length_string1', file)
+
     def default(self, x_value, file):
         query = '''
             SELECT 
@@ -55,6 +58,8 @@ if __name__ == '__main__':
             plot.astar(args.file)
         case 'lcs':
             plot.lcs(args.file)
+        case 'needleman' | 'needle':
+            plot.needleman(args.file)
         case _:
             parser.exit(1, 'Unknown query')
 

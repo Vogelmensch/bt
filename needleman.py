@@ -62,9 +62,16 @@ if __name__ == '__main__':
 
     parser.add_argument('-p', '--probability', type=float, help='Probability of changing a random letter in random string')
 
+    parser.add_argument('--repeat', '--repeats', type=int, help='repeat the entire query')
+
     args = parser.parse_args()
     
     timer = Timer('needleman', args.file, header=['script', 'length_string1', 'length_string2', 'solutions_count', 'time'])
+
+    if args.repeat:
+        repeats = args.repeat
+    else:
+        repeats = 1
 
     # Use provided strings
     if args.strings:
@@ -76,23 +83,27 @@ if __name__ == '__main__':
             string1 = args.strings.pop(0)
             string2 = args.strings.pop(0)
 
-            perform_query(timer, string1, string2, args)
+            for _ in range(repeats):
+                perform_query(timer, string1, string2, args)
 
     # Generate random strings with given lengths
     elif args.random:
         while len(args.random) > 0:
             print(f'{len(args.random)} remaining')
-            # Generate first string randomly
-            string1 = dna.generate(args.random.pop(0))
+            random_string_length = args.random.pop(0)
+            for _ in range(repeats):
+                # Generate first string randomly
+                string1 = dna.generate(random_string_length)
 
-            if args.probability is None:
-                argparse.ArgumentParser.exit(1, 'When generating random strings, you need to provide -p PROBABILITY')
-            # Generate second string by inserting diffs into string1
-            string2 = dna.insert_diffs(string1, args.probability)
-            print('String1: {}\nString2: {}'.format(string1, string2))
-            print()
+                if args.probability is None:
+                    argparse.ArgumentParser.exit(1, 'When generating random strings, you need to provide -p PROBABILITY')
+                # Generate second string by inserting diffs into string1
+                string2 = dna.insert_diffs(string1, args.probability)
+                if not args.suppress_solution:
+                    print('String1: {}\nString2: {}'.format(string1, string2))
+                    print()
 
-            perform_query(timer, string1, string2, args)
+                perform_query(timer, string1, string2, args)
 
     else:
         print('Provide either -s STRINGS or -r INTEGER')
