@@ -87,13 +87,11 @@ if __name__ == '__main__':
     
     # Generate random strings with given lengths
     elif args.random:
-        if len(args.random) % 2 == 1:
-            parser.exit(status=1, message='Please provide an even amount of lengths for -r.')
-
         while len(args.random) > 0:
-            print(f'{int(len(args.random)/2)} remaining')
-            string1 = generate(args.random.pop(0))
-            string2 = generate(args.random.pop(0))
+            print(f'{len(args.random)} remaining')
+            str_length = args.random.pop(0)
+            string1 = generate(str_length)
+            string2 = generate(str_length)
             if not args.suppress_solution:
                 print('String1: {}\nString2: {}'.format(string1, string2))
                 print()
