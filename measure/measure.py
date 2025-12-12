@@ -8,6 +8,7 @@ class Measurer:
         return f'measure/{self.query_name}_{time.strftime('%m%d_%H%M%S', now)}.csv'
 
     # The header is only dependent on the query; supclasses of Measurer should automatically append their respective parameters
+    # `header` appears to be a global variable of some sort??
     def __init__(self, query_name, filepath, header=None):
         self.query_name = query_name
         

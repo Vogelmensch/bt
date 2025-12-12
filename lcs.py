@@ -3,7 +3,7 @@ import argparse
 from generators.rstring import generate
 from measure.measure import Timer, Memory
 
-def perform_query(timer, memory, string1, string2, args):
+def perform_query(string1, string2, args):
     scripts = []
 
     if args.using_key:
@@ -23,13 +23,17 @@ def perform_query(timer, memory, string1, string2, args):
         with open(script) as f:
             query = f.read()
 
-        timer.start()
-        memory.start()
+        if args.time:
+            timer.start()
+        if args.memory:
+            memory.start()
 
         res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
 
-        timer.stop()
-        memory.stop()
+        if args.time:
+            timer.stop()
+        if args.memory:
+            memory.stop()
 
         if not args.suppress_solution:
             for s in res:
@@ -76,8 +80,10 @@ if __name__ == '__main__':
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count']
 
-    timer = Timer('lcs', args.file, header)
-    memory = Memory('lcs', args.file, header)
+    if args.time:
+        timer = Timer('lcs', args.file, header[:])
+    if args.memory:
+        memory = Memory('lcs', args.file, header[:])
 
     # Repeat by expanding input by given length
     if args.repeat and args.strings:
@@ -95,7 +101,7 @@ if __name__ == '__main__':
             string1 = args.strings.pop(0)
             string2 = args.strings.pop(0)
 
-            perform_query(timer, memory, string1, string2, args)
+            perform_query(string1, string2, args)
 
             print()
     
@@ -110,7 +116,7 @@ if __name__ == '__main__':
                 print('String1: {}\nString2: {}'.format(string1, string2))
                 print()
             
-            perform_query(timer, memory, string1, string2, args)
+            perform_query(string1, string2, args)
 
             print()
 

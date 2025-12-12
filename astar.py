@@ -3,7 +3,7 @@ import argparse
 from measure.measure import Timer, Memory
 
 # supply args from argparse
-def perform_query(args, timer, memory):
+def perform_query(args):
     with duckdb.connect(args.db) as con:
         if args.heuristic:
             heuristic = args.heuristic
@@ -29,13 +29,17 @@ def perform_query(args, timer, memory):
             with open(script) as f:
                 query = f.read()
 
-            timer.start()
-            memory.start()
+            if args.time:
+                timer.start()
+            if args.memory:
+                memory.start()
 
             res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
-            timer.stop()
-            memory.stop()
+            if args.time:
+                timer.stop()
+            if args.memory:
+                memory.stop()
 
             if (len(res) > 0):
                 path, length = res[0]
@@ -100,8 +104,10 @@ if __name__ == '__main__':
 
     header = ['script','graph','path','length']
 
-    timer = Timer('astar', args.file, header)
-    memory = Memory('astar', args.file, header)
+    if args.time:
+        timer = Timer('astar', args.file, header[:])
+    if args.memory:
+        memory = Memory('astar', args.file, header[:])
 
     if args.goals:
         goals = args.goals
@@ -124,9 +130,9 @@ if __name__ == '__main__':
                 # loop over goals
                 for goal in goals:
                     args.goal = goal
-                    perform_query(args, timer, memory)
+                    perform_query(args)
         else:
             # loop over goals
             for goal in goals:
                 args.goal = goal
-                perform_query(args, timer, memory)
+                perform_query(args)

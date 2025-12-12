@@ -3,7 +3,7 @@ import argparse
 import generators.dna as dna
 from measure.measure import Timer, Memory
 
-def perform_query(timer, memory, string1, string2, args):
+def perform_query(string1, string2, args):
     scripts = []
 
     if args.using_key:
@@ -22,13 +22,17 @@ def perform_query(timer, memory, string1, string2, args):
         with open(script) as f:
             query = f.read()
 
-        timer.start()
-        memory.start()
+        if args.time:
+            timer.start()
+        if args.memory:
+            memory.start()
 
         res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0]
 
-        timer.stop()
-        memory.stop()
+        if args.time:
+            timer.stop()
+        if args.memory:
+            memory.stop()
 
         if not args.suppress_solution:
             l1 = res[0]
@@ -79,8 +83,10 @@ if __name__ == '__main__':
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count']
     
-    timer = Timer('needleman', args.file, header)
-    memory = Memory('needleman', args.file, header)
+    if args.time:
+        timer = Timer('needleman', args.file, header[:])
+    if args.memory:
+        memory = Memory('needleman', args.file, header[:])
 
     if args.repeat:
         repeats = args.repeat
@@ -98,7 +104,7 @@ if __name__ == '__main__':
             string2 = args.strings.pop(0)
 
             for _ in range(repeats):
-                perform_query(timer, memory, string1, string2, args)
+                perform_query(string1, string2, args)
 
     # Generate random strings with given lengths
     elif args.random:
@@ -117,7 +123,7 @@ if __name__ == '__main__':
                     print('String1: {}\nString2: {}'.format(string1, string2))
                     print()
 
-                perform_query(timer, memory, string1, string2, args)
+                perform_query(string1, string2, args)
 
     else:
         print('Provide either -s STRINGS or -r INTEGER')

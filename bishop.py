@@ -58,7 +58,7 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     print('+')
 
 
-def perform_query(args, timer, memory):
+def perform_query(args):
     if args.scale:
         scale = args.scale        
     else:
@@ -101,13 +101,17 @@ def perform_query(args, timer, memory):
         with open(script) as f:
             query = f.read()
 
-        timer.start()
-        memory.start()
+        if args.time:
+            timer.start()
+        if args.memory:
+            memory.start()
 
         res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
 
-        timer.stop()
-        memory.stop()
+        if args.time:
+            timer.stop()
+        if args.memory:
+            memory.stop()
 
         res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
@@ -163,8 +167,10 @@ if __name__ == '__main__':
 
     header=['script', 'fingerprint_length', 'image_scale']
 
-    timer = Timer('bishop', args.file, header)
-    memory = Memory('bishop', args.file, header)
+    if args.time:
+        timer = Timer('bishop', args.file, header[:])
+    if args.memory:
+        memory = Memory('bishop', args.file, header[:])
 
     if args.repeat and args.fingerprint:
         args.fingerprint *= args.repeat
@@ -172,4 +178,4 @@ if __name__ == '__main__':
         args.random *= args.repeat
 
     while args.fingerprint and len(args.fingerprint) > 0 or args.random and len(args.random) > 0:
-        perform_query(args, timer, memory)
+        perform_query(args)
