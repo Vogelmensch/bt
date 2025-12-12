@@ -1,11 +1,13 @@
 import csv
 import time
+import tracemalloc
 
-class Timer:
+class Measurer:
     def _generate_filename(self):
         now = time.localtime()
         return f'measure/{self.query_name}_{time.strftime('%m%d_%H%M%S', now)}.csv'
 
+    # The header is only dependent on the query; supclasses of Measurer should automatically append their respective parameters
     def __init__(self, query_name, filepath, header=None):
         self.query_name = query_name
         
@@ -19,19 +21,28 @@ class Timer:
                 writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow(header)
 
-        self.time_start = 0
-        self.time_stop = 0
-
-    # Write data formatted as list and the current time
+    # Write data formatted as list. Append list to add data in child classes.
     def write_csv(self, data):
         if self.filepath == 'DONT STORE':
             return
 
-        time_elapsed = self.time_stop - self.time_start
-
         with open(self.filepath, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',', quotechar='"')
-            writer.writerow(data + [time_elapsed])
+            writer.writerow(data)
+
+
+class Timer(Measurer):
+    def __init__(self, query_name, filepath, header=None):
+        if header:
+            header += ['time']
+        super().__init__(query_name, filepath, header)
+        self.time_start = 0
+        self.time_stop = 0
+
+    # Add current time to measurement
+    def write_csv(self, data):
+        time_elapsed = self.time_stop - self.time_start
+        super().write_csv(data + [time_elapsed])
 
     def start(self):
         self.time_start = time.process_time()
@@ -51,3 +62,39 @@ class Timer:
 
         print('CPU time: {0:.2f} {1}'.format(time_elapsed, unit))
         print()
+
+class Memory(Measurer):
+    def __init__(self, query_name, filepath, header=None):
+        if header:
+            header += ['memory_size', 'memory_peak']
+        super().__init__(query_name, filepath, header)
+        tracemalloc.start()
+
+    def write_csv(self, data):
+        super().write_csv(data + [self.size, self.peak])
+
+    def start(self):
+        tracemalloc.reset_peak()
+
+    def stop(self):
+        self.size, self.peak = tracemalloc.get_traced_memory()
+
+    def print(self):
+        size = self._append_unit(self.size)
+        peak = self._append_unit(self.peak)
+
+        print(f'Size: {size}')
+        print(f'Peak: {peak}')
+        print()
+
+    def _append_unit(self, n):
+        units = ['B', 'KB', 'MB', 'GB']
+        idx = 0
+
+        while n > 1000:
+            idx += 1
+            n /= 1000
+        
+        n = round(n, 2)
+        
+        return f'{n} {units[idx]}'

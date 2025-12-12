@@ -1,9 +1,9 @@
 import duckdb
 import argparse
 from generators.rstring import generate
-from measure.measure import Timer
+from measure.measure import Timer, Memory
 
-def perform_query(timer, string1, string2, args):
+def perform_query(timer, memory, string1, string2, args):
     scripts = []
 
     if args.using_key:
@@ -24,10 +24,12 @@ def perform_query(timer, string1, string2, args):
             query = f.read()
 
         timer.start()
+        memory.start()
 
         res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0][0]
 
         timer.stop()
+        memory.stop()
 
         if not args.suppress_solution:
             for s in res:
@@ -36,9 +38,15 @@ def perform_query(timer, string1, string2, args):
         if args.time:
             timer.print_elapsed()
 
+        if args.memory:
+            memory.print()
+
         if args.file != 'DONT STORE':
             data = [script_name, len(string1), len(string2), len(res)]
-            timer.write_csv(data)
+            if args.time:
+                timer.write_csv(data)
+            if args.memory:
+                memory.write_csv(data)
 
         if args.file == 'DONT STORE':
             print()
@@ -51,7 +59,10 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
 
-    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure = parser.add_mutually_exclusive_group()
+    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
+
     parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
     parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
 
@@ -63,7 +74,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    timer = Timer('lcs', args.file, header=['script', 'length_string1', 'length_string2', 'solutions_count', 'time'])
+    header=['script', 'length_string1', 'length_string2', 'solutions_count']
+
+    timer = Timer('lcs', args.file, header)
+    memory = Memory('lcs', args.file, header)
 
     # Repeat by expanding input by given length
     if args.repeat and args.strings:
@@ -81,7 +95,7 @@ if __name__ == '__main__':
             string1 = args.strings.pop(0)
             string2 = args.strings.pop(0)
 
-            perform_query(timer, string1, string2, args)
+            perform_query(timer, memory, string1, string2, args)
 
             print()
     
@@ -96,7 +110,7 @@ if __name__ == '__main__':
                 print('String1: {}\nString2: {}'.format(string1, string2))
                 print()
             
-            perform_query(timer, string1, string2, args)
+            perform_query(timer, memory, string1, string2, args)
 
             print()
 

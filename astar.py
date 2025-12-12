@@ -1,9 +1,9 @@
 import duckdb
 import argparse
-from measure.measure import Timer
+from measure.measure import Timer, Memory
 
 # supply args from argparse
-def perform_query(args, timer):
+def perform_query(args, timer, memory):
     with duckdb.connect(args.db) as con:
         if args.heuristic:
             heuristic = args.heuristic
@@ -30,10 +30,12 @@ def perform_query(args, timer):
                 query = f.read()
 
             timer.start()
+            memory.start()
 
             res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
 
             timer.stop()
+            memory.stop()
 
             if (len(res) > 0):
                 path, length = res[0]
@@ -50,10 +52,16 @@ def perform_query(args, timer):
             if args.time:
                 timer.print_elapsed()
 
+            if args.memory:
+                memory.print()
+
             # data to store to csv
             if args.file != 'DONT STORE':
                 data = [script_name, args.graph, path, length]
-                timer.write_csv(data)
+                if args.time:
+                    timer.write_csv(data)
+                if args.memory:
+                    memory.write_csv(data)
 
             print()
             print()
@@ -77,7 +85,10 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
 
-    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure = parser.add_mutually_exclusive_group()
+    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
+
     parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
     parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
 
@@ -87,7 +98,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    timer = Timer('astar', args.file, header=['script','graph','path','length', 'time'])
+    header = ['script','graph','path','length']
+
+    timer = Timer('astar', args.file, header)
+    memory = Memory('astar', args.file, header)
 
     if args.goals:
         goals = args.goals
@@ -110,9 +124,9 @@ if __name__ == '__main__':
                 # loop over goals
                 for goal in goals:
                     args.goal = goal
-                    perform_query(args, timer)
+                    perform_query(args, timer, memory)
         else:
             # loop over goals
             for goal in goals:
                 args.goal = goal
-                perform_query(args, timer)
+                perform_query(args, timer, memory)

@@ -2,7 +2,7 @@ import argparse
 from itertools import chain
 import duckdb
 from generators.hexstring import generate
-from measure.measure import Timer
+from measure.measure import Timer, Memory
 
 def to_bit_reversed(hex_str):
     hex_num = int(hex_str, base=16)
@@ -58,7 +58,7 @@ def print_fingerprint(fp, symbols, height=9, width=17):
     print('+')
 
 
-def perform_query(args, timer):
+def perform_query(args, timer, memory):
     if args.scale:
         scale = args.scale        
     else:
@@ -102,10 +102,12 @@ def perform_query(args, timer):
             query = f.read()
 
         timer.start()
+        memory.start()
 
         res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
 
         timer.stop()
+        memory.stop()
 
         res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
@@ -118,9 +120,15 @@ def perform_query(args, timer):
         if args.time:
             timer.print_elapsed()
 
+        if args.memory:
+            memory.print()
+
         if args.file != 'DONT STORE':
             data = [script_name, len(fp_list), scale] 
-            timer.write_csv(data)
+            if args.time:
+                timer.write_csv(data)
+            if args.memory:
+                memory.write_csv(data)
         
         print()
 
@@ -132,22 +140,36 @@ if __name__ == '__main__':
     group.add_argument('-s', '--fingerprint', '--string', type=str, nargs='+', help='hex-string, e.g. 42:f2:bb:02')
     group.add_argument('-r', '--random', type=int, nargs='+', help='use randomly generated hexstring of given length')
 
-    parser.add_argument('-p', '--print_result', action='store_true', help='print the pure result list')
-    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
-
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
 
-    parser.add_argument('-d', '--scale', '--dim', type=float, help='scale image dimensions')
-    parser.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure = parser.add_mutually_exclusive_group()
+    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
+    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
+
     parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
+
+    parser.add_argument('-p', '--print_result', action='store_true', help='print the pure result list')
+    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
+
+    parser.add_argument('-d', '--scale', '--dim', type=float, help='scale image dimensions')
+    
+    parser.add_argument('--repeat', '--repeats', type=int, help='Repeat the entire query')
     
     args = parser.parse_args()
 
     if not args.fingerprint and not args.random:
         parser.exit(1, 'Provide either -s FINGERPRINT or -r INTEGER.')
 
-    timer = Timer('bishop', args.file, header=['script', 'fingerprint_length', 'image_scale', 'time'])
+    header=['script', 'fingerprint_length', 'image_scale']
+
+    timer = Timer('bishop', args.file, header)
+    memory = Memory('bishop', args.file, header)
+
+    if args.repeat and args.fingerprint:
+        args.fingerprint *= args.repeat
+    if args.repeat and args.random:
+        args.random *= args.repeat
 
     while args.fingerprint and len(args.fingerprint) > 0 or args.random and len(args.random) > 0:
-        perform_query(args, timer)
+        perform_query(args, timer, memory)
