@@ -6,10 +6,14 @@ DEFAULT_DB_NAME = 'graphs.db'
 DEFAULT_GRAPH_NAME = 'pygraph'
 PROGRESS_INDICATOR = 1  
 
+def insert_query(graph_name, edge):
+    query = 'INSERT INTO {graph_name} VALUES '
+    return f
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate random Graph')
     parser.add_argument('nodes', type=int, help='Number of nodes')
-    parser.add_argument('con_prob', type=float, help='Probability that two nodes are connected. con_prob = 1 creates a fully connected graph.')
+    parser.add_argument('edges', type=int, help='Number of edges')
 
     parser.add_argument('-w', '--max_weight', type=int, help='Max weight. Defaults to 1.')
     parser.add_argument('-c', '--connect', type=str, help='Name of .db-file to connect to. Defaults to \'graphs.db\'')
@@ -20,9 +24,6 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--print_progress', action='store_true', help='Print progress of generation')
 
     args = parser.parse_args()
-
-    if args.directed:
-        raise NotImplementedError
 
     max_weight = args.max_weight if args.max_weight else 1
 
@@ -50,22 +51,38 @@ if __name__ == '__main__':
                 created = True
             except duckdb.CatalogException:
                 add_number += 1
+
+        print(f'Created table {graph_name}.')
         
         progress = 0
-        for node1 in range(args.nodes):
-            for node2 in range(args.nodes):
-                if args.print_progress:
-                    current_progress = int(node1/args.nodes * 100)
-                    if current_progress - progress == PROGRESS_INDICATOR:
-                        print("{}%".format(current_progress))
-                        progress = current_progress
+        dp = 1 / args.edges
+        edges = [] # Type: list(tuple(int, int))
 
+        for i in range(args.edges):
+            progress = i / args.edges
+            print(f'\rGenerating edges {int(progress * 100)} %', end='')
+            
+            node_from, node_to = 0, 0
+            while node_from == node_to:
+                node_from = random.randint(0, args.nodes)
+                node_to = random.randint(0, args.nodes)
+            
+            weight = random.randint(1, max_weight)
 
-                if node1 != node2 and random.random() < args.con_prob:
-                    weight = random.randint(1, max_weight)
-                    con.sql(
-                        '''
-                        INSERT INTO {graph} VALUES ({f},{t},{w});
-                        INSERT INTO {graph} VALUES ({t},{f},{w});
-                        '''
-                        .format(graph=graph_name, f = node1, t = node2, w = weight))
+            # twice for undirected graphs
+            for _ in range(2):
+                edge = (node_from, node_to, weight)
+                edges.append(edge)
+
+                if args.directed:
+                    break
+
+                node_from, node_to = node_to, node_from
+
+        print()
+        print('Generating query...')
+        query = f'INSERT INTO {graph_name} VALUES '
+        query = query + str(edges)[1:-1] + ';' # the str-representation can simply be used
+
+        print('Performing query (this may take a while)...')
+        con.sql(query)
