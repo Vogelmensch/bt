@@ -9,36 +9,39 @@ class Plot:
         plt.figure()
 
     def show(self):
-        plt.grid()
-        plt.legend()
         plt.show()
 
-    def astar(self, file):
-        self.default('length', file)
+    def store(self, name):
+        plt.savefig(name)
 
-    def lcs(self, file):
-        self.default('length_string1', file)
+    def astar(self, y_value, file):
+        self.default('length', y_value, file)
 
-    def needleman(self, file):
-        self.default('length_string1', file)
+    def lcs(self, y_value, file):
+        self.default('length_string1', y_value, file)
 
-    def default(self, x_value, file):
+    def needleman(self, y_value, file):
+        self.default('length_string1', y_value, file)
+
+    def default(self, x_value, y_value, file):
         query = '''
             SELECT 
-                {x_value} AS l,
-                mean(time) AS t, 
-                var_samp(time) AS dt
+                {x_value} AS x,
+                mean({y_value}) AS y, 
+                var_samp({y_value}) AS dy
             FROM \'{file}\'
             WHERE script=\'{script}\' 
             GROUP BY {x_value}
         '''
-        u = duckdb.sql(query.format(x_value=x_value, file=file, script='using-key.sql')).fetchnumpy()
-        c = duckdb.sql(query.format(x_value=x_value, file=file, script='classic.sql')).fetchnumpy()
+        u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
+        c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
 
-        plt.plot(u['l'], u['t'], 'o', label='USING KEY')
-        plt.plot(c['l'], c['t'], 'o', label='Classic')
+        plt.plot(u['x'], u['y'], 'o', label='USING KEY')
+        plt.plot(c['x'], c['y'], 'o', label='Classic')
         plt.xlabel(x_value)
-        plt.ylabel('time')
+        plt.ylabel(y_value)
+        plt.grid()
+        plt.legend()
 
     
 
@@ -46,21 +49,35 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('query', type=str)
+    parser.add_argument('y_value', type=str)
     parser.add_argument('file', type=str)
+
+    parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
     args = parser.parse_args()
 
+    possible_y_values = ['time', 'memory_size', 'memory_peak']
+    if args.y_value not in possible_y_values:
+        parser.exit(1, f'Unknown y-value. Possible values are: {possible_y_values}')
 
     plot = Plot()
 
     match args.query:
         case 'astar':
-            plot.astar(args.file)
+            plot.astar(args.y_value, args.file)
         case 'lcs':
-            plot.lcs(args.file)
+            plot.lcs(args.y_value, args.file)
         case 'needleman' | 'needle':
-            plot.needleman(args.file)
+            plot.needleman(args.y_value, args.file)
         case _:
             parser.exit(1, 'Unknown query')
 
-    plot.show()
+    if args.store == 'DONT STORE':
+        plot.show()
+    else:
+        if args.store == 'NOT PROVIDED':
+            measurement_filename = args.file.split('/')[-1].split('.')[0]
+            filename = f'measure/plots/{measurement_filename}.svg'
+        else:
+            filename = args.store
+        plot.store(filename)
