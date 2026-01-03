@@ -1,74 +1,94 @@
-import duckdb
+import subprocess 
 import argparse
 from measure.measure import Timer, Memory
 
 # supply args from argparse
 def perform_query(args):
-    with duckdb.connect(args.db) as con:
-        if args.heuristic:
-            heuristic = args.heuristic
+    if args.heuristic:
+        heuristic = args.heuristic
+    else:
+        # without a heuristic, A* reduces to dijkstra
+        heuristic = 0
+
+    scripts = []
+
+    if args.using_key:
+        scripts.append('queries/astar/using-key.sql')
+    if args.classic:
+        scripts.append('queries/astar/classic.sql')
+
+    if len(scripts) == 0:
+        scripts.append('queries/astar/using-key.sql')
+
+    for script in scripts:
+        script_name = script.split('/')[-1]
+        print(script_name) # Print script name
+        print('-' * len(script_name))
+
+        with open(script) as f:
+            query = f.read()
+
+        # Add arguments with formatted python string
+        query = query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)
+
+        # Use duckdb's interal time measurement utility
+        if args.time:
+            cmd = '.timer on'
         else:
-            # without a heuristic, A* reduces to dijkstra
-            heuristic = 0
+            cmd = ''
+        if args.memory:
+            memory.start()
 
-        scripts = []
+        # Execute query as subprocess
+        res = subprocess.run(['duckdb', args.db, '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
 
-        if args.using_key:
-            scripts.append('queries/astar/using-key.sql')
-        if args.classic:
-            scripts.append('queries/astar/classic.sql')
+        if args.memory:
+            memory.stop()
+        
+        if res.stderr != '':
+            print('An error occured during query execution:')
+            print(res.stderr)
+            return
+        
+        out = res.stdout.replace('\n', '|').split('|')
 
-        if len(scripts) == 0:
-            scripts.append('queries/astar/using-key.sql')
-
-        for script in scripts:
-            script_name = script.split('/')[-1]
-            print(script_name) # Print script name
-            print('-' * len(script_name))
-
-            with open(script) as f:
-                query = f.read()
-
+        if (len(res.stdout) > 0):
             if args.time:
-                timer.start()
-            if args.memory:
-                memory.start()
-
-            res = con.sql(query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)).fetchall()
-
-            if args.time:
-                timer.stop()
-            if args.memory:
-                memory.stop()
-
-            if (len(res) > 0):
-                path, length = res[0]
+                path = out[5]
+                length = out[6]
+                timestr = out[7]
             else:
-                path, length = None, None
-                
-            if not args.suppress_solution:
-                if (len(res) == 0):
-                    print('Nothing found.')
-                else:
-                    print('Path:\t {}'.format(path))
-                    print('Length:\t {}'.format(length))
+                path = out[2]
+                length = out[3]
+                timestr = None
+        else:
+            path, length, timestr = None, None, None
+            
+        if not args.suppress_solution:
+            if (len(res.stdout) == 0):
+                print('Nothing found.')
+            else:
+                print('Path:\t {}'.format(path))
+                print('Length:\t {}'.format(length))
 
+        if args.time:
+            print(timestr)
+
+        if args.memory:
+            memory.print()
+
+        # data to store to csv
+        if args.file != 'DONT STORE':
+            data = [script_name, args.graph, path, length]
             if args.time:
-                timer.print_elapsed()
-
+                timelist = timestr.split()
+                timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
+                timer.write_csv(data)
             if args.memory:
-                memory.print()
+                memory.write_csv(data)
 
-            # data to store to csv
-            if args.file != 'DONT STORE':
-                data = [script_name, args.graph, path, length]
-                if args.time:
-                    timer.write_csv(data)
-                if args.memory:
-                    memory.write_csv(data)
-
-            print()
-            print()
+        print()
+        print()
 
 
 if __name__ == '__main__':

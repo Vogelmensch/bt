@@ -1,6 +1,6 @@
 import argparse
 from itertools import chain
-import duckdb
+import subprocess
 from generators.hexstring import generate
 from measure.measure import Timer, Memory
 
@@ -101,28 +101,51 @@ def perform_query(args):
         with open(script) as f:
             query = f.read()
 
+        query = query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))
+
         if args.time:
-            timer.start()
+            cmd = '.timer on'
+        else:
+            cmd = ''
         if args.memory:
             memory.start()
 
-        res = duckdb.sql(query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))).fetchall()
+        # Execute query as subprocess
+        res = subprocess.run(['duckdb', '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
 
-        if args.time:
-            timer.stop()
         if args.memory:
             memory.stop()
 
-        res.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
+        if res.stderr != '':
+            print('An error occured during query execution:')
+            print(res.stderr)
+            return
+
+        # Format result into 'out'
+        out = res.stdout.split('\n')
+        out = list(map(lambda s: tuple(s.split('|')), out))
+        # Cut list depending on whether we measured time
+        if args.time:
+            # get time measurement
+            timestr = out[-2][0]
+            # cut all time measurements out
+            out = out[4:-2]
+        else:
+            # cut stuff out
+            out = out[1:-1]
+        out = map(lambda t: (int(t[0]), int(t[1]), int(t[2])), out)
+        out = list(out)
+
+        out.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
         if args.print_result:
-            print(res)
+            print(out)
 
         if not args.suppress_solution:
-            print_fingerprint(res, symbols, height=HEIGHT, width=WIDTH)
+            print_fingerprint(out, symbols, height=HEIGHT, width=WIDTH)
 
         if args.time:
-            timer.print_elapsed()
+            print(timestr)
 
         if args.memory:
             memory.print()
@@ -130,6 +153,8 @@ def perform_query(args):
         if args.file != 'DONT STORE':
             data = [script_name, len(fp_list), scale] 
             if args.time:
+                timelist = timestr.split()
+                timer.foreign_measurement(timelist[4:9:2])
                 timer.write_csv(data)
             if args.memory:
                 memory.write_csv(data)

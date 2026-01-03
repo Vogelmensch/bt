@@ -35,15 +35,20 @@ class Measurer:
 class Timer(Measurer):
     def __init__(self, query_name, filepath, header=None):
         if header:
-            header += ['time']
+            header += ['t_real', 't_user', 't_sys']
         super().__init__(query_name, filepath, header)
         self.time_start = 0
         self.time_stop = 0
 
+    def foreign_measurement(self, time_data):
+        self.foreign_time = time_data
+
     # Add current time to measurement
     def write_csv(self, data):
-        time_elapsed = self.time_stop - self.time_start
-        super().write_csv(data + [time_elapsed])
+        if self.foreign_time:
+            super().write_csv(data + self.foreign_time)
+        else:
+            raise Exception('This feature is deprecated. Use DuckDB\'s internal time measurement from now on.')
 
     def start(self):
         self.time_start = time.process_time()

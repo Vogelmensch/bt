@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    possible_y_values = ['time', 'memory_size', 'memory_peak']
+    possible_y_values = ['t_real','t_user','t_sys','memory_size','memory_peak']
     if args.y_value not in possible_y_values:
         parser.exit(1, f'Unknown y-value. Possible values are: {possible_y_values}')
 

@@ -1,4 +1,4 @@
-import duckdb
+import subprocess
 import argparse
 import generators.dna as dna
 from measure.measure import Timer, Memory
@@ -22,35 +22,54 @@ def perform_query(string1, string2, args):
         with open(script) as f:
             query = f.read()
 
+        query = query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')
+
         if args.time:
-            timer.start()
+            cmd = '.timer on'
+        else:
+            cmd = ''
         if args.memory:
             memory.start()
 
-        res = duckdb.sql(query.format(string1='\'' + string1 + '\'', string2='\'' + string2 + '\'')).fetchall()[0]
+        # Execute query as subprocess
+        res = subprocess.run(['duckdb', '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
 
-        if args.time:
-            timer.stop()
         if args.memory:
             memory.stop()
 
+        if res.stderr != '':
+            print('An error occured during query execution:')
+            print(res.stderr)
+            return
+
+        out = res.stdout.split('\n')
+        if args.time:
+            timestr = out[-2]
+            out = out[-3]
+        else:
+            out = out[1]
+
+        out = out.split('|')
+        l1 = out[0][1:-1].split(', ')
+        l2 = out[1][1:-1].split(', ')
+
         if not args.suppress_solution:
-            l1 = res[0]
-            l2 = res[1]
             for s1, s2 in zip(l1, l2):
                 print(s1)
                 print(s2)
                 print()
 
         if args.time:
-            timer.print_elapsed()
+            print(timestr)
 
         if args.memory:
             memory.print()
 
         if args.file != 'DONT STORE':
-            data = [script_name, len(string1), len(string2), len(res[0])]
+            data = [script_name, len(string1), len(string2), len(l1)]
             if args.time:
+                timelist = timestr.split()
+                timer.foreign_measurement(timelist[4:9:2])
                 timer.write_csv(data)
             if args.memory:
                 memory.write_csv(data)
