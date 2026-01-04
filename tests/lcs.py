@@ -38,3 +38,5 @@ if __name__ == '__main__':
     run_test(query, '', 'some other string', [''])
     run_test(query, 'never gonna give you up', 'never gonna let you down', ['never gonna e you '])
     run_test(query, 'AGCAT', 'GAC', ['AC', 'GA', 'GC'])
+    run_test(query, 'fidi', 'bidi', ['idi'])
+    run_test(query, 'abcde', 'abcde', ['abcde'])

@@ -70,16 +70,16 @@ lcs (
         ltrs.ysym, ltrs.yidx,
         diag.len + 1,            -- the solution's length is increased by one
         false, false, true
-
     FROM 
         letters AS ltrs
         JOIN lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                      ltrs.yidx = diag.yidx+1 
+                            ltrs.yidx = diag.yidx+1 
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and
-                                                 ltrs.yidx = this.yidx
+                                       ltrs.yidx = this.yidx
     WHERE 
-        this.len IS NULL and    -- this field is empty
-        ltrs.xsym = ltrs.ysym   -- letters are equal
+        this.len IS NULL and        -- this field is empty
+        ltrs.xsym = ltrs.ysym and   -- letters are equal
+        (SELECT y FROM current_row) <= (SELECT y FROM max_row) -- termination condition
 
     UNION
 
@@ -95,8 +95,9 @@ lcs (
         JOIN lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1 
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
     WHERE 
-        this.len IS NULL and    -- this field is empty
-        ltrs.xsym != ltrs.ysym  -- letters are unequal
+        this.len IS NULL and        -- this field is empty
+        ltrs.xsym != ltrs.ysym and  -- letters are unequal
+        (SELECT y FROM current_row) <= (SELECT y FROM max_row) -- termination condition
     )
 ),
 -- ❻ Build the resulting strings in backtracking process, using the highlighted paths

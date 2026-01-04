@@ -50,9 +50,9 @@ WITH RECURSIVE lcs (
         FROM 
             letters AS ltrs
             JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                        ltrs.yidx = diag.yidx+1 
+                                          ltrs.yidx = diag.yidx+1 
             LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and
-                                                    ltrs.yidx = this.yidx
+                                                     ltrs.yidx = this.yidx
         WHERE 
             this.len IS NULL and    -- this field is empty
             ltrs.xsym = ltrs.ysym   -- letters are equal
