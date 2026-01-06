@@ -26,8 +26,9 @@ def perform_query(args):
 
     for script in scripts:
         script_name = script.split('/')[-1]
-        print(script_name) # Print script name
-        print('-' * len(script_name))
+        if not args.suppress_solution:
+            print(script_name) # Print script name
+            print('-' * len(script_name))
 
         with open(script) as f:
             query = f.read()
@@ -75,7 +76,7 @@ def perform_query(args):
                 print('Path:\t {}'.format(path))
                 print('Length:\t {}'.format(length))
 
-        if args.time:
+        if args.time and not args.suppress_solution:
             print(timestr)
 
         if args.memory:
@@ -91,8 +92,9 @@ def perform_query(args):
             if args.memory:
                 memory.write_csv(data)
 
-        print()
-        print()
+        if not args.suppress_solution:
+            print()
+            print()
 
 
 if __name__ == '__main__':
@@ -140,25 +142,28 @@ if __name__ == '__main__':
     else:
         goals = [args.goal]
 
+    if args.extend:
+        extensions = args.extend
+    else:
+        extensions = ['']
+
     if args.repeat:
         repeats = args.repeat
     else:
         repeats = 1
 
-    for _ in range(repeats):
-        if args.extend:
-            # loop over graphs
-            graph = args.graph
-            for idx, extension in enumerate(args.extend):
-                print(f'{idx+1}/{len(args.extend)}')
-                args.graph = graph + extension
+    # Number of total repeats to show progress 
+    total_repeats = repeats * len(goals) * len(extensions)
+    current_repeat = 1
 
-                # loop over goals
-                for goal in goals:
-                    args.goal = goal
-                    perform_query(args)
-        else:
+    for _ in range(repeats):
+        # loop over graphs
+        graph = args.graph
+        for extension in extensions:
+            args.graph = graph + extension
             # loop over goals
             for goal in goals:
                 args.goal = goal
+                print(f'Performing query {current_repeat}/{total_repeats}', end='\r')
+                current_repeat += 1
                 perform_query(args)

@@ -159,3 +159,9 @@ python bishop.py -s 4 -r 400
 ## Sources
 Graph from 9th DIMACS Implementation Challenge:
 ```https://www.diag.uniroma1.it/challenge9/download.shtml```
+
+
+## Directly use finder in astar with
+```bash
+cat queries/astar/finder.sql | duckdb usa.db -list | tail -n 1
+```

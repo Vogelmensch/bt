@@ -17,4 +17,7 @@ WITH RECURSIVE find(n, node) USING KEY (n) AS (
         time_graph AS g ON f.node = g.node_from
     WHERE f.n < max_length() AND NOT EXISTS (FROM recurring.find AS r WHERE r.node = g.node_to)
 )
+
+-- Directly use this as argument for the --goals option in astar.py
+SELECT string_agg(node, ' ' ORDER BY n) AS 'Path'
 FROM find;
