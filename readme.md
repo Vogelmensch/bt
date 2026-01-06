@@ -154,3 +154,8 @@ python bishop.py -s 4 -r 400
 - My Laptop (Acer Spin 5) finds the solution in... 
     - USING KEY: 10 s
     - Classic query: 180 ms 🤨
+
+
+## Sources
+Graph from 9th DIMACS Implementation Challenge:
+```https://www.diag.uniroma1.it/challenge9/download.shtml```

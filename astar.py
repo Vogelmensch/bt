@@ -2,9 +2,13 @@ import subprocess
 import argparse
 from measure.measure import Timer, Memory
 
+STANDARD_HEURISTIC = '(select sqrt((fr.long - t.long)^2 + (fr.lat - t.lat)^2) from coords as fr join coords as t on fr.node_id = x and t.node_id = goal_node())'
+
 # supply args from argparse
 def perform_query(args):
-    if args.heuristic:
+    if args.standard_heuristic:
+        heuristic = STANDARD_HEURISTIC
+    elif args.heuristic:
         heuristic = args.heuristic
     else:
         # without a heuristic, A* reduces to dijkstra
@@ -105,6 +109,8 @@ if __name__ == '__main__':
     parser.add_argument('start', type=int, help='id of the start node')
     parser.add_argument('goal', type=int, help='id of the goal node')
     parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
+
+    parser.add_argument('-s', '--standard_heuristic', action='store_true', help='use standard heuristic file')
 
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
