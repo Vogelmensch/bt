@@ -15,7 +15,7 @@ class Plot:
         plt.savefig(name)
 
     def astar(self, y_value, file):
-        self.default('length', y_value, file)
+        self.default('nodes_count', y_value, file)
 
     def lcs(self, y_value, file):
         self.default('length_string1', y_value, file)

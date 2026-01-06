@@ -1,6 +1,5 @@
--- Find one path of given length from start_node in graph
-
-CREATE OR REPLACE MACRO max_length() AS 15;
+-- Find some path of given length from start_node in graph
+CREATE OR REPLACE MACRO max_length() AS 20;
 CREATE OR REPLACE MACRO start_node() AS 1;
 
 WITH RECURSIVE find(n, node) USING KEY (n) AS (
