@@ -1,6 +1,6 @@
 -- Find some path of given length from start_node in graph
-CREATE OR REPLACE MACRO max_length() AS 20;
-CREATE OR REPLACE MACRO start_node() AS 1;
+CREATE OR REPLACE MACRO max_length() AS {max_length};
+CREATE OR REPLACE MACRO start_node() AS {start_node};
 
 WITH RECURSIVE find(n, node) USING KEY (n) AS (
     -- initial case
@@ -13,7 +13,7 @@ WITH RECURSIVE find(n, node) USING KEY (n) AS (
         g.node_to
     FROM
         find AS f JOIN 
-        time_graph AS g ON f.node = g.node_from
+        {graph} AS g ON f.node = g.node_from
     WHERE f.n < max_length() AND NOT EXISTS (FROM recurring.find AS r WHERE r.node = g.node_to)
 )
 
