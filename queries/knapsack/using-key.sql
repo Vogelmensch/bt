@@ -2,25 +2,25 @@
 -- input: 
 -- 1. table `items` with the following schema
 
-CREATE OR REPLACE TABLE items (
-    id INTEGER PRIMARY KEY,
-    value INTEGER,
-    weight INTEGER
-);
+-- CREATE OR REPLACE TABLE items (
+--     id INTEGER PRIMARY KEY,
+--     value INTEGER,
+--     weight INTEGER
+-- );
 
-INSERT INTO items VALUES 
-    (1, 5, 4),
-    (2, 4, 3),
-    (3, 3, 2),
-    (4, 2, 1);
+-- INSERT INTO items VALUES 
+--     (1, 5, 4),
+--     (2, 4, 3),
+--     (3, 3, 2),
+--     (4, 2, 1);
 
 -- 2. max_weight (INTEGER)
 
-CREATE OR REPLACE MACRO total_max_weight() AS 6;
+CREATE OR REPLACE MACRO total_max_weight() AS {max_weight};
 
 -- max_weight is a local value
 -- all items up to item_id are included
-WITH RECURSIVE best_value(max_weight, item_id, value) AS (
+WITH RECURSIVE best_value(max_weight, item_id, value) USING KEY (max_weight) AS (
     -- First row: for i = 0 (no items taken), the total value is zero across all weights.
     SELECT 
         w.x,
@@ -28,7 +28,7 @@ WITH RECURSIVE best_value(max_weight, item_id, value) AS (
         0
     FROM generate_series(total_max_weight()) AS w(x)
 
-    UNION ALL 
+    UNION 
 
     -- We can calculate the entire row in one go!
     SELECT 
@@ -40,7 +40,7 @@ WITH RECURSIVE best_value(max_weight, item_id, value) AS (
         END
     FROM 
         best_value AS up JOIN
-        items      AS i       ON i.id = up.item_id + 1 LEFT OUTER JOIN
+        {items}    AS i       ON i.id = up.item_id + 1 LEFT OUTER JOIN
         best_value AS shifted ON shifted.max_weight = up.max_weight - i.weight
 )
 SELECT max(value)
