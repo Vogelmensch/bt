@@ -138,7 +138,8 @@ path_as_string (
 
 SELECT 
     path_string AS 'Path',
-    (SELECT dist FROM solution WHERE node_id = goal_node()) AS 'Distance'
+    (SELECT dist FROM solution WHERE node_id = goal_node()) AS 'Distance',
+    (SELECT count(DISTINCT node_id) FROM astar) AS 'Expanded Nodes'
 FROM 
     path_as_string
 WHERE new_node = start_node();

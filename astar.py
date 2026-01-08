@@ -59,15 +59,15 @@ def perform_query(args):
 
         if (len(res.stdout) > 0):
             if args.time:
-                path = out[5]
-                length = out[6]
-                timestr = out[7]
+                idx = 6
             else:
-                path = out[2]
-                length = out[3]
-                timestr = None
+                idx = 4
+            path = out[idx]
+            total_weight = out[idx+1]
+            expanded_count = out[idx+2]
+            timestr = out[idx+3] if args.time else None
         else:
-            path, length, timestr = None, None, None
+            path, total_weight, timestr = None, None, None
 
         nodes_count = len(path.split('->'))
             
@@ -75,8 +75,9 @@ def perform_query(args):
             if (len(res.stdout) == 0):
                 print('Nothing found.')
             else:
-                print(f'Path:\t {path} ({nodes_count} node{'' if nodes_count == 1 else 's'})')
-                print(f'Length:\t {length}')
+                print(f'Path: {path} ({nodes_count} node{'' if nodes_count == 1 else 's'})')
+                print(f'Total Weight: {total_weight}')
+                print(f'{expanded_count} nodes expanded')
 
         if args.time and not args.suppress_solution:
             print(timestr)
@@ -86,7 +87,7 @@ def perform_query(args):
 
         # data to store to csv
         if args.file != 'DONT STORE':
-            data = [script_name, args.graph, path, nodes_count]
+            data = [script_name, args.graph, path, nodes_count, total_weight, expanded_count]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
@@ -132,7 +133,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    header = ['script','graph','path','nodes_count']
+    header = ['script','graph','path','nodes_count','total_weight','expanded_count']
 
     if args.time:
         timer = Timer('astar', args.file, header[:])
@@ -167,6 +168,6 @@ if __name__ == '__main__':
             for goal in goals:
                 args.goal = goal
                 if args.suppress_solution:
-                    print(f'Performing query {current_repeat}/{total_repeats}', end='\r')
+                    print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
                 current_repeat += 1
                 perform_query(args)

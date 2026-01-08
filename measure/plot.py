@@ -15,7 +15,7 @@ class Plot:
         plt.savefig(name)
 
     def astar(self, y_value, file):
-        self.default('nodes_count', y_value, file)
+        self.default('expanded_count', y_value, file)
 
     def lcs(self, y_value, file):
         self.default('length_string1', y_value, file)
@@ -36,8 +36,11 @@ class Plot:
         u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
         c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
 
+        print(u)
+
         plt.plot(u['x'], u['y'], 'o', label='USING KEY')
         plt.plot(c['x'], c['y'], 'o', label='Classic')
+        plt.plot()
         plt.xlabel(x_value)
         plt.ylabel(y_value)
         plt.grid()
