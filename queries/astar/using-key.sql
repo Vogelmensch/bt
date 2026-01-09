@@ -99,7 +99,8 @@ path_as_string (
 SELECT 
     path_string AS 'Path',
     (SELECT dist FROM astar WHERE node_id = goal_node()) AS 'Distance',
-    (SELECT count(*) FROM astar) AS 'Expanded Nodes'
+    (SELECT count(*) FROM astar) AS 'Expanded Nodes',
+    (SELECT count(*) FROM astar) AS 'Table Size',
 FROM 
     path_as_string
 WHERE new_node = start_node()

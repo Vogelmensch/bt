@@ -41,6 +41,7 @@ def perform_query(args):
             cmd = '.timer on'
         else:
             cmd = ''
+
         if args.memory:
             memory.start()
 
@@ -59,13 +60,14 @@ def perform_query(args):
 
         if (len(res.stdout) > 0):
             if args.time:
-                idx = 6
+                idx = 7
             else:
                 idx = 4
             path = out[idx]
             total_weight = out[idx+1]
             expanded_count = out[idx+2]
-            timestr = out[idx+3] if args.time else None
+            table_size = out[idx+3] 
+            timestr = out[idx+4] if args.time else None
         else:
             path, total_weight, timestr = None, None, None
 
@@ -78,16 +80,17 @@ def perform_query(args):
                 print(f'Path: {path} ({nodes_count} node{'' if nodes_count == 1 else 's'})')
                 print(f'Total Weight: {total_weight}')
                 print(f'{expanded_count} nodes expanded')
+                print(f'{table_size} items in final table')
 
         if args.time and not args.suppress_solution:
             print(timestr)
 
-        if args.memory:
+        if args.memory and not args.suppress_solution:
             memory.print()
 
         # data to store to csv
         if args.file != 'DONT STORE':
-            data = [script_name, args.graph, path, nodes_count, total_weight, expanded_count]
+            data = [script_name, args.graph, path, nodes_count, total_weight, expanded_count, table_size]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
@@ -133,7 +136,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    header = ['script','graph','path','nodes_count','total_weight','expanded_count']
+    # expanded_count does count every single node only once. That means, if a node gets visited again, it does not count again.
+    # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.
+    # for measuring performance, total_visiting_count seems to be the better metric.
+    header = ['script','graph','path','nodes_count','total_weight','expanded_count','table_size']
 
     if args.time:
         timer = Timer('astar', args.file, header[:])

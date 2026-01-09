@@ -14,8 +14,8 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def astar(self, y_value, file):
-        self.default('expanded_count', y_value, file)
+    def astar(self, y_value, file, x_value='expanded_count'):
+        self.default(x_value, y_value, file)
 
     def lcs(self, y_value, file):
         self.default('length_string1', y_value, file)
@@ -55,6 +55,8 @@ if __name__ == '__main__':
     parser.add_argument('y_value', type=str)
     parser.add_argument('file', type=str)
 
+    parser.add_argument('-x', '--x_value', type=str)
+
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
     args = parser.parse_args()
@@ -67,7 +69,10 @@ if __name__ == '__main__':
 
     match args.query:
         case 'astar':
-            plot.astar(args.y_value, args.file)
+            if args.x_value:
+                plot.astar(args.y_value, args.file, x_value=args.x_value)
+            else:
+                plot.astar(args.y_value, args.file)
         case 'lcs':
             plot.lcs(args.y_value, args.file)
         case 'needleman' | 'needle':
