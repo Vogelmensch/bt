@@ -43,5 +43,7 @@ WITH RECURSIVE best_value(max_weight, item_id, value) AS (
         {items}      AS i       ON i.id = up.item_id + 1 LEFT OUTER JOIN
         best_value AS shifted ON shifted.max_weight = up.max_weight - i.weight
 )
-SELECT max(value)
-FROM best_value;
+SELECT 
+    (SELECT max(value) FROM best_value) AS max_value,
+    (SELECT count(*) FROM {items}) AS items_count,
+    (SELECT count(*) FROM best_value) AS table_size;

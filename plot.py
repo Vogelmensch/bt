@@ -10,7 +10,7 @@ class Plot:
             'astar': 'expanded_count',
             'lcs': 'length_string1',
             'needleman': 'length_string1',
-            'knapsack': 'max_value'
+            'knapsack': 'items_count'
         }
         plt.figure()
 

@@ -1,8 +1,10 @@
 import argparse
 import subprocess
 from measure.measure import Timer, Memory
+import duckdb
+import json
 
-def perform_query(args, graph):
+def perform_query(args, item_table):
     scripts = []
 
     if args.using_key:
@@ -22,7 +24,7 @@ def perform_query(args, graph):
         with open(script) as f:
             query = f.read()
 
-        query = query.format(max_weight=args.max_weight, items=graph)
+        query = query.format(max_weight=args.max_weight, items=item_table)
 
         # Use duckdb's interal time measurement utility
         if args.time:
@@ -33,8 +35,8 @@ def perform_query(args, graph):
         if args.memory:
             memory.start()
 
-        res = subprocess.run(['duckdb', args.db, '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
-        
+        res = subprocess.run(['duckdb', args.db, '-json', '-cmd', cmd], input=query, text=True, capture_output=True)
+
         if args.memory:
             memory.stop()
         
@@ -43,16 +45,23 @@ def perform_query(args, graph):
             print(res.stderr)
             return
 
-        out = res.stdout.replace('\n', '|').split('|')
-
+        results = res.stdout.split('\n')
         if args.time:
-            max_value = out[2]
-            timestr = out[3]
+            json_string = results[1][1:-1]
+            timestr = results[2]
         else:
-            max_value = out[1]
-    
+            json_string = results[0][1:-1]
+
+        out = json.loads(json_string)
+
+        max_value = out['max_value']
+        items_count = out['items_count']
+        table_size = out['table_size']
+
         if not args.suppress_solution:
             print(f'Max Value: {max_value}')
+            print(f'{items_count} items in table')
+            print(f'{table_size} items in final table')
         
         if args.time and not args.suppress_solution:
             print(timestr)
@@ -62,7 +71,7 @@ def perform_query(args, graph):
 
         # data to store to csv
         if args.file != 'DONT STORE':
-            data = [script_name, args.graph, max_value]
+            data = [script_name, item_table, items_count, max_value, table_size]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
@@ -70,16 +79,21 @@ def perform_query(args, graph):
             if args.memory:
                 memory.write_csv(data)
 
+        if not args.suppress_solution:
+            print()
+            print()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Perform Knapsack query.'
     )
-    parser.add_argument('db', type=str, help='path to .db-file holding the graph(s)')
-    parser.add_argument('graph', type=str, help='name of the graph to perform the query on')
+    parser.add_argument('db', type=str, help='path to .db-file holding the item_table(s)')
+    parser.add_argument('item_table', type=str, help='name of the item_table to perform the query on')
     parser.add_argument('max_weight', type=int, help='total max weight')
 
-    parser.add_argument('-g', '--graphs', type=str, nargs='*', help='additional graphs to evaluate')
+    parser.add_argument('-g', '--item_tables', type=str, nargs='*', help='additional item_tables to evaluate')
+    parser.add_argument('-r', '--random', type=int, nargs='*', help='create random item-table of given size')
 
     parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
     parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
@@ -93,16 +107,30 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    header = ['script','graph','max_value']
+    header = ['script','item_table','items_count','max_value','table_size']
 
     if args.time:
         timer = Timer('knapsack', args.file, header[:])
     if args.memory:
         memory = Memory('knapsack', args.file, header[:])
 
-    graphs = [args.graph] + (args.graphs if args.graphs else [])
+    random_tables = []
+    if args.random:
+        with open('queries/knapsack/random-items.sql') as f:
+            query_from_file = f.read()
+        with duckdb.connect(args.db) as con:
+            for idx, sample_size in enumerate(args.random):
+                table_name = f'generated_{idx}'
+                random_tables.append(table_name)
+                query = query_from_file.format(table_name=table_name, sample_size=sample_size)
+                con.sql(query)
 
-    for i, graph in enumerate(graphs):
+    if not args.random:
+        item_tables = [args.item_table] + (args.item_tables if args.item_tables else [])
+    else:
+        item_tables = random_tables
+
+    for i, item_table in enumerate(item_tables):
         if args.suppress_solution:
-            print(f'\rPerforming query {i+1}/{len(graphs)}', end='')
-        perform_query(args, graph)
+            print(f'\rPerforming query {i+1}/{len(item_tables)}', end='')
+        perform_query(args, item_table)
