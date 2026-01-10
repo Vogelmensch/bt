@@ -23,6 +23,9 @@ class Plot:
     def needleman(self, y_value, file):
         self.default('length_string1', y_value, file)
 
+    def knapsack(self, y_value, file):
+        self.default('max_value', y_value, file)
+
     def default(self, x_value, y_value, file):
         query = '''
             SELECT 
@@ -77,6 +80,8 @@ if __name__ == '__main__':
             plot.lcs(args.y_value, args.file)
         case 'needleman' | 'needle':
             plot.needleman(args.y_value, args.file)
+        case 'knapsack':
+            plot.knapsack(args.y_value, args.file)
         case _:
             parser.exit(1, 'Unknown query')
 
