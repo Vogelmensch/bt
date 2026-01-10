@@ -14,17 +14,21 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def astar(self, y_value, file, x_value='expanded_count'):
+    def astar(self, y_value, file, x_value):
+        if not x_value:
+            x_vale = 'expanded_count'
         self.default(x_value, y_value, file)
 
-    def lcs(self, y_value, file):
-        self.default('length_string1', y_value, file)
+    def lcs(self, y_value, file, x_value):
+        if not x_value:
+            x_value = 'length_string1'
+        self.default(x_value, y_value, file)
 
-    def needleman(self, y_value, file):
-        self.default('length_string1', y_value, file)
+    def needleman(self, y_value, file, x_value='length_string1'):
+        self.default(x_value, y_value, file)
 
-    def knapsack(self, y_value, file):
-        self.default('max_value', y_value, file)
+    def knapsack(self, y_value, file, x_value='max_value'):
+        self.default(x_value, y_value, file)
 
     def default(self, x_value, y_value, file):
         query = '''
@@ -39,8 +43,8 @@ class Plot:
         u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
         c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
 
-        plt.plot(u['x'], u['y'], 'o', label='USING KEY')
-        plt.plot(c['x'], c['y'], 'o', label='Classic')
+        plt.plot(u['x'], u['y'], '.', label='USING KEY')
+        plt.plot(c['x'], c['y'], '.', label='Classic')
         plt.plot()
         plt.xlabel(x_value)
         plt.ylabel(y_value)
@@ -62,20 +66,17 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    possible_y_values = ['t_real','t_user','t_sys','memory_size','memory_peak']
-    if args.y_value not in possible_y_values:
-        parser.exit(1, f'Unknown y-value. Possible values are: {possible_y_values}')
+    # possible_y_values = ['t_real','t_user','t_sys','memory_size','memory_peak']
+    # if args.y_value not in possible_y_values:
+    #     parser.exit(1, f'Unknown y-value. Possible values are: {possible_y_values}')
 
     plot = Plot()
 
     match args.query:
         case 'astar':
-            if args.x_value:
-                plot.astar(args.y_value, args.file, x_value=args.x_value)
-            else:
-                plot.astar(args.y_value, args.file)
+            plot.astar(args.y_value, args.file, x_value=args.x_value)
         case 'lcs':
-            plot.lcs(args.y_value, args.file)
+            plot.lcs(args.y_value, args.file, x_value=args.x_value)
         case 'needleman' | 'needle':
             plot.needleman(args.y_value, args.file)
         case 'knapsack':

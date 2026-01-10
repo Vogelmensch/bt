@@ -17,8 +17,9 @@ def perform_query(string1, string2, args):
     # Run all queries with the same inputs
     for script in scripts:
         script_name = script.split('/')[-1]
-        print(script_name) # Print script name
-        print('-' * len(script_name))
+        if not args.suppress_solution:
+            print(script_name) # Print script name
+            print('-' * len(script_name))
 
         with open(script) as f:
             query = f.read()
@@ -50,20 +51,24 @@ def perform_query(string1, string2, args):
         else:
             out = out[1][1:-1]
 
-        out = out.split(', ')
+        out = out.split('|')
+        solutions = out[0]
+        table_size = out[1]
+        solutions = solutions.split(', ')
 
         if not args.suppress_solution:
-            for s in out:
+            for s in solutions:
                 print(s)
+            print(f'{table_size} items in final table')
 
-        if args.time:
+        if args.time and not args.suppress_solution:
             print(timestr)
 
-        if args.memory:
+        if args.memory and not args.suppress_solution:
             memory.print()
 
         if args.file != 'DONT STORE':
-            data = [script_name, len(string1), len(string2), len(out)]
+            data = [script_name, len(string1), len(string2), len(solutions), table_size]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2])
@@ -71,7 +76,7 @@ def perform_query(string1, string2, args):
             if args.memory:
                 memory.write_csv(data)
 
-        if args.file == 'DONT STORE':
+        if args.file == 'DONT STORE' and not args.suppress_solution:
             print()
 
 if __name__ == '__main__':
@@ -97,7 +102,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    header=['script', 'length_string1', 'length_string2', 'solutions_count']
+    header=['script', 'length_string1', 'length_string2', 'solutions_count', 'table_size']
 
     if args.time:
         timer = Timer('lcs', args.file, header[:])
@@ -115,29 +120,33 @@ if __name__ == '__main__':
         if len(args.strings) % 2 == 1:
                 parser.exit(status=1, message='Please provide an even amount of strings for -s.')
 
+        total_repeats = len(args.strings)
+        current_repeat = 1
         while len(args.strings) > 0:
-            print(f'{int(len(args.strings)/2)} remaining')
             string1 = args.strings.pop(0)
             string2 = args.strings.pop(0)
-
+            if args.suppress_solution:
+                    print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+                    current_repeat += 1
             perform_query(string1, string2, args)
 
             print()
     
     # Generate random strings with given lengths
     elif args.random:
+        total_repeats = len(args.random)
+        current_repeat = 1
         while len(args.random) > 0:
-            print(f'{len(args.random)} remaining')
             str_length = args.random.pop(0)
             string1 = generate(str_length)
             string2 = generate(str_length)
             if not args.suppress_solution:
                 print('String1: {}\nString2: {}'.format(string1, string2))
                 print()
-            
+            else:
+                print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+                current_repeat += 1
             perform_query(string1, string2, args)
-
-            print()
 
     else:
         print('Provide either -s STRINGS or -r INTEGER')

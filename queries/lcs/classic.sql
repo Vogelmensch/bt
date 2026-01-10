@@ -143,9 +143,11 @@ backtrack(
         -- notice that 'left' and 'up' can both be selected simultaneously
     )
 )
-SELECT list(word) 
-FROM (
-    SELECT DISTINCT word
-    FROM backtrack
-    WHERE xidx = 0 OR yidx = 0
-)
+SELECT 
+    (SELECT list(word) 
+    FROM (
+        SELECT DISTINCT word
+        FROM backtrack
+        WHERE xidx = 0 OR yidx = 0
+    )) AS solutions,
+    (SELECT count(*) FROM lcs) AS table_size
