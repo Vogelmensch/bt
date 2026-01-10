@@ -6,6 +6,12 @@ import argparse
 class Plot:
     # start new figure
     def __init__(self):
+        self.default_x_values = {
+            'astar': 'expanded_count',
+            'lcs': 'length_string1',
+            'needleman': 'length_string1',
+            'knapsack': 'max_value'
+        }
         plt.figure()
 
     def show(self):
@@ -14,23 +20,10 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def astar(self, y_value, file, x_value):
-        if not x_value:
-            x_vale = 'expanded_count'
-        self.default(x_value, y_value, file)
+    def default(self, algorithm, x_value, y_value, file):
+        if not args.x_value:
+            x_value = self.default_x_values[algorithm]
 
-    def lcs(self, y_value, file, x_value):
-        if not x_value:
-            x_value = 'length_string1'
-        self.default(x_value, y_value, file)
-
-    def needleman(self, y_value, file, x_value='length_string1'):
-        self.default(x_value, y_value, file)
-
-    def knapsack(self, y_value, file, x_value='max_value'):
-        self.default(x_value, y_value, file)
-
-    def default(self, x_value, y_value, file):
         query = '''
             SELECT 
                 {x_value} AS x,
@@ -66,23 +59,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # possible_y_values = ['t_real','t_user','t_sys','memory_size','memory_peak']
-    # if args.y_value not in possible_y_values:
-    #     parser.exit(1, f'Unknown y-value. Possible values are: {possible_y_values}')
-
     plot = Plot()
 
-    match args.query:
-        case 'astar':
-            plot.astar(args.y_value, args.file, x_value=args.x_value)
-        case 'lcs':
-            plot.lcs(args.y_value, args.file, x_value=args.x_value)
-        case 'needleman' | 'needle':
-            plot.needleman(args.y_value, args.file)
-        case 'knapsack':
-            plot.knapsack(args.y_value, args.file)
-        case _:
-            parser.exit(1, 'Unknown query')
+    plot.default(args.query, args.x_value, args.y_value, args.file)
 
     if args.store == 'DONT STORE':
         plot.show()
