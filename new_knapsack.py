@@ -1,6 +1,8 @@
 from query_tester import QueryTester
 
 class KnapsackTester(QueryTester):
+    item_table = None
+
     def __init__(self, constants, metrics):
         super().__init__('knapsack', 'Perform Knapsack Query', constants, metrics)
 
@@ -44,8 +46,6 @@ if __name__ == '__main__':
     tester = KnapsackTester(constants, metrics)
     
     item_tables = tester.prepare_knapsack()
-
-    print(item_tables)
 
     for i, item_table in enumerate(item_tables):
         tester.item_table = item_table
