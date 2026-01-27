@@ -1,6 +1,10 @@
 New York City:
 ```sql
-FROM coords 
+SELECT 
+FROM 
+      coords AS c_from
+      JOIN time_graph AS t ON 
+
 WHERE long < -7300000 and long > -74300000 and 
       lat < 41100000 and lat > 40300000;
 ```

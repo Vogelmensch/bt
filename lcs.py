@@ -2,6 +2,7 @@ import subprocess
 import argparse
 from generators.rstring import generate
 from measure.measure import Timer, Memory
+from general_query import GeneralQuery as Master
 
 def perform_query(string1, string2, args):
     scripts = []
@@ -47,12 +48,12 @@ def perform_query(string1, string2, args):
         out = res.stdout.split('\n')
         if args.time:
             timestr = out[-2]
-            out = out[4][1:-1]
+            out = out[4]
         else:
-            out = out[1][1:-1]
+            out = out[1]
 
         out = out.split('|')
-        solutions = out[0]
+        solutions = out[0][1:-1]
         table_size = out[1]
         solutions = solutions.split(', ')
 
@@ -84,23 +85,14 @@ if __name__ == '__main__':
         description='Perform lcs query.', 
         epilog='To perform multiple measurements, provide multiple tuples for either -s or -r.')
 
-    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
-    parser.add_argument('-c', '--classic', action='store_true', help='use classic CTE')
-
-    measure = parser.add_mutually_exclusive_group()
-    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
-    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
-
-    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
-    parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
+    Master.add_standard_args(parser)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--strings', type=str, nargs='+', help='String arguments to compare')
     group.add_argument('-r', '--random', type=int, nargs='+', help='use randomly generated strings of given lengths')
 
-    parser.add_argument('--repeat', '--repeats', type=int, help='repeat the entire query')
-
     args = parser.parse_args()
+    Master.check_combos(args)
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count', 'table_size']
 

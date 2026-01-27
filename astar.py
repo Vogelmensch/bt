@@ -1,6 +1,7 @@
 import subprocess 
 import argparse
 from measure.measure import Timer, Memory
+from general_query import GeneralQuery as Master
 
 STANDARD_HEURISTIC = '(select sqrt((fr.long - t.long)^2 + (fr.lat - t.lat)^2) from coords as fr join coords as t on fr.node_id = x and t.node_id = goal_node())'
 
@@ -112,29 +113,24 @@ if __name__ == '__main__':
         To perform multiple queries and store them all into one csv-file, provide -e / --extend. 
         The provided strings extend the graph name.
         ''')
+
+
     parser.add_argument('db', type=str, help='path to .db-file holding the graph(s)')
     parser.add_argument('graph', type=str, help='name of the graph to perform the query on')
     parser.add_argument('start', type=int, help='id of the start node')
     parser.add_argument('goal', type=int, help='id of the goal node')
     parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
 
+    Master.add_standard_args(parser)
+
     parser.add_argument('-s', '--standard_heuristic', action='store_true', help='use standard heuristic file')
-
-    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
-    parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
-
-    measure = parser.add_mutually_exclusive_group()
-    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
-    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
-
-    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
-    parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
 
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
     parser.add_argument('-g', '--goals', type=int, nargs='+', help='Override provided goal with a list goals to perform MULTIPLE queries')
-    parser.add_argument('-r', '--repeat', '--repeats', type=int, help='Repeat the entire query')
 
     args = parser.parse_args()
+
+    Master.check_combos(args)
 
     # expanded_count does count every single node only once. That means, if a node gets visited again, it does not count again.
     # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.

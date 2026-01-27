@@ -3,6 +3,7 @@ import subprocess
 from measure.measure import Timer, Memory
 import duckdb
 import json
+from general_query import GeneralQuery as Master
 
 def perform_query(args, item_table):
     scripts = []
@@ -92,20 +93,14 @@ if __name__ == '__main__':
     parser.add_argument('item_table', type=str, help='name of the item_table to perform the query on')
     parser.add_argument('max_weight', type=int, help='total max weight')
 
+    Master.add_standard_args(parser)
+
     parser.add_argument('-g', '--item_tables', type=str, nargs='*', help='additional item_tables to evaluate')
     parser.add_argument('-r', '--random', type=int, nargs='*', help='create random item-table of given size')
 
-    parser.add_argument('-u', '--using_key', action='store_true', help='USING KEY')
-    parser.add_argument('-c','--classic', action='store_true', help='use classic CTE')
-
-    measure = parser.add_mutually_exclusive_group()
-    measure.add_argument('-t', '--time', action='store_true', help='measure process time for query execution')
-    measure.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
-
-    parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
-    parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='measure time and store into FILE')
-
     args = parser.parse_args()
+
+    Master.check_combos(args)
 
     header = ['script','item_table','items_count','max_value','table_size']
 

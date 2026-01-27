@@ -2,29 +2,47 @@
 
 Queries for testing DuckDB's revolutionary new approach for writing recursive CTEs.
 
-## Usage
+# Usage
 
-### Installation
+## Installation
 1. Clone the repository
 2. Install the DuckDB Python package via `pip install duckdb`
 3. In the root directory, use the provided `.py`-files to run the queries
 
-Every query implements the following flags:
-```
-  -h, --help     show help message and exit
-  -c, --classic  use classic CTE (without USING KEY)
-```
-The following queries and implemented:
 
-### A*
+# Queries
+
+Every query implements the following flags.
+```
+  -h, --help            show this help message and exit
+  -u, --using_key       USING KEY
+  -c, --classic         use classic CTE
+  -t, --time            measure process time for query execution
+  -m, --memory          measure memory allocated during query execution
+  -x, --suppress_solution
+                        suppress print of solution
+  -f, --file [FILE]     store measured data into FILE
+  --repeat, --repeats REPEAT
+                        Repeat the entire query
+```
+
+Besides those, every query implements individual flags. The explanations below only show the required inputs. For a full list of arguments, use the option `-h` to display the help document for a query.
+
+Algorithms for the following problems have been implemented as queries: 
+- A* Search Algorithm
+- Longest Common Subsequence
+- Drunken Bishop 
+- Needleman-Wunsch
+- Knapsack
+
+## A* Search Algorithm
 Find the shortest path between two nodes in a graph. It expands Dijkstra's Algorithm by using a heuristic function to estimate the distance to the goal node.
 
 ```
-python astar.py [-h] [-c] db graph start goal [heuristic]
+python astar.py db graph start goal [heuristic] [OPTIONS]
 ```
 
-
-The graph has to be defined in a `.db`-file. It has to implement the following schema:
+The `graph` has to be defined in a DuckDB-`.db`-file, provided as `db`. It has to implement the following schema:
 ```SQL
 CREATE TABLE graph (
     node_from INTEGER,
@@ -38,41 +56,73 @@ To define a custom heuristic function, pass the according SQL-code as an argumen
 Example:
 ```
 > python astar.py example.db simple 0 6
-USING KEY
-
-Path:    0 -> 1 -> 3 -> 5 -> 6
-Length:  5
+using-key.sql
+-------------
+Path: 0 -> 1 -> 3 -> 5 -> 6 (5 nodes)
+Total Weight: 5
+7 nodes expanded
+7 items in final table
 ```
 
-### Longest Common Subsequence
+## Longest Common Subsequence (LCS)
 
-Find the longest substring common to both `string1` and `string2`.
-
-```
-lcs.py [-h] [-c] string1 string2
-```
-
-
-Example:
-```
-> python lcs.py 'Never gonna give you up' 'Never gonna let you down'
-USING KEY
-Never gonna e you 
+Find the longest substring common to two input strings.
 
 ```
+python lcs.py [-s STRINGS [STRINGS ...] | -r RANDOM [RANDOM ...]]
+```
 
-### Drunken Bishop
+You have to choose between one of two options:
+1. Provide your own input with `-s STRING_1a STRING_1b STRING_2a STRING_2b ...`. You can define an arbitrary amount of string-tuples. The two strings of a tuple get compared to each other.
+2. Generate random strings with `-r LENGTH_1 LENGTH_2 ...`, providing the length of the generated strings. For each LENGTH, one string-tuple is being generated.
+
+
+Examples:
+```
+> python lcs.py -s 'never gonna give you up' 'never gonna let you down' 
+using-key.sql
+-------------
+'never gonna e you '
+600 items in final table
+```
+
+```
+> python lcs.py -r 10 20
+String1: goluhezsyn
+String2: yqatlurdgi
+
+using-key.sql
+-------------
+lu
+121 items in final table
+
+String1: fmgynxkvztoeajwtqdrj
+String2: jbrenxfiynytokmzhbig
+
+using-key.sql
+-------------
+fynto
+fynkz
+441 items in final table
+```
+
+## Drunken Bishop
 
 Create and ASCII-image based on a string of hexadecimal numbers.
 ```
-bishop.py [-h] [-p] [-c] [-s SCALE] fingerprint
+bishop.py [-s FINGERPRINT [FINGERPRINT ...] | -r RANDOM [RANDOM ...]]
 ```
 The argument `fingerprint` is a string of hexadecimal numbers, separated by `:`.
 
+You have to choose between one of two options:
+1. Provide your own input with `-s FINGERPRINT_1 FINGERPRINT_2 ...`. You can define an arbitrary amount of fingerprints.
+2. Generate random strings with `-r LENGTH_1 LENGTH_2 ...`, providing the length of the generated strings. For each LENGTH, one string-tuple is being generated.
+
 Example:
 ```
-> python bishop.py fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7
-USING KEY
+> python bishop.py -s fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7
+using-key.sql
+-------------
 +-----------------+
 |       .=o.  .   |
 |     . *+*. o    |
@@ -86,50 +136,87 @@ USING KEY
 +-----------------+
 ```
 
-## Unit testing
+```
+> python bishop.py -r 30
+Generated 4c:56:34:f0:50:35:a7:ba:2d:6e:11:f9:3a:1d:a8:7b:39:a9:91:58:44:91:93:b1:a1:32:30:95:7b:05
+using-key.sql
+-------------
++-----------------+
+|  o.....BO=.o .  |
+|   o.  o=* . +   |
+|    o...=....    |
+|    .o.=  o.     |
+|     .  + .+     |
+|       o .ooo    |
+|      . o.o*..   |
+|        .oO..    |
+|        o=.o     |
++-----------------+
+```
 
-Unit tests are defined in `/tests`. Run the `.py`-files to test the queries directly. Additional tests can be defined at the bottom of the `.py`-files, marked with an according comment.
+## Needleman-Wunsch
+
+Align two strings. Most commonly used to align DNA sequences.
+
+```
+> python needleman.py [-s STRINGS [STRINGS ...] | -r RANDOM [RANDOM ...]] [-p PROBABILITY]
+```
+
+You have to choose between one of two options:
+1. Provide your own input with `-s SEQUENCE_1a SEQUENCE_1b SEQUENCE_2a SEQUENCE _2b ...`. You can define an arbitrary amount of tuples.
+2. Generate random DNA sequences (i.e. strings consisting of the letters G, A, C and T) with `-r LENGTH_1 LENGTH_2 ...`, providing the length of the generated sequences. For each LENGTH, one string-tuple is being generated. When using this option, you also need to provide a value for `-p`. This value defines the probability for each letter of the generated second sequence to differ from the corresponding letter in the first sequence.
 
 Example:
 ```
-python tests/astar.py
+> python needleman.py -s GCATGCG GATTACAS
+using-key.sql
+-------------
+GCA-TGCG-
+G-ATTACAS
+
+GCAT-GCG-
+G-ATTACAS
+
+GCATG-CG-
+G-ATTACAS
+
+GCAT-GC-G
+G-ATTACAS
+
+GCA-TGC-G
+G-ATTACAS
+
+GCATG-C-G
+G-ATTACAS
 ```
 
+```
+> python needleman.py -r 10 -p 0.5
+String1: AGGCTCCATT
+String2: TTACTACAGT
 
-## Measurements
+using-key.sql
+-------------
+AGGCTCCATT
+TTACTACAGT
+
+AGGCTCCATT
+A--CTACAGT
+```
+
+## Knapsack
+
+TODO
+
+# Measurements
 
 A protocol of inputs for the different algorithms and my observations.
 
-### A*
+## A*
 
-Works out of the box, but no performance difference is observable:
-```bash
-python astar.py example.db simple 0 6
-```
+...
 
-Requires an additional ![graph](https://repository.surfsara.nl/datasets/cwi/lsqb), but performance difference is observable. 
-
-The graph `person_knows_person` has 
-- 162,059 nodes
-- 7,273,036 edges
-- a mean branching factor of ~45.
-
-```bash
-python astar.py graphs.db person_knows_person 14 2199023256081
-```
-
-- My Laptop (Acer Spin 5) finds the solution in... 
-    - USING KEY: 1m 18s
-    - Classic query: 40s 🤨
-
-
-Observe memory use of the following query.
-
-```bash
-python astar.py graphs.db person_knows_person 14 37383395527996
-```
-
-### LCS
+## LCS
 
 ```bash
 python lcs.py -s 'Never gonna give you up' 'Never gonna let you down'
@@ -145,7 +232,7 @@ python lcs.py -s 'Houston, we have a problem' 'Oberpfaffenhofen, wir haben ein P
     - USING KEY: ~330 ms
     - Classic query: > 10 min
 
-### Bishop
+## Bishop
 
 ```bash
 python bishop.py -s 4 -r 400
@@ -156,12 +243,12 @@ python bishop.py -s 4 -r 400
     - Classic query: 180 ms 🤨
 
 
-## Sources
+# Sources
 Graph from 9th DIMACS Implementation Challenge:
 ```https://www.diag.uniroma1.it/challenge9/download.shtml```
 
 
-## Directly use finder in astar with
+# Directly use finder in astar with
 ```bash
 cat queries/astar/finder.sql | duckdb usa.db -list | tail -n 1
 ```
