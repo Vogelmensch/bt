@@ -17,8 +17,9 @@ def perform_query(string1, string2, args):
 
     for script in scripts:
         script_name = script.split('/')[-1]
-        print(script_name) # Print script name
-        print('-' * len(script_name))
+        if not args.suppress_solution:
+            print(script_name) # Print script name
+            print('-' * len(script_name))
 
         with open(script) as f:
             query = f.read()
@@ -60,7 +61,7 @@ def perform_query(string1, string2, args):
                 print(s2)
                 print()
 
-        if args.time:
+        if args.time and not args.suppress_solution:
             print(timestr)
 
         if args.memory:
@@ -75,7 +76,8 @@ def perform_query(string1, string2, args):
             if args.memory:
                 memory.write_csv(data)
 
-        print()
+        if not args.suppress_solution:
+            print()
 
 
 if __name__ == '__main__':
@@ -109,18 +111,23 @@ if __name__ == '__main__':
         if len(args.strings) % 2 == 1:
                 parser.exit(status=1, message='Please provide an even amount of strings for -s.')
 
+        current_repeat = 1
+        total_repeats = int(len(args.strings)/2) * repeats
         while len(args.strings) > 0:
-            print(f'{int(len(args.strings)/2)} remaining')
             string1 = args.strings.pop(0)
             string2 = args.strings.pop(0)
 
             for _ in range(repeats):
+                if args.suppress_solution:
+                    print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+                    current_repeat += 1
                 perform_query(string1, string2, args)
 
     # Generate random strings with given lengths
     elif args.random:
+        current_repeat = 1
+        total_repeats = len(args.random) * repeats
         while len(args.random) > 0:
-            print(f'{len(args.random)} remaining')
             random_string_length = args.random.pop(0)
             for _ in range(repeats):
                 # Generate first string randomly
@@ -130,7 +137,10 @@ if __name__ == '__main__':
                     argparse.ArgumentParser.exit(1, 'When generating random strings, you need to provide -p PROBABILITY')
                 # Generate second string by inserting diffs into string1
                 string2 = dna.insert_diffs(string1, args.probability)
-                if not args.suppress_solution:
+                if args.suppress_solution:
+                    print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+                    current_repeat += 1
+                else:
                     print('String1: {}\nString2: {}'.format(string1, string2))
                     print()
 

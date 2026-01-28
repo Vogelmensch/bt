@@ -5,3 +5,5 @@ activate-venv
 __pycache__
 *.csv
 usa.db
+nyc.db
+large_measurements/
