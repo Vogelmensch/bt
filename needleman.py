@@ -2,7 +2,7 @@ import subprocess
 import argparse
 import generators.dna as dna
 from measure.measure import Timer, Memory
-from general_query import GeneralQuery as Master
+from general_query import GeneralQuery as master
 
 def perform_query(string1, string2, args):
     scripts = []
@@ -33,16 +33,13 @@ def perform_query(string1, string2, args):
         if args.memory:
             memory.start()
 
-        # Execute query as subprocess
-        res = subprocess.run(['duckdb', '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
+        res = master.run_subprocess(cmd, query, args)
+
+        if not res:
+            continue
 
         if args.memory:
             memory.stop()
-
-        if res.stderr != '':
-            print('An error occured during query execution:')
-            print(res.stderr)
-            return
 
         out = res.stdout.split('\n')
         if args.time:
@@ -78,12 +75,13 @@ def perform_query(string1, string2, args):
 
         if not args.suppress_solution:
             print()
+            print()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform needleman-wunsch query.')
 
-    Master.add_standard_args(parser)
+    master.add_standard_args(parser)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--strings', type=str, nargs='+', help='String arguments to compare')
@@ -92,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--probability', type=float, help='Probability of changing a random letter in random string')
 
     args = parser.parse_args()
-    Master.check_combos(args)
+    master.check_combos(args)
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count']
     

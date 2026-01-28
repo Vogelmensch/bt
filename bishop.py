@@ -3,7 +3,7 @@ from itertools import chain
 import subprocess
 from generators.hexstring import generate
 from measure.measure import Timer, Memory
-from general_query import GeneralQuery as Master
+from general_query import GeneralQuery as master
 
 
 def to_bit_reversed(hex_str):
@@ -112,16 +112,13 @@ def perform_query(args):
         if args.memory:
             memory.start()
 
-        # Execute query as subprocess
-        res = subprocess.run(['duckdb', '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
+        res = master.run_subprocess(cmd, query, args)
+
+        if not res:
+            continue
 
         if args.memory:
             memory.stop()
-
-        if res.stderr != '':
-            print('An error occured during query execution:')
-            print(res.stderr)
-            return
 
         # Format result into 'out'
         out = res.stdout.split('\n')
@@ -167,7 +164,7 @@ def perform_query(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Perform Drunken-Bishop query.')
 
-    Master.add_standard_args(parser)
+    master.add_standard_args(parser)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--fingerprint', '--string', type=str, nargs='+', help='hex-string, e.g. 42:f2:bb:02')
@@ -177,7 +174,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
 
-    Master.check_combos(args)
+    master.check_combos(args)
 
     if not args.fingerprint and not args.random:
         parser.exit(1, 'Provide either -s FINGERPRINT or -r INTEGER.')

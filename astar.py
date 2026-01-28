@@ -1,7 +1,8 @@
+import subprocess
 import subprocess 
 import argparse
 from measure.measure import Timer, Memory
-from general_query import GeneralQuery as Master
+from general_query import GeneralQuery as master
 
 STANDARD_HEURISTIC = '(select sqrt((fr.long - t.long)^2 + (fr.lat - t.lat)^2) from coords as fr join coords as t on fr.node_id = x and t.node_id = goal_node())'
 
@@ -46,16 +47,13 @@ def perform_query(args):
         if args.memory:
             memory.start()
 
-        # Execute query as subprocess
-        res = subprocess.run(['duckdb', args.db, '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
+        res = master.run_subprocess(cmd, query, args)
+
+        if not res:
+            continue
 
         if args.memory:
             memory.stop()
-        
-        if res.stderr != '':
-            print('An error occured during query execution:')
-            print(res.stderr)
-            return
         
         out = res.stdout.replace('\n', '|').split('|')
 
@@ -121,7 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('goal', type=int, help='id of the goal node')
     parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
 
-    Master.add_standard_args(parser)
+    master.add_standard_args(parser)
 
     parser.add_argument('-s', '--standard_heuristic', action='store_true', help='use standard heuristic file')
 
@@ -130,7 +128,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    Master.check_combos(args)
+    master.check_combos(args)
 
     # expanded_count does count every single node only once. That means, if a node gets visited again, it does not count again.
     # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.

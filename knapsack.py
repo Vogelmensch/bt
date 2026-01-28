@@ -3,7 +3,7 @@ import subprocess
 from measure.measure import Timer, Memory
 import duckdb
 import json
-from general_query import GeneralQuery as Master
+from general_query import GeneralQuery as master
 
 def perform_query(args, item_table):
     scripts = []
@@ -36,16 +36,14 @@ def perform_query(args, item_table):
         if args.memory:
             memory.start()
 
-        res = subprocess.run(['duckdb', args.db, '-json', '-cmd', cmd], input=query, text=True, capture_output=True)
+        res = master.run_subprocess(cmd, query, args)
+
+        if not res:
+            continue
 
         if args.memory:
             memory.stop()
         
-        if res.stderr != '':
-            print('An error occured during query execution:')
-            print(res.stderr)
-            return
-
         results = res.stdout.split('\n')
         if args.time:
             json_string = results[1][1:-1]
@@ -93,14 +91,14 @@ if __name__ == '__main__':
     parser.add_argument('item_table', type=str, help='name of the item_table to perform the query on')
     parser.add_argument('max_weight', type=int, help='total max weight')
 
-    Master.add_standard_args(parser)
+    master.add_standard_args(parser)
 
     parser.add_argument('-g', '--item_tables', type=str, nargs='*', help='additional item_tables to evaluate')
     parser.add_argument('-r', '--random', type=int, nargs='*', help='create random item-table of given size')
 
     args = parser.parse_args()
 
-    Master.check_combos(args)
+    master.check_combos(args)
 
     header = ['script','item_table','items_count','max_value','table_size']
 

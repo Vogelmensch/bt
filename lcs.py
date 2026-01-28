@@ -2,7 +2,7 @@ import subprocess
 import argparse
 from generators.rstring import generate
 from measure.measure import Timer, Memory
-from general_query import GeneralQuery as Master
+from general_query import GeneralQuery as master
 
 def perform_query(string1, string2, args):
     scripts = []
@@ -34,16 +34,13 @@ def perform_query(string1, string2, args):
         if args.memory:
             memory.start()
 
-        # Execute query as subprocess
-        res = subprocess.run(['duckdb', '-list', '-cmd', cmd], input=query, text=True, capture_output=True)
+        res = master.run_subprocess(cmd, query, args)
+
+        if not res:
+            continue
 
         if args.memory:
             memory.stop()
-
-        if res.stderr != '':
-            print('An error occured during query execution:')
-            print(res.stderr)
-            return
         
         out = res.stdout.split('\n')
         if args.time:
@@ -85,14 +82,14 @@ if __name__ == '__main__':
         description='Perform lcs query.', 
         epilog='To perform multiple measurements, provide multiple tuples for either -s or -r.')
 
-    Master.add_standard_args(parser)
+    master.add_standard_args(parser)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-s', '--strings', type=str, nargs='+', help='String arguments to compare')
     group.add_argument('-r', '--random', type=int, nargs='+', help='use randomly generated strings of given lengths')
 
     args = parser.parse_args()
-    Master.check_combos(args)
+    master.check_combos(args)
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count', 'table_size']
 
