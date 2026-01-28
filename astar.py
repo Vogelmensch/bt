@@ -4,17 +4,17 @@ import argparse
 from measure.measure import Timer, Memory
 from general_query import GeneralQuery as master
 
-STANDARD_HEURISTIC = '(select sqrt((fr.long - t.long)^2 + (fr.lat - t.lat)^2) from coords as fr join coords as t on fr.node_id = x and t.node_id = goal_node())'
-
 # supply args from argparse
 def perform_query(args):
     if args.standard_heuristic:
-        heuristic = STANDARD_HEURISTIC
+        with open('queries/astar/sloppy_heuristic.sql') as f:
+            heuristic = f.read()
     elif args.heuristic:
-        heuristic = args.heuristic
+        with open(args.heuristic) as f:
+            heuristic = f.read()
     else:
         # without a heuristic, A* reduces to dijkstra
-        heuristic = 0
+        heuristic = 'CREATE OR REPLACE MACRO h(x) AS 0;'
 
     scripts = []
 
@@ -51,7 +51,7 @@ def perform_query(args):
 
         if not res:
             continue
-
+    
         if args.memory:
             memory.stop()
         
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('graph', type=str, help='name of the graph to perform the query on')
     parser.add_argument('start', type=int, help='id of the start node')
     parser.add_argument('goal', type=int, help='id of the goal node')
-    parser.add_argument('heuristic', type=str, nargs='?', help='optional custom heuristic function. Default: h(x) = 0')
+    parser.add_argument('heuristic', type=str, nargs='?', help='optional file path for custom heuristic function. Default: h(x) = 0')
 
     master.add_standard_args(parser)
 

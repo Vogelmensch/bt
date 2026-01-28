@@ -34,10 +34,10 @@ class GeneralQuery:
             timeout = None
 
         try:
-            res = sp.run(['duckdb', db, '-list', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
+            res = sp.run(['duckdb', db, '-list', '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
         except sp.TimeoutExpired:
             if not args.suppress_solution:
-                print('query timed out.\n\n')
+                print('query timed out.\n')
             return
         
         if res.stderr != '':
