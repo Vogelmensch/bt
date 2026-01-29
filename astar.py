@@ -49,6 +49,18 @@ def perform_query(args):
 
         res = master.run_subprocess(cmd, query, args)
 
+        if res == 'timeout':
+            if args.file == 'DONT STORE':
+                continue
+            data = [script_name, args.graph, args.start, args.goal] + 5 * [None]
+            if args.time:
+                timelist = [args.timeout] + 2 * [None]
+                timer.foreign_measurement(timelist)
+                timer.write_csv(data)
+            if args.memory:
+                memory.write_csv(data)
+            continue
+
         if not res:
             continue
     
@@ -89,7 +101,7 @@ def perform_query(args):
 
         # data to store to csv
         if args.file != 'DONT STORE':
-            data = [script_name, args.graph, path, nodes_count, total_weight, expanded_count, table_size]
+            data = [script_name, args.graph, args.start, args.goal, path, nodes_count, total_weight, expanded_count, table_size]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
@@ -133,7 +145,7 @@ if __name__ == '__main__':
     # expanded_count does count every single node only once. That means, if a node gets visited again, it does not count again.
     # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.
     # for measuring performance, total_visiting_count seems to be the better metric.
-    header = ['script','graph','path','nodes_count','total_weight','expanded_count','table_size']
+    header = ['script','graph','start_node','goal_node','path','nodes_count','total_weight','expanded_count','table_size']
 
     if args.time:
         timer = Timer('astar', args.file, header[:])

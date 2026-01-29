@@ -38,7 +38,7 @@ class GeneralQuery:
         except sp.TimeoutExpired:
             if not args.suppress_solution:
                 print('query timed out.\n')
-            return
+            return 'timeout'
         
         if res.stderr != '':
             print('An error occured during query execution:')
