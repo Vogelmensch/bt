@@ -36,13 +36,21 @@ def perform_query(args, item_table):
         if args.memory:
             memory.start()
 
-        res = master.run_subprocess(cmd, query, args)
-
-        if not res:
-            continue
+        res = master.run_subprocess(cmd, query, args, result_format='-json')
 
         if args.memory:
             memory.stop()
+
+        if res == 'timeout':
+            constant_data = [script_name, item_table, args.max_weight]
+            if args.time:
+                master.store_timeout(args, constant_data, timer)
+            if args.memory:
+                master.store_timeout(args, constant_data, memory)
+            continue
+
+        if not res:
+            continue
         
         results = res.stdout.split('\n')
         if args.time:
@@ -70,7 +78,7 @@ def perform_query(args, item_table):
 
         # data to store to csv
         if args.file != 'DONT STORE':
-            data = [script_name, item_table, items_count, max_value, table_size]
+            data = [script_name, item_table, args.max_weight, items_count, max_value, table_size]
             if args.time:
                 timelist = timestr.split()
                 timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
@@ -100,7 +108,7 @@ if __name__ == '__main__':
 
     master.check_combos(args)
 
-    header = ['script','item_table','items_count','max_value','table_size']
+    header = ['script','item_table','max_weight','items_count','max_value','table_size']
 
     if args.time:
         timer = Timer('knapsack', args.file, header[:])

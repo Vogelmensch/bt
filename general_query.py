@@ -23,7 +23,7 @@ class GeneralQuery:
         if args.file != 'DONT STORE' and not args.time and not args.memory:
             print('CAUTION: You provided a file with --file but no measurement with --time or --memory.')
 
-    def run_subprocess(cmd: str, query: str, args: argparse.Namespace) -> sp.CompletedProcess:
+    def run_subprocess(cmd: str, query: str, args: argparse.Namespace, result_format='-list') -> sp.CompletedProcess:
         # some queries don't need those, so we need to check for their existence
         try:
             db = args.db
@@ -35,7 +35,7 @@ class GeneralQuery:
             timeout = None
 
         try:
-            res = sp.run(['duckdb', db, '-list', '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
+            res = sp.run(['duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
         except sp.TimeoutExpired:
             if not args.suppress_solution:
                 print('query timed out.\n')
