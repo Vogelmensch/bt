@@ -11,6 +11,7 @@ class Measurer:
     # `header` appears to be a global variable of some sort??
     def __init__(self, query_name, filepath, header=None):
         self.query_name = query_name
+        self.header = header
         
         if filepath == 'NOT PROVIDED':
             self.filepath = self._generate_filename()

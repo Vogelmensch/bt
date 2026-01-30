@@ -1,5 +1,6 @@
 import argparse
 import subprocess as sp
+from measure.measure import Measurer, Timer, Memory
 
 # Code that every query-evaluating python-file needs!
 class GeneralQuery:
@@ -38,6 +39,7 @@ class GeneralQuery:
         except sp.TimeoutExpired:
             if not args.suppress_solution:
                 print('query timed out.\n')
+            
             return 'timeout'
         
         if res.stderr != '':
@@ -46,3 +48,18 @@ class GeneralQuery:
             return
 
         return res
+
+    # Store data that exists even without completed measurement
+    # Store timeout-time in seconds for t_real and NULL for the rest
+    def store_timeout(args, constant_data, measurer: Measurer):
+        if args.file == 'DONT STORE':
+            return
+        n_dynamic_data = len(measurer.header) - len(constant_data)
+        if args.time:
+            data = constant_data + (n_dynamic_data-3) * [None]
+            timelist = [args.timeout] + 2 * [None]
+            measurer.foreign_measurement(timelist)
+            measurer.write_csv(data)
+        if args.memory:
+            data = constant_data + (n_dynamic_data-2) * [None]
+            measurer.write_csv(data)

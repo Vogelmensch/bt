@@ -49,24 +49,20 @@ def perform_query(args):
 
         res = master.run_subprocess(cmd, query, args)
 
-        if res == 'timeout':
-            if args.file == 'DONT STORE':
-                continue
-            data = [script_name, args.graph, args.start, args.goal] + 5 * [None]
-            if args.time:
-                timelist = [args.timeout] + 2 * [None]
-                timer.foreign_measurement(timelist)
-                timer.write_csv(data)
-            if args.memory:
-                memory.write_csv(data)
-            continue
+        if args.memory:
+            memory.stop()
 
+        if res == 'timeout':
+            constant_data = [script_name, args.graph, args.start, args.goal]
+            if args.time:
+                master.store_timeout(args, constant_data, timer)
+            if args.memory:
+                master.store_timeout(args, constant_data, memory)
+            continue
+        
         if not res:
             continue
     
-        if args.memory:
-            memory.stop()
-        
         out = res.stdout.replace('\n', '|').split('|')
 
         if (len(res.stdout) > 0):

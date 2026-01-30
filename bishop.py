@@ -114,11 +114,19 @@ def perform_query(args):
 
         res = master.run_subprocess(cmd, query, args)
 
-        if not res:
-            continue
-
         if args.memory:
             memory.stop()
+
+        if res == 'timeout':
+            constant_data = [script_name, len(fp_list), scale] 
+            if args.time:
+                master.store_timeout(args, constant_data, timer)
+            if args.memory:
+                master.store_timeout(args, constant_data, memory)
+            continue
+
+        if not res:
+            continue
 
         # Format result into 'out'
         out = res.stdout.split('\n')

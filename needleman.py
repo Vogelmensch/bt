@@ -35,11 +35,19 @@ def perform_query(string1, string2, args):
 
         res = master.run_subprocess(cmd, query, args)
 
-        if not res:
-            continue
-
         if args.memory:
             memory.stop()
+
+        if res == 'timeout':
+            constant_data = [script_name, len(string1), len(string2)]
+            if args.time:
+                master.store_timeout(args, constant_data, timer)
+            if args.memory:
+                master.store_timeout(args, constant_data, memory)
+            continue
+
+        if not res:
+            continue
 
         out = res.stdout.split('\n')
         if args.time:
