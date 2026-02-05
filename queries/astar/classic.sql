@@ -91,7 +91,6 @@ WITH RECURSIVE astar (
             {graph}        AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN -- neighbors of smallest node
             filtered_astar AS old ON nbs.node_to = old.node_id                   -- old dist and prev of neighbors
         WHERE 
-            NOT sml.visited AND                                                     -- not visited yet -> part of the front
             sml.node_id = (SELECT id FROM min_node) AND                             -- sml is the smallest node in the front
             sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND    -- modify only neighbors with smaller distances
             sml.node_id != goal_node()                                              -- stop when path to goal node has been found
