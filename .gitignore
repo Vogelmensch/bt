@@ -7,3 +7,4 @@ __pycache__
 usa.db
 nyc.db
 large_measurements/
+*.pdf
