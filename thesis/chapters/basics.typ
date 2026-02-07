@@ -1,3 +1,7 @@
+#set heading(numbering: "1.1")
+
+#import "rec_ctes_img.typ": it2, im2
+
 #let colgut = 15pt
 #let rowgut = 10pt
 #let gap = 15pt
@@ -43,7 +47,7 @@ SQLs way of doing this is called the *Common Table Expression* (CTE). The genera
 ) <cte_general>
 
 
-== `WITH RECURSIVE`: Making SQL turing-complete
+== `WITH RECURSIVE`: Making SQL turing-complete <with_recursive>
 
 In order for SQL to become turing complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs, SQL:1999 introduced _recursive CTEs_, which expand the general CTE by allowing self-reference within the inner query. 
 
@@ -89,14 +93,25 @@ See @cte_recursive for the general layout and an example. As we are dealing with
   )
 ) <cte_recursive>
 
-How do recursive CTEs work internally in DuckDB? Let us consider the example in @cte_recursive and follow its computation step-by-step.
-
 Internally, DuckDB uses three tables to perform the recursive computation.
-1. The current iteration stores its result in the *intermediate table*.
-2. At the end of one iteration, the values from the intermediate table get moved to the *working table*. In the next iteration, we can access the working table to use the results of the _previous iteration_.
-3. The results of all iterations are accumulated in the *union table*.
+- Except for the base case, each iteration can access the *working table*.
+- Each iteration stores its result by overwriting the *intermediate table*.
+- At the end of each iteration, the values in the intermediate table get copied to the *working table*. Thus, in the next iteration, we can use the results of the previous iteration.
+- The results of all iterations are accumulated in the *union table*.
 
+Following the example introduced in @cte_recursive, we visualize the process of iterative computation using recursive CTEs. @example_it shows the tables the recursive query uses as input and output: it has access to the working table and stores its results by writing to the intermediate table and appending the union table. @example_im shows how the working table gets overwritten in between iterations by the values stored in the intermediate table. This way, the query can always access the results from the previous iteration.
 
+#figure(
+  placement: top,
+  caption: [The CTE calculates the 2nd iteration using data from the working table and writing to the intermediate- and union table respectively.],
+  it2
+) <example_it>
+
+#figure(
+  placement: top,
+  caption: [The working table gets overwritten by the intermediate table between the 2nd and 3rd iterations.],
+  im2
+) <example_im>
 
 
 == The problem with recursive CTEs
@@ -114,7 +129,9 @@ While the additional work is manageable in this example, it grows while queries 
 
 But it is not just the query author who has to put in unnecessary work. Even if we select only those values that have been calculated in the last iteration, until this point, *all intermediate values* have been stored in the so-called _Union Table_. Again, with increasing complexity and amount of data, all this unnecessarily stored data can easily overwhelm our system.
 
-Finally, there is 
+Finally, the question arises which values our CTE should have access to. We saw in @with_recursive, that the CTE has access to the working table, which holds the results from the previous iteration. But what if we want to access results which have been calculated in an _even earler_ iteration? While those values have been stored in the union table, we cannot access them during runtime, as we do not have access to the union table. 
+
+TODO: warum eigentlich nicht?
 
 
 == `USING KEY`: making loops great again
