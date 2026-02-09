@@ -16,7 +16,7 @@
 #let cte_table(pos, table_name, ..content) = node(
   pos,
   shape: rect,
-  stroke: tablestroke,
+  stroke: none,
   grid(
     rows: 2,
     row-gutter: 10pt,

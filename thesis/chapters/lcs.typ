@@ -12,3 +12,6 @@ and
 $ s_2 = "\"Never gonna let you down\"," $
 some subsequences common to both $s_1$ and $s_2$ would be "Never", "Never gonna", "gonna you", but also "N  p", "eea" "r na u", etc. Now, what we are looking for is the _longest_ common subsequence, which, in this case, is "Never gonna e you " (notice the whitespace at the end).
 
+Note that the longest common subsequence is not equal to the longest common _substring_. The difference is ...
+
+
