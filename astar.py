@@ -48,7 +48,7 @@ def perform_query(args):
         if args.memory:
             memory.start()
 
-        res = master.run_subprocess(cmd, query, args)
+        res = master.run_subprocess(cmd, query, args, result_format='-json')
 
         if args.memory:
             memory.stop()
@@ -63,26 +63,17 @@ def perform_query(args):
         
         if not res:
             continue
-    
-        out = res.stdout.replace('\n', '|').split('|')
 
-        if (len(res.stdout) > 0):
-            if args.time:
-                idx = 7
-            else:
-                idx = 4
-            path = out[idx]
-            total_weight = out[idx+1]
-            expanded_count = out[idx+2]
-            table_size = out[idx+3] 
-            timestr = out[idx+4] if args.time else None
-        else:
-            path, total_weight, timestr = None, None, None
+        # 'out': dictionary holding values
+        out, timestr = master.get_out_dict(args, res)
 
-        nodes_count = len(path.split('->'))
-            
+        # getting values out of 'out'
+        path, total_weight, expanded_count, table_size = out['Path'], out['Distance'], out['Expanded Nodes'], out['Table Size']
+   
+        nodes_count = len(path.split('->')) if path else None
+
         if not args.suppress_solution:
-            if (len(res.stdout) == 0):
+            if not path:
                 print('Nothing found.')
             else:
                 print(f'Path: {path} ({nodes_count} node{'' if nodes_count == 1 else 's'})')
