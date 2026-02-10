@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     master.add_standard_args(parser)
 
-    parser.add_argument('--use_heuristic', action='store_true', help='use heuristic for coordinate-based queries')
+    parser.add_argument('--use_heuristic', '--heu', action='store_true', help='use heuristic for coordinate-based queries')
 
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
     parser.add_argument('-g', '--goals', type=int, nargs='+', help='Override provided goal with a list goals to perform MULTIPLE queries')
