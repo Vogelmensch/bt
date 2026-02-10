@@ -1,5 +1,6 @@
 import argparse
 import subprocess as sp
+import json
 from measure.measure import Measurer, Timer, Memory
 
 # Code that every query-evaluating python-file needs!
@@ -23,7 +24,7 @@ class GeneralQuery:
         if args.file != 'DONT STORE' and not args.time and not args.memory:
             print('CAUTION: You provided a file with --file but no measurement with --time or --memory.')
 
-    def run_subprocess(cmd: str, query: str, args: argparse.Namespace, result_format='-list') -> sp.CompletedProcess:
+    def run_subprocess(cmd: str, query: str, args: argparse.Namespace, result_format='-json') -> sp.CompletedProcess:
         # some queries don't need those, so we need to check for their existence
         try:
             db = args.db
@@ -63,3 +64,22 @@ class GeneralQuery:
         if args.memory:
             data = constant_data + (n_dynamic_data-2) * [None]
             measurer.write_csv(data)
+
+    # get dictionary of the query's output values
+    # also get timestr
+    def get_out_dict(args, res):
+        results = res.stdout.split('\n')
+        if args.time:
+            # timestr is always the second-to-last item (last item is always empty),
+            # and json_string is always the item before that
+            json_string = results[-3][1:-1]
+            timestr = results[-2]
+        else:
+            # here, json_string is second-to-last item 
+            json_string = results[-2][1:-1]
+            timestr = ''
+
+        out = json.loads(json_string)
+
+        return out, timestr
+

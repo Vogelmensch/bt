@@ -6,16 +6,15 @@ from general_query import GeneralQuery as master
 
 # supply args from argparse
 def perform_query(args):
-    if args.standard_heuristic:
-        with open('queries/astar/sloppy_heuristic.sql') as f:
-            heuristic = f.read()
-    elif args.heuristic:
-        with open(args.heuristic) as f:
-            heuristic = f.read()
+    if args.use_heuristic:
+        with open('queries/astar/create_heuristic_graph.sql') as f:
+            heuristic_query = f.read()
+        graph = 'h_' + args.graph
+        heuristic_query.format(goal_node=args.goal, graph=graph)
     else:
-        # without a heuristic, A* reduces to dijkstra
-        heuristic = 'CREATE OR REPLACE MACRO h(x) AS 0;'
-
+        heuristic_query = ''
+        graph = args.graph
+    
     scripts = []
 
     if args.using_key:
@@ -35,8 +34,10 @@ def perform_query(args):
         with open(script) as f:
             query = f.read()
 
+        query = heuristic_query + query
+
         # Add arguments with formatted python string
-        query = query.format(graph=args.graph, start_node=args.start, goal_node=args.goal, heuristic=heuristic)
+        query = query.format(graph=graph, start_node=args.start, goal_node=args.goal)
 
         # Use duckdb's interal time measurement utility
         if args.time:
@@ -62,26 +63,17 @@ def perform_query(args):
         
         if not res:
             continue
-    
-        out = res.stdout.replace('\n', '|').split('|')
 
-        if (len(res.stdout) > 0):
-            if args.time:
-                idx = 7
-            else:
-                idx = 4
-            path = out[idx]
-            total_weight = out[idx+1]
-            expanded_count = out[idx+2]
-            table_size = out[idx+3] 
-            timestr = out[idx+4] if args.time else None
-        else:
-            path, total_weight, timestr = None, None, None
+        # 'out': dictionary holding values
+        out, timestr = master.get_out_dict(args, res)
 
-        nodes_count = len(path.split('->'))
-            
+        # getting values out of 'out'
+        path, total_weight, expanded_count, table_size = out['Path'], out['Distance'], out['Expanded Nodes'], out['Table Size']
+   
+        nodes_count = len(path.split('->')) if path else None
+
         if not args.suppress_solution:
-            if (len(res.stdout) == 0):
+            if not path:
                 print('Nothing found.')
             else:
                 print(f'Path: {path} ({nodes_count} node{'' if nodes_count == 1 else 's'})')
@@ -120,16 +112,14 @@ if __name__ == '__main__':
         The provided strings extend the graph name.
         ''')
 
-
     parser.add_argument('db', type=str, help='path to .db-file holding the graph(s)')
     parser.add_argument('graph', type=str, help='name of the graph to perform the query on')
     parser.add_argument('start', type=int, help='id of the start node')
     parser.add_argument('goal', type=int, help='id of the goal node')
-    parser.add_argument('heuristic', type=str, nargs='?', help='optional file path for custom heuristic function. Default: h(x) = 0')
 
     master.add_standard_args(parser)
 
-    parser.add_argument('-s', '--standard_heuristic', action='store_true', help='use standard heuristic file')
+    parser.add_argument('--use_heuristic', '--heu', action='store_true', help='use heuristic for coordinate-based queries')
 
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
     parser.add_argument('-g', '--goals', type=int, nargs='+', help='Override provided goal with a list goals to perform MULTIPLE queries')

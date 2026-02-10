@@ -17,7 +17,6 @@ CREATE OR REPLACE MACRO start_node() AS {start_node};
 CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 
 -- ❶ A* uses a problem-specific heuristic function to estimate the distance to the goal node
-{heuristic}
 
 WITH RECURSIVE astar (
     node_id,
@@ -83,7 +82,7 @@ WITH RECURSIVE astar (
         SELECT
             nbs.node_to,                            -- id of neighbor
             sml.dist + nbs.weight,                  -- new distance
-            sml.dist + nbs.weight + h(nbs.node_to), -- f-value: distance + estimated distance to the goal
+            sml.dist + nbs.weight + nbs.h,          -- f-value: distance + estimated distance to the goal
             sml.node_id,                            -- new prev
             false                                   -- still unvisited
         FROM

@@ -36,7 +36,7 @@ def perform_query(args, item_table):
         if args.memory:
             memory.start()
 
-        res = master.run_subprocess(cmd, query, args, result_format='-json')
+        res = master.run_subprocess(cmd, query, args)
 
         if args.memory:
             memory.stop()
@@ -52,15 +52,11 @@ def perform_query(args, item_table):
         if not res:
             continue
         
-        results = res.stdout.split('\n')
-        if args.time:
-            json_string = results[1][1:-1]
-            timestr = results[2]
-        else:
-            json_string = results[0][1:-1]
+        # out: dictionary holding result values
+        # timestr: string showing execution times measured by DuckDB
+        out, timestr = master.get_out_dict(args, res)
 
-        out = json.loads(json_string)
-
+        # get wanted values out of 'out'
         max_value = out['max_value']
         items_count = out['items_count']
         table_size = out['table_size']

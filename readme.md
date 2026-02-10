@@ -47,11 +47,12 @@ The `graph` has to be defined in a DuckDB-`.db`-file, provided as `db`. It has t
 CREATE TABLE graph (
     node_from INTEGER,
     node_to INTEGER,
-    weight INTEGER
+    weight INTEGER,
+    h DOUBLE 
 );
 ```
 
-To define a custom heuristic function, pass the according SQL-code as an argument for `[heuristic]`. It standards to `h(x) = 0`, implementing Dijkstra's Algorithm. 
+In the `h`-column, all values remain `0`. 
 
 Example:
 ```
