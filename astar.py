@@ -48,7 +48,7 @@ def perform_query(args):
         if args.memory:
             memory.start()
 
-        res = master.run_subprocess(cmd, query, args, result_format='-json')
+        res = master.run_subprocess(cmd, query, args)
 
         if args.memory:
             memory.stop()

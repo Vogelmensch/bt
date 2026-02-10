@@ -49,16 +49,10 @@ def perform_query(string1, string2, args):
         if not res:
             continue
 
-        out = res.stdout.split('\n')
-        if args.time:
-            timestr = out[-2]
-            out = out[-3]
-        else:
-            out = out[1]
+        out, timestr = master.get_out_dict(args, res)
 
-        out = out.split('|')
-        l1 = out[0][1:-1].split(', ')
-        l2 = out[1][1:-1].split(', ')
+        l1 = out['list1'][1:-1].split(', ')
+        l2 = out['list2'][1:-1].split(', ')
 
         if not args.suppress_solution:
             for s1, s2 in zip(l1, l2):

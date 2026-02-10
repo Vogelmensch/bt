@@ -57,9 +57,9 @@ def perform_query(string1, string2, args):
         else:
             out = out[1]
 
-        out = out.split('|')
-        solutions = out[0][1:-1]
-        table_size = out[1]
+        out, timestr = master.get_out_dict(args, res)
+
+        solutions, table_size = out['solutions'], out['table_size']
         solutions = solutions.split(', ')
 
         if not args.suppress_solution:

@@ -152,7 +152,7 @@ backtrack(
         -- notice that all paths can be taken simultaneously if scores are equal
     )
 )
-SELECT list(string1), list(string2) 
+SELECT list(string1) AS list1, list(string2) AS list2
 FROM (
     SELECT DISTINCT string1, string2
     FROM backtrack
