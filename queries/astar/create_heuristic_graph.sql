@@ -1,3 +1,5 @@
+-- make sure to convert coords into correct unit!
+
 CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 
 CREATE OR REPLACE MACRO h(x) AS (
@@ -6,8 +8,8 @@ CREATE OR REPLACE MACRO h(x) AS (
         st_point(goal.lat, goal.long)
     ) :: INTEGER
     FROM 
-        normed_coords AS c JOIN
-        normed_coords AS goal ON goal.node_id = goal_node()
+        coords AS c JOIN
+        coords AS goal ON goal.node_id = goal_node()
     WHERE 
         c.node_id = x
 );

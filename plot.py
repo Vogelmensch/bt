@@ -26,17 +26,15 @@ class Plot:
         query = '''
             SELECT 
                 {x_value} AS x,
-                mean({y_value}) AS y, 
-                var_samp({y_value}) AS dy
+                {y_value} AS y
             FROM \'{file}\'
             WHERE script=\'{script}\' 
-            GROUP BY {x_value}
         '''
         u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
         c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
 
-        plt.plot(u['x'], u['y'], 'o', label='USING KEY')
-        plt.plot(c['x'], c['y'], 'o', label='Classic')
+        plt.plot(u['x'], u['y'], '.', label='USING KEY')
+        plt.plot(c['x'], c['y'], '.', label='Classic')
         plt.plot()
         plt.xlabel(x_value)
         plt.ylabel(y_value)

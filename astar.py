@@ -1,7 +1,7 @@
 import argparse
 from measure.measure import Timer, Memory
 from general_query import GeneralQuery as master
-from random import shuffle
+from random import sample
 
 # supply args from argparse
 def perform_query(args):
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--extend', type=str, action='extend', nargs='*', help='extend graph name with provided strings and perform MULTIPLE queries')
     parser.add_argument('-g', '--goals', type=int, nargs='+', help='Override provided goal with a list goals to perform MULTIPLE queries')
 
-    parser.add_argument('--nyc_rider', type=int, help='Number of nodes to search around the start node; intended for nyc graph')
+    parser.add_argument('--nyc_random', type=int, help='Number of nodes to search around the start node; intended for nyc graph')
 
     args = parser.parse_args()
 
@@ -139,9 +139,9 @@ if __name__ == '__main__':
     if args.memory:
         memory = Memory('astar', args.file, header[:])
 
-    if args.nyc_rider:
-        r = int(args.nyc_rider / 2)
-        goals = range(args.start - r, args.start + r)
+    if args.nyc_random:
+        nyc_spots = range(1, 264346+1)
+        goals = sample(nyc_spots, args.nyc_random)
     elif args.goals:
         goals = args.goals
     else:

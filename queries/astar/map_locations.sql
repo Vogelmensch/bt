@@ -1,18 +1,16 @@
 -- Inserting location into DB:
 -- 1. Simply copy coordinates from google maps (right-click on map)
-insert into locations (lat, long, name) values
-(paste here, 'name'), 
-...
-
-
+-- insert into locations (lat, long, name) values
+-- (paste here, 'name'), 
+-- ...
 
 -- Getting node IDs:
 WITH loc_ids (name, node_id, long_diff, lat_diff, diff) AS (
     SELECT 
         l.name,
         c.node_id,
-        abs((l.long*1000000) - c.long) AS long_diff,
-        abs((l.lat*1000000) - c.lat) AS lat_diff,
+        abs(l.long - c.long) AS long_diff,
+        abs(l.lat - c.lat) AS lat_diff,
         sqrt(long_diff^2 + lat_diff^2) AS diff
     FROM 
         locations AS l,
