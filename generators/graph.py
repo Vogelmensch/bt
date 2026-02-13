@@ -45,7 +45,7 @@ if __name__ == '__main__':
             temp_name = graph_name + (str(add_number) if add_number > 0 else '')
             try:
                 con.sql(
-                    'CREATE TABLE {} (node_from int, node_to int, weight int)'
+                    'CREATE TABLE {} (node_from int, node_to int, weight int, h DOUBLE DEFAULT 0)'
                     .format(temp_name))
                 graph_name = temp_name
                 created = True
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
             # twice for undirected graphs
             for _ in range(2):
-                edge = (node_from, node_to, weight)
+                edge = (node_from, node_to, weight, 0)
                 edges.append(edge)
 
                 if args.directed:

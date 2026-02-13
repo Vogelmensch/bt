@@ -1,5 +1,5 @@
 - The dists graph is measured in meters
-- The times graph ???
+- The times graph is measured in seconds
 
 On the website, it says "arc lengths" ??? 
 
