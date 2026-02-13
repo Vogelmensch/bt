@@ -127,5 +127,12 @@ With this in mind, we can have a look at the plot:
   image("../images/lcs_10_to_200.svg")
 )
 
+Update: the memory measurement turned out to be ass. So I started another.
+
+```
+> python lcs.py -ucmx --file large_measurements/lcs_10_to_200_memory_big.csv --repeat 100 -r $(seq 10 10 200) --timeout 40
+```
+
+Hopefully, I'll get some better results from this one. Maybe I should do a similar one with time as well.
 
 #bibliography("../references.bib")

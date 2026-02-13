@@ -21,8 +21,8 @@ class Plot:
         plt.savefig(name)
 
     def default(self, algorithm, x_value, y_value, file, xlabel=None, ylabel=None):
-        if algorithm == 'lcs':
-            return self.lcs(x_value, y_value, file, xlabel, ylabel)
+        # if algorithm == 'lcs':
+        #     return self.lcs(x_value, y_value, file, xlabel, ylabel)
 
         if not args.x_value:
             x_value = self.default_x_values[algorithm]
@@ -91,6 +91,18 @@ class Plot:
         plt.ylabel('number of edges')
         plt.title('Distribution of edge weights in New York')
 
+    def map(self, coords_file, path_file='path.txt'):
+        coords = np.loadtxt(coords_file, skiprows=1, delimiter=',')
+        lat = coords[:,0]
+        long = coords[:,1]
+        plt.plot(long, lat, '.')
+
+        if path_file:
+            path_coords = np.loadtxt(path_file, skiprows=1, delimiter=' -> ')
+            lat = path_coords[:,0]
+            long = path_coords[:,1]
+            plt.plot(long, lat, '.')
+
     
 
 if __name__ == '__main__':
@@ -108,6 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
     parser.add_argument('--edge', action='store_true')
+    parser.add_argument('--map', type=str, help='coords-file')
 
     args = parser.parse_args()
 
@@ -115,6 +128,8 @@ if __name__ == '__main__':
 
     if args.edge:
         plot.edge_weights()
+    elif args.map:
+        plot.map(args.map)
     else:
         plot.default(args.query, args.x_value, args.y_value, args.file, args.xlabel, args.ylabel)
 
