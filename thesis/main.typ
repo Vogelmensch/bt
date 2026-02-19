@@ -55,8 +55,6 @@ This is an abstract.
 
 #show: mainmatter
 
-#include("chapters/01_introduction.typ")
-
 #show: backmatter
 
 #pagebreak(to: "even")
