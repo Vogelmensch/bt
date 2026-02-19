@@ -22,7 +22,7 @@ A graph representing a physical map is an obvious choice for testing A\*, becaus
       [stdev of edge weight],[],
     ),
     image(
-      "../images/all_edge_weights.svg"
+      "images/all_edge_weights.svg"
     )
   )
 ) <nyc_facts>
@@ -43,7 +43,7 @@ As start node, we chose `node_id = 189104`, which lies within central park. From
       [stdev of edge weight],[855.33],
     ),
     image(
-      "../images/edge_weights.svg"
+      "images/edge_weights.svg"
     )
   )
 ) <central_park_facts>
@@ -61,7 +61,7 @@ TODO: show all graphs
 
 #figure(
   caption: [Execution time of A\* on the New-York-City graph],
-  image("../images/astar_3_km.svg")
+  image("images/astar_3_km.svg")
 ) <nyc_3km>
 
 Memory. The memory measurement does not show any relation. Yes, the table clearly grows larger. But the memory does not seem to give a shit.
@@ -73,7 +73,7 @@ Now, I generated a random graph with
 then, I measured astar from 0 to every other node.
 
 #figure(
-  image("../images/astar_random.svg")
+  image("images/astar_random.svg")
 )
 
 
@@ -124,7 +124,7 @@ With this in mind, we can have a look at the plot:
 
 #figure(
   caption: [Mean and standard deviation of LCS time measurement.],
-  image("../images/lcs_10_to_200.svg")
+  image("images/lcs_10_to_200.svg")
 )
 
 Update: the memory measurement turned out to be ass. So I started another.

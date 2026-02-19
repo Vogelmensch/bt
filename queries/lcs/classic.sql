@@ -24,13 +24,7 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
         range(length(s2())+1) AS r(n)
 );
 
-WITH RECURSIVE 
- -- largest possible y-value
-max_row (y) AS (
-    SELECT max(yidx)
-    FROM letters
-),
-lcs (
+WITH RECURSIVE lcs (
     xsym, xidx,                     -- one letter and its index from the first strings
     ysym, yidx,                     -- one letter and its index from the second strings
     len,                            -- current solution's length
@@ -60,7 +54,7 @@ lcs (
     FROM lcs
     WHERE 
         -- when the current row number is larger than the maximal row number, terminate
-        (SELECT y FROM current_row) <= (SELECT y FROM max_row) 
+        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters) 
 
     UNION
 
@@ -79,7 +73,7 @@ lcs (
     WHERE 
         this.len IS NULL and        -- this field is empty
         ltrs.xsym = ltrs.ysym and   -- letters are equal
-        (SELECT y FROM current_row) <= (SELECT y FROM max_row) -- termination condition
+        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters)  -- termination condition
 
     UNION
 
@@ -97,7 +91,7 @@ lcs (
     WHERE 
         this.len IS NULL and        -- this field is empty
         ltrs.xsym != ltrs.ysym and  -- letters are unequal
-        (SELECT y FROM current_row) <= (SELECT y FROM max_row) -- termination condition
+        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters)  -- termination condition
     )
 ),
 -- ❻ Build the resulting strings in backtracking process, using the highlighted paths
