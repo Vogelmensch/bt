@@ -36,7 +36,7 @@ In words, the second property states that, if two strings end with different let
 We can combine the two properties to form the recurrence relation. We use the above definitions for the syntax, with the generalization that it is unknown whether $a$ and $b$ are equal or not. Also, let $epsilon$ be the empty word. Then:
 
 $ lcs(s_1 + a, s_2 + b) = cases(
-    epsilon &"if" a = epsilon "or" b = epsilon,
+    epsilon &"if" s_1 + a = epsilon "or" s_2 + b = epsilon,
     lcs(s_1, s_2) + a &"if" a = b,
     max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%) &"if" a != b
 ) $ 
@@ -99,9 +99,11 @@ We start by defining the table `letters` which holds all combinations of letters
 
 Now we can define the CTEs base case, see @lcs_base_case. With the exception of the `USING KEY` statement, the code is equal for both query types. 
 
-TODO: explain that we don't fill the dynamic programming table with strings, but with integers and "arrows". This is the part that explains the schema.
+The recurrence relation gets strings as inputs and returns strings as results. While strings help us understand the relation in a mathematical sense, it would be unwise to use strings during the iterative process in the query. Strings can become quite large data structures and the operation of string concatenation is more complex than, say, incrementing an integer or changing a boolean value. Thus, to ensure better performance, we change the recurrence relation and follow a backtracking strategy on the result table afterwards.
 
-The base case simply implements the first case of the recurrence relation: It fills the dynamic programming table with zero
+For this, we fill the dynamic programming table with the following data: For every symbol `xsym` at `xidx` of `s1()` and every symbol `ysym` at `yidx` of `s2()`, we calculate the length `len` of the lcs, and provide the direction we need to follow when backtracking afterwards, `from_left`, `from_up`, `from_diag`.
+
+The base case corresponds to the first case of the recurrence relation. For the empty characters at the beginning of the strings, `len = 0` and `from_left = from_up = from_diag = false`. 
 
 #figure(
     caption: [Base case of LCS for classic (left) and using-key (right)],
@@ -126,7 +128,7 @@ The base case simply implements the first case of the recurrence relation: It fi
 
                 UNION ALL
 
-                <recursive step>
+                (<recursive step>)
             )
             <outer query>
             ```
@@ -149,7 +151,7 @@ The base case simply implements the first case of the recurrence relation: It fi
                 
                 UNION
 
-                <recursive step>
+                (<recursive step>)
             )
             <outer query>
             ```
@@ -157,5 +159,200 @@ The base case simply implements the first case of the recurrence relation: It fi
     )
 ) <lcs_base_case>
 
+#figure(
+    caption: [Dynamic programming table after the base case],
+    table(
+        rows: 6,
+        columns: 6,
+        stroke: 0.5pt,
+        [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+        table.hline(stroke: 1pt),
+        [*$epsilon$*], [0], [0], [0], [0], [0],
+        [*H*], [0], [], [], [], [],
+        [*E*], [0], [], [], [], [],
+        [*R*], [0], [], [], [], [],
+        [*E*], [0], [], [], [], [],
+    ),
+)<lcs_table_start>
+
+
+== Recursive step: using-key
+
+
+
+Similar to A\*, the recursive step of classic contains the recursive step of using-key, which is why we start with the latter.
+
+The recursive step corresponds to the other two cases of the recurrence relation. In the query, we simply separate the cases with a `UNION`. See @lcs_recursive_using_key for the code.
+
+#figure(
+    caption: [Recursive step of lcs for using-key],
+    [
+        ```sql
+        SELECT
+            ltrs.xsym, ltrs.xidx,
+            ltrs.ysym, ltrs.yidx,
+            diag.len + 1,
+            false, false, true
+        FROM 
+            letters       AS ltrs JOIN
+            recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
+                                     ltrs.yidx = diag.yidx+1 LEFT OUTER JOIN
+            recurring.lcs AS this ON ltrs.xidx = this.xidx and
+                                     ltrs.yidx = this.yidx
+        WHERE 
+            this.len IS NULL and    
+            ltrs.xsym = ltrs.ysym   
+
+        UNION
+
+        SELECT
+            ltrs.xsym, ltrs.xidx,
+            ltrs.ysym, ltrs.yidx,
+            greatest(l.len, u.len),
+            l.len >= u.len, u.len >= l.len, false
+        FROM 
+            letters       AS ltrs JOIN
+            recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and 
+                                  ltrs.yidx = l.yidx JOIN
+            recurring.lcs AS u ON ltrs.xidx = u.xidx and 
+                                  ltrs.yidx = u.yidx+1 LEFT OUTER JOIN
+            recurring.lcs AS this ON ltrs.xidx = this.xidx and 
+                                     ltrs.yidx = this.yidx    
+        WHERE 
+            this.len IS NULL and    
+            ltrs.xsym != ltrs.ysym 
+        ```
+    ]
+) <lcs_recursive_using_key>
+
+TODO: Explanation with markings in code
+
+
+#let t(len, left, up, diag, color) = table.cell(
+    grid(
+        rows: 2,
+        columns: 2,
+        gutter: 3pt,
+        if diag [↖] else [#text(color)[↖]],
+        if up [↑] else [#text(color)[↑]],
+        if left [←] else [#text(color)[←]], 
+        [#len]
+    ),
+    fill: color
+)
+
+#let e = t("", false, false, false, white)
+
+#figure(
+    caption: [Dynamic programming table in various iterations],
+    grid(
+        rows: 4,
+        columns: 2,
+        gutter: 10pt,
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, lime), e, e, e,
+            [*E*], [0], e, e, e, e,
+            [*R*], [0], e, e, e, e,
+            [*E*], [0], e, e, e, e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, lime), e, e,
+            [*E*], [0], t(0, true, true, false, lime), t(1, false, false, true, lime), e, e,
+            [*R*], [0], e, e, e, e,
+            [*E*], [0], e, e, e, e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, lime), e,
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), e, e,
+            [*R*], [0], t(0, true, true, false, lime), e, e, e,
+            [*E*], [0], e, e, e, e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, lime),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, lime), e,
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, lime), e, e,
+            [*E*], [0], t(0, true, true, false, lime), t(1, false, false, true, lime), e, e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, white), t(1, true, false, false, lime),
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, lime), t(2, false, false, true, lime),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), e, e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, white), t(1, true, false, false, white),
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, lime), e,
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, white), t(1, true, false, false, white),
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, lime),
+        ),
+
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], [0], [0], [0], [0], [0],
+            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, white), t(1, true, false, false, white),
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, white),
+        ),
+    )
+)<lcs_table_steps>
 
 #bibliography("../references.bib")
