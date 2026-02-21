@@ -3,3 +3,5 @@
     inset: 2mm,
     content
 )
+
+#let orange = rgb("#ffB51b")

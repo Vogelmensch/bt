@@ -1,4 +1,4 @@
-#import "../definitions.typ" as def
+#import "../definitions.typ": orange, redbox
 #let lcs = "LCS"
 
 = Longest Common Subsequence
@@ -17,7 +17,10 @@ Note that the longest common subsequence is not equal to the longest common _sub
 
 We solve LCS by implementing the "traditional technique" first proposed by Wagner and Fischer, using both `USING KEY` and `WITH RECURSIVE` @string_to_string @survey_of_lcs. This approach breaks the problem down by finding the longest common subsequence for all combinations of prefixes of the input strings. 
 
-#def.redbox([TODO: If there is time, we will try to find an algorithm that works better in `WITH RECURSIVE`, and compare that to the results from this chapter.])
+#redbox([TODO: If there is time, we will try to find an algorithm that works better in `WITH RECURSIVE`, and compare that to the results from this chapter.
+
+Erkenntnis: Dadurch, dass wir in jedem Schritt alle Werte berechnen, die berechnet werden können, sind wir glaub schon echt gut dabei.
+])
 
 
 We observe two properties of the longest common subsequence which we will use when deriving the recurrence relation. These properties look at the last letters of the input strings.
@@ -182,15 +185,15 @@ The base case corresponds to the first case of the recurrence relation. For the 
 
 Similar to A\*, the recursive step of classic contains the recursive step of using-key, which is why we start with the latter.
 
-The recursive step corresponds to the other two cases of the recurrence relation. In the query, we simply separate the cases with a `UNION`. In the code at @lcs_recursive_using_key, we marked the cases using comments.
+The recursive step corresponds to the other two cases of the recurrence relation. In the query, we simply separate the cases with a `UNION`. In the code at @lcs_recursive_using_key, we marked the cases using comments. You can follow an example in @lcs_example.
 
-Case ❶: Letters are equal, corresponding to the second case in the recurrence relation. We select `FROM` our table `letters` to get the letters we want to compare and two times from the recurring table `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. Notice that we are using a `LEFT OUTER JOIN` to join `this`, as we want `this` to be empty.
+Case ❶: Letters are equal, corresponding to the second case of the recurrence relation. We select `FROM` our table `letters` to get the letters we want to compare, and two times from the recurring table `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. Notice that we are using a `LEFT OUTER JOIN` to join `this`, as we want `this` to be empty.
 
 In order for `this` to be selectable in the current iteration, two condition, defined in the `WHERE` clause, must be fulfilled: first, `this` must not have been selected in any previous iteration, `this.len IS NULL`; secondly, the letters must be equal, `ltrs.xsym = ltrs.ysym`. 
 
-If those conditions are met, the clause `SELECT`s the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx,ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
+If those conditions are met, the clause `SELECT`s the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx, ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
 
-Case ❷: Letters are unequal, corresponding to the third case in the recurrence relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the both elements `l` and `u`, we only want to select the greater length, and mark the corresponding path.
+Case ❷: Letters are unequal, corresponding to the third case in the recurrence relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path.
 
 #figure(
     caption: [Recursive step of lcs for using-key],
@@ -252,7 +255,7 @@ Case ❷: Letters are unequal, corresponding to the third case in the recurrence
 #let e = t("", false, false, false, white)
 
 #figure(
-    caption: [Dynamic programming table in various iterations],
+    caption: [Dynamic programming table in various iterations. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         rows: 4,
         columns: 2,
@@ -354,13 +357,20 @@ Case ❷: Letters are unequal, corresponding to the third case in the recurrence
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*B*], [*E*], [*A*], [*R*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], [0], [0], [0], [0], [0],
-            [*H*], [0], t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
-            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, false, false, white), t(1, true, false, false, white),
-            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
-            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, white),
+            [*$epsilon$*], [0], table.cell([0], fill: orange), [0], [0], [0],
+            [*H*], table.cell([0], fill: orange), t(0, true, true, false, orange), t(0, true, true, false, white), t(0, true, true, false, white), t(0, true, true, false, white),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, orange), t(1, true, false, false, orange), t(1, true, false, false, white),
+            [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, orange),
+            [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, orange),
         ),
     )
-)<lcs_table_steps>
+)<lcs_example>
+
+== Recursive step: classic
+
+As mentioned above, the classic variant contains the using-key-variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step.  
+
+In using-key, the recursion encounters a natural termination point when no table element is being found that meets the conditions in the `WHERE` clauses. In classic, because all values are being selected in every iteration, no such point occurs. We thus have to manually define a termination condition.
+
 
 #bibliography("../references.bib")

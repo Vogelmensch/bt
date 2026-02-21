@@ -1,8 +1,7 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+#import "../definitions.typ": orange
 
 #set heading(numbering: "1.1")
-
-#let orange = rgb("#ffB51b")
 
 #let example_graph() = diagram(
       node-shape: circle,
