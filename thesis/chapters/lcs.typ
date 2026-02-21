@@ -182,12 +182,21 @@ The base case corresponds to the first case of the recurrence relation. For the 
 
 Similar to A\*, the recursive step of classic contains the recursive step of using-key, which is why we start with the latter.
 
-The recursive step corresponds to the other two cases of the recurrence relation. In the query, we simply separate the cases with a `UNION`. See @lcs_recursive_using_key for the code.
+The recursive step corresponds to the other two cases of the recurrence relation. In the query, we simply separate the cases with a `UNION`. In the code at @lcs_recursive_using_key, we marked the cases using comments.
+
+Case ❶: Letters are equal, corresponding to the second case in the recurrence relation. We select `FROM` our table `letters` to get the letters we want to compare and two times from the recurring table `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. Notice that we are using a `LEFT OUTER JOIN` to join `this`, as we want `this` to be empty.
+
+In order for `this` to be selectable in the current iteration, two condition, defined in the `WHERE` clause, must be fulfilled: first, `this` must not have been selected in any previous iteration, `this.len IS NULL`; secondly, the letters must be equal, `ltrs.xsym = ltrs.ysym`. 
+
+If those conditions are met, the clause `SELECT`s the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx,ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
+
+Case ❷: Letters are unequal, corresponding to the third case in the recurrence relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the both elements `l` and `u`, we only want to select the greater length, and mark the corresponding path.
 
 #figure(
     caption: [Recursive step of lcs for using-key],
     [
         ```sql
+        -- Case ❶: Letters are equal
         SELECT
             ltrs.xsym, ltrs.xidx,
             ltrs.ysym, ltrs.yidx,
@@ -205,6 +214,7 @@ The recursive step corresponds to the other two cases of the recurrence relation
 
         UNION
 
+        -- Case ❷: Letters are unequal
         SELECT
             ltrs.xsym, ltrs.xidx,
             ltrs.ysym, ltrs.yidx,
@@ -224,8 +234,6 @@ The recursive step corresponds to the other two cases of the recurrence relation
         ```
     ]
 ) <lcs_recursive_using_key>
-
-TODO: Explanation with markings in code
 
 
 #let t(len, left, up, diag, color) = table.cell(
@@ -248,7 +256,7 @@ TODO: Explanation with markings in code
     grid(
         rows: 4,
         columns: 2,
-        gutter: 10pt,
+        gutter: 20pt,
         table(
             rows: 6,
             columns: 6,
