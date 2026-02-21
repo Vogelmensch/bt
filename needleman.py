@@ -5,15 +5,7 @@ from measure.measure import Timer, Memory
 from general_query import GeneralQuery as master
 
 def perform_query(string1, string2, args):
-    scripts = []
-
-    if args.using_key:
-        scripts.append('queries/needleman/using-key.sql')
-    if args.classic:
-        scripts.append('queries/needleman/classic.sql')
-
-    if len(scripts) == 0:
-        scripts.append('queries/needleman/using-key.sql')
+    scripts = master.scripts(args, 'needleman')
 
     for script in scripts:
         script_name = script.split('/')[-1]

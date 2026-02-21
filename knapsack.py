@@ -6,15 +6,7 @@ import json
 from general_query import GeneralQuery as master
 
 def perform_query(args, item_table):
-    scripts = []
-
-    if args.using_key:
-        scripts.append('queries/knapsack/using-key.sql')
-    if args.classic:
-        scripts.append('queries/knapsack/classic.sql')
-
-    if len(scripts) == 0:
-        scripts.append('queries/knapsack/using-key.sql')
+    scripts = master.scripts(args, 'knapsack')
 
     for script in scripts:
         script_name = script.split('/')[-1]

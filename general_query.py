@@ -13,8 +13,9 @@ class GeneralQuery:
         parser.add_argument('-m', '--memory', action='store_true', help='measure memory allocated during query execution')
         parser.add_argument('-x', '--suppress_solution', action='store_true', help='suppress print of solution')
         parser.add_argument('-f', '--file', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store measured data into FILE')
-        parser.add_argument('--repeat', '--repeats', type=int, help='Repeat the entire query')
-        parser.add_argument('--timeout', type=int, help='Timeout for each query in seconds')
+        parser.add_argument('--repeat', '--repeats', type=int, help='repeat the entire query')
+        parser.add_argument('--timeout', type=int, help='timeout for each query in seconds')
+        parser.add_argument('--script', '--scripts', type=str, nargs='*', help='manually provide script to read from')
 
     # Check weird combinations of provided arguments
     def check_combos(args: argparse.Namespace):
@@ -83,3 +84,17 @@ class GeneralQuery:
 
         return out, timestr
 
+    def scripts(args, query_name):
+        scripts = []
+
+        if args.using_key:
+            scripts.append(f'queries/{query_name}/using-key.sql')
+        if args.classic:
+            scripts.append(f'queries/{query_name}/classic.sql')
+        if args.script:
+            scripts += args.script
+
+        if len(scripts) == 0:
+            scripts.append(f'queries/{query_name}/using-key.sql')
+
+        return scripts

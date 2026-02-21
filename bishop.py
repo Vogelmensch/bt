@@ -85,15 +85,7 @@ def perform_query(args):
     except:
         argparse.ArgumentParser.exit(1, 'Invalid Input')
 
-    scripts = []
-
-    if args.using_key:
-        scripts.append('queries/bishop/using-key.sql')
-    if args.classic:
-        scripts.append('queries/bishop/classic.sql')
-
-    if len(scripts) == 0:
-        scripts.append('queries/bishop/using-key.sql')
+    scripts = master.scripts(args, 'bishop')
 
     for script in scripts:
         script_name = script.split('/')[-1]

@@ -14,15 +14,7 @@ def perform_query(args):
         heuristic_query = ''
         graph = args.graph
     
-    scripts = []
-
-    if args.using_key:
-        scripts.append('queries/astar/using-key.sql')
-    if args.classic:
-        scripts.append('queries/astar/classic.sql')
-
-    if len(scripts) == 0:
-        scripts.append('queries/astar/using-key.sql')
+    scripts = master.scripts(args, 'astar')
 
     for script in scripts:
         script_name = script.split('/')[-1]
