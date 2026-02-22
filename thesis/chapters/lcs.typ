@@ -1,4 +1,4 @@
-#import "../definitions.typ": orange, redbox
+#import "../definitions.typ": orange
 #let lcs = "LCS"
 
 = Longest Common Subsequence
@@ -16,12 +16,6 @@ Note that the longest common subsequence is not equal to the longest common _sub
 == Filling the dynamic programming table
 
 We solve LCS by implementing the "traditional technique" first proposed by Wagner and Fischer, using both `USING KEY` and `WITH RECURSIVE` @string_to_string @survey_of_lcs. This approach breaks the problem down by finding the longest common subsequence for all combinations of prefixes of the input strings. 
-
-#redbox([TODO: If there is time, we will try to find an algorithm that works better in `WITH RECURSIVE`, and compare that to the results from this chapter.
-
-Erkenntnis: Dadurch, dass wir in jedem Schritt alle Werte berechnen, die berechnet werden können, sind wir glaub schon echt gut dabei.
-])
-
 
 We observe two properties of the longest common subsequence which we will use when deriving the recurrence relation. These properties look at the last letters of the input strings.
 
@@ -194,6 +188,8 @@ In order for `this` to be selectable in the current iteration, two condition, de
 If those conditions are met, the clause `SELECT`s the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx, ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
 
 Case ❷: Letters are unequal, corresponding to the third case in the recurrence relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path.
+
+The two cases shown in @lcs_recursive_using_key automatically terminate as soon as no empty table element is left, i.e. when `this.len IS NULL` returns `false` for all elements.
 
 #figure(
     caption: [Recursive step of lcs for using-key],
@@ -368,9 +364,26 @@ Case ❷: Letters are unequal, corresponding to the third case in the recurrence
 
 == Recursive step: classic
 
-As mentioned above, the classic variant contains the using-key-variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step.  
+As mentioned above, classic lcs contains the using-key lcs. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step. To guarantee termination, we included the check in the `WHERE` clause, which returns `true` as long as the working table has not been filled completely.
 
-In using-key, the recursion encounters a natural termination point when no table element is being found that meets the conditions in the `WHERE` clauses. In classic, because all values are being selected in every iteration, no such point occurs. We thus have to manually define a termination condition.
+To access those carried values, we simply replace all occurences of `recurring.lcs` in @lcs_recursive_using_key with `lcs`. Then, as shown in @lcs_recursive_classic, the difference between the two variants boils down to a few additional lines.
+
+#figure(
+    caption: [Recursive step of lcs for classic],
+    [
+        ```sql
+        <using-key recursive step>
+
+        UNION
+
+        FROM lcs
+        WHERE (SELECT count(*) FROM lcs) < (SELECT count(*) FROM letters)
+        ```
+    ]
+) <lcs_recursive_classic>
+
+
+
 
 
 #bibliography("../references.bib")

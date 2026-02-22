@@ -460,9 +460,9 @@ We will now make the step from Dijkstra's algorithm to A\*. So far, the only inf
 
 A vivid example is that of route planning. When travelling, say, via train, we can depict the railway network as a graph, with stations being the nodes, railroads being the edges and travel times or distances being the edge weights. We then want to find the fastest route from our current location, the start node, to our destination, the goal node. 
 
-Dijkstra's algorithm approaches this problem by searching in _every_ direction until it found the destination. While it always finds the best solution, the runtime is obviously not optimal, as we constantly calculate shortest paths for stations which we know to be in the wrong direction.
+Dijkstra's algorithm approaches this problem by searching in _every_ direction until it finds the destination. While it always finds the best solution, the runtime is obviously not optimal, as we constantly calculate shortest paths for stations which we know to be in the wrong direction.
 
-This problem can be solved by using a _heuristic function_. In our example, a heuristic $h$ for a node $n$ would simply be the air-line distance between a node and the goal-node,
+This problem can be addressed by using a _heuristic function_. In our example, a heuristic $h$ for a node $n$ would simply be the air-line distance between a node and the goal-node,
 
 $ 
   h(n) = "dist"(n, "goal_node"). 

@@ -36,7 +36,7 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False):
+    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, logy=False):
         if not args.x_value:
             x_value = self.default_x_values[algorithm]
 
@@ -45,11 +45,13 @@ class Plot:
         for script in scripts:
             d = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
 
-            if not errorbars:
-                plt.plot(d['x'], d['y'], '.', label=script)
-            else:
+            if errorbars:
                 plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script)
+            else:
+                plt.plot(d['x'], d['y'], '.', label=script)
 
+        if logy:
+            plt.yscale('log')
         plt.xlabel(xlabel if xlabel else x_value)
         plt.ylabel(ylabel if ylabel else y_value)
         plt.grid()
@@ -91,6 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--ylabel', type=str)
 
     parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
+    parser.add_argument('--logy', action='store_true')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
@@ -106,7 +109,7 @@ if __name__ == '__main__':
     elif args.map:
         plot.map(args.map)
     else:
-        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err)
+        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.logy)
 
     if args.store == 'DONT STORE':
         plot.show()
