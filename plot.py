@@ -12,59 +12,14 @@ class Plot:
             'needleman': 'length_string1',
             'knapsack': 'items_count'
         }
-        plt.figure()
-
-    def show(self):
-        plt.show()
-
-    def store(self, name):
-        plt.savefig(name)
-
-    def default(self, algorithm, x_value, y_value, file, xlabel=None, ylabel=None):
-        # if algorithm == 'lcs':
-        #     return self.lcs(x_value, y_value, file, xlabel, ylabel)
-
-        if not args.x_value:
-            x_value = self.default_x_values[algorithm]
-
-        query = '''
+        self.default_query = '''
             SELECT 
                 {x_value} AS x,
                 {y_value} AS y
             FROM \'{file}\'
             WHERE script=\'{script}\' 
-        '''
-        u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
-        c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
-
-
-        # diff_query = '''
-        #     SELECT 
-        #         u.{x_value} AS x,
-        #         c.{y_value} - u.{y_value} AS diff
-        #     FROM \'{file}\' AS u JOIN
-        #          \'{file}\' AS c ON u.{x_value} = c.{x_value}
-        #     WHERE u.script = \'using-key.sql\' AND
-        #           c.script = \'classic.sql\'
-        #     GROUP BY u.{x_value}
-        # '''
-        # q = diff_query.format(x_value=x_value, y_value=y_value, file=file)
-        # print(q)
-        # d = duckdb.sql(q).fetchnumpy()
-
-        plt.plot(u['x'], u['y'], '.', label='USING KEY')
-        plt.plot(c['x'], c['y'], '.', label='Classic')
-        # plt.plot(d['x'], d['diff'], label='Difference')
-        plt.xlabel(xlabel if xlabel else x_value)
-        plt.ylabel(ylabel if ylabel else y_value)
-        plt.grid()
-        plt.legend()
-
-    def lcs(self, x_value, y_value, file, xlabel=None, ylabel=None):
-        if not args.x_value:
-            x_value = self.default_x_values['lcs']
-
-        query = '''
+            '''
+        self.errorbar_query = '''
             SELECT 
                 {x_value} AS x,
                 mean({y_value}) AS y,
@@ -73,16 +28,32 @@ class Plot:
             WHERE script=\'{script}\' 
             GROUP BY {x_value}
         '''
+        plt.figure()
 
-        u = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='using-key.sql')).fetchnumpy()
-        c = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script='classic.sql')).fetchnumpy()
+    def show(self):
+        plt.show()
 
-        plt.errorbar(u['x'], u['y'], yerr=u['dy'], fmt='o', label='USING KEY')
-        plt.errorbar(c['x'], c['y'], yerr=c['dy'], fmt='o', label='Classic')
+    def store(self, name):
+        plt.savefig(name)
+
+    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False):
+        if not args.x_value:
+            x_value = self.default_x_values[algorithm]
+
+        query = self.default_query if not errorbars else self.errorbar_query
+
+        for script in scripts:
+            d = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
+
+            if not errorbars:
+                plt.plot(d['x'], d['y'], '.', label=script)
+            else:
+                plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script)
+
         plt.xlabel(xlabel if xlabel else x_value)
         plt.ylabel(ylabel if ylabel else y_value)
         plt.grid()
-        plt.legend(loc='upper left')
+        plt.legend()
 
     def edge_weights(self):
         w = np.loadtxt('all_weights.csv', skiprows=1)
@@ -112,10 +83,14 @@ if __name__ == '__main__':
     parser.add_argument('y_value', type=str)
     parser.add_argument('file', type=str)
 
+    parser.add_argument('--script', '--scripts', type=str, nargs='*', default=['using-key.sql', 'classic.sql'], help='scripts to consider')
+
     parser.add_argument('-x', '--x_value', type=str)
 
     parser.add_argument('--xlabel', type=str)
     parser.add_argument('--ylabel', type=str)
+
+    parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
@@ -131,7 +106,7 @@ if __name__ == '__main__':
     elif args.map:
         plot.map(args.map)
     else:
-        plot.default(args.query, args.x_value, args.y_value, args.file, args.xlabel, args.ylabel)
+        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err)
 
     if args.store == 'DONT STORE':
         plot.show()

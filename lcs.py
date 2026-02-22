@@ -1,4 +1,3 @@
-import subprocess
 import argparse
 from generators.rstring import generate
 from measure.measure import Timer, Memory

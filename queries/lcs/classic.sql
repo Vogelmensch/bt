@@ -4,9 +4,9 @@
 -- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 -- ❷ Initial Case: The LCS between any sequence and an empty sequence is always empty
 -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
--- ❹ Carry the entire working table until the entire table has been filled
--- ❺ Case 1: Letters are equal; highlight diagonal path
--- ❻ Case 2: Letters are unequal; highlight best path (left or up)
+-- ❹ Case 1: Letters are equal; highlight diagonal path
+-- ❺ Case 2: Letters are unequal; highlight best path (left or up)
+-- ❻ Carry the entire working table until the entire table has been filled
 -- ❼ Build the resulting strings in backtracking process, using the highlighted paths
 -- Working Table: Holds solutions; manual carry necessary
 -- Union Table: Every iteration's solution gets dumped here
@@ -43,22 +43,7 @@ WITH RECURSIVE lcs (
 
     -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (
-    -- ❹ Carry the entire working table until the entire table has been filled
-
-    -- `current_row` is the highest "full" row's yidx plus one
-    WITH current_row(y) AS ( 
-        SELECT max(yidx) + 1
-        FROM lcs
-        WHERE xidx = length(s1())
-    ) 
-    FROM lcs
-    WHERE 
-        -- when the current row number is larger than the maximal row number, terminate
-        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters) 
-
-    UNION
-
-    -- ❺ Case 1: Letters are equal; highlight diagonal path
+    -- ❹ Case 1: Letters are equal; highlight diagonal path
     SELECT
         ltrs.xsym, ltrs.xidx,
         ltrs.ysym, ltrs.yidx,
@@ -71,13 +56,12 @@ WITH RECURSIVE lcs (
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and
                                        ltrs.yidx = this.yidx
     WHERE 
-        this.len IS NULL and        -- this field is empty
-        ltrs.xsym = ltrs.ysym and   -- letters are equal
-        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters)  -- termination condition
+        this.len IS NULL and    -- this field is empty
+        ltrs.xsym = ltrs.ysym   -- letters are equal
 
     UNION
 
-    -- ❻ Case 2: Letters are unequal; highlight best path (left or up)
+    -- ❺ Case 2: Letters are unequal; highlight best path (left or up)
     SELECT
         ltrs.xsym, ltrs.xidx,
         ltrs.ysym, ltrs.yidx,
@@ -89,12 +73,17 @@ WITH RECURSIVE lcs (
         JOIN lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1 
         LEFT OUTER JOIN lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
     WHERE 
-        this.len IS NULL and        -- this field is empty
-        ltrs.xsym != ltrs.ysym and  -- letters are unequal
-        (SELECT y FROM current_row) <= (SELECT max(yidx) FROM letters)  -- termination condition
+        this.len IS NULL and    -- this field is empty
+        ltrs.xsym != ltrs.ysym  -- letters are unequal
+    
+    UNION
+
+    -- ❻ Carry the entire working table until the entire table has been filled
+    FROM lcs
+    WHERE (SELECT count(*) FROM lcs) < (SELECT count(*) FROM letters)
     )
 ),
--- ❻ Build the resulting strings in backtracking process, using the highlighted paths
+-- ❼ Build the resulting strings in backtracking process, using the highlighted paths
 backtrack(
     xidx, yidx,
     word
