@@ -17,15 +17,17 @@ CREATE OR REPLACE MACRO height() AS {height};
 CREATE OR REPLACE MACRO bitlist() AS {bitlist};
 
 WITH RECURSIVE bishop (
-    x,      -- x and y coordinates defining the grid
+    x,          -- x and y coordinates defining the grid
     y, 
-    bitlist -- list of binary tuples, e.g. (10, 11, 01, 00, 10, ...)
+    bitlist,    -- list of binary tuples, e.g. (10, 11, 01, 00, 10, ...)
+    is_end      -- last cell gets a special character
 ) AS (
     -- ❶ Start in the center of the grid, with the entire bitlist
     SELECT 
         (width()/2) :: INTEGER,
         (height()/2) :: INTEGER,
         bitlist(),
+        false
         
     UNION ALL
 
@@ -41,12 +43,13 @@ WITH RECURSIVE bishop (
             THEN greatest(0, y-1)       -- don't move past borders
             ELSE least(height()-1, y+1)
         END,
-        array_pop_front(bitlist)
+        array_pop_front(bitlist),
+        length(bitlist) = 1             -- last element only
     FROM bishop
     -- ❸ Repeat until the bitlist is empty
     WHERE length(bitlist) > 0
 )
 -- ❹ Count the number of rows including each cell to get the sym_id
-SELECT x, y, count(*)
+SELECT x, y, count(*), bool_or(is_end)
 FROM bishop
 GROUP BY x, y;

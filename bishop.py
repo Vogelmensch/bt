@@ -28,6 +28,11 @@ def to_bit_reversed(hex_str):
 # fp (fingerprint) is a list of 3-tuples (x, y, sym_id)
 # fp is sorted by y first, then by x
 def print_fingerprint(fp, symbols, height=9, width=17):
+    start_symbol = 'S'
+    end_symbol = 'E'
+    x_start, y_start = int(width/2), int(height/2)
+
+
     # Upper Boundaries (Visual only)
     print('+', end='')
     for _ in range(width):
@@ -43,8 +48,15 @@ def print_fingerprint(fp, symbols, height=9, width=17):
                 continue
             t = fp[0] # current list element (type: tuple)
             if t[0] == x and t[1] == y:
+                if x == x_start and y == y_start:
+                    sym = start_symbol
+                elif t[3]:
+                    sym = end_symbol
+                else:
+                    sym = symbols[t[2]]
+
                 try:
-                    print(symbols[t[2]], end='')
+                    print(sym, end='')
                 except IndexError:
                     print('M', end='')
                 fp.pop(0)
@@ -132,7 +144,7 @@ def perform_query(args):
         else:
             # cut stuff out
             out = out[1:-1]
-        out = map(lambda t: (int(t[0]), int(t[1]), int(t[2])), out)
+        out = map(lambda t: (int(t[0]), int(t[1]), int(t[2]), t[3] == 'true'), out)
         out = list(out)
 
         out.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x

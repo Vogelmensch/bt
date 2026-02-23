@@ -17,10 +17,11 @@ CREATE OR REPLACE MACRO height() AS {height};
 CREATE OR REPLACE MACRO bitlist() AS {bitlist};
 
 WITH RECURSIVE bishop (
-    x,      -- x and y coordinates defining the grid
+    x,          -- x and y coordinates defining the grid
     y, 
-    sym_id, -- id for symbol in picture
-    bitlist -- list of binary tuples, e.g. (10, 11, 01, 00, 10, ...)
+    sym_id,     -- id for symbol in picture
+    bitlist,    -- list of binary tuples, e.g. (10, 11, 01, 00, 10, ...)
+    is_end      -- last cell gets a special character
 ) USING KEY (x, y) AS (
     -- ❶ Start in the center of the grid, with the entire bitlist
     SELECT 
@@ -28,6 +29,7 @@ WITH RECURSIVE bishop (
         (height()/2) :: INTEGER,
         1,
         bitlist(),
+        false
         
     UNION
 
@@ -54,7 +56,8 @@ WITH RECURSIVE bishop (
         new.y,
         -- if field has not been visited before, result is NULL
         coalesce(field_to.sym_id + 1, 1),
-        new.bitlist
+        new.bitlist,
+        length((SELECT bitlist FROM bishop)) = 1
     FROM 
         new 
         LEFT OUTER JOIN recurring.bishop AS field_to
@@ -63,5 +66,5 @@ WITH RECURSIVE bishop (
     WHERE length((SELECT bitlist FROM bishop)) > 0
    )
 )
-SELECT x, y, sym_id
+SELECT x, y, sym_id, is_end
 FROM bishop;
