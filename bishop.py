@@ -85,7 +85,8 @@ def perform_query(args):
     try:
         if args.random:
             fingerprint = generate(args.random.pop(0))
-            print('Generated {}'.format(fingerprint))
+            if not args.suppress_solution:
+                print('Generated {}'.format(fingerprint))
         else:
             fingerprint = args.fingerprint.pop(0)
 
@@ -100,8 +101,9 @@ def perform_query(args):
 
     for script in scripts:
         script_name = script.split('/')[-1]
-        print(script_name) # Print script name
-        print('-' * len(script_name))
+        if not args.suppress_solution:
+            print(script_name) # Print script name
+            print('-' * len(script_name))
 
         with open(script) as f:
             query = f.read()
@@ -154,10 +156,10 @@ def perform_query(args):
         if not args.suppress_solution:
             print_fingerprint(out, symbols, height=HEIGHT, width=WIDTH)
 
-        if args.time:
+        if args.time and not args.suppress_solution:
             print(timestr)
 
-        if args.memory:
+        if args.memory and not args.suppress_solution:
             memory.print()
 
         if args.file != 'DONT STORE':
@@ -169,7 +171,8 @@ def perform_query(args):
             if args.memory:
                 memory.write_csv(data)
         
-        print()
+        if args.file == 'DONT STORE' and not args.suppress_solution:
+            print()
 
 
 if __name__ == '__main__':
@@ -202,5 +205,10 @@ if __name__ == '__main__':
     if args.repeat and args.random:
         args.random *= args.repeat
 
+    current_repeat = 1
+    total_repeats = len(args.fingerprint) if args.fingerprint else len(args.random)
+
     while args.fingerprint and len(args.fingerprint) > 0 or args.random and len(args.random) > 0:
+        print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+        current_repeat += 1
         perform_query(args)

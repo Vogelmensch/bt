@@ -6,8 +6,8 @@
 
 -- ❶ Start in the center of the grid, with the entire bitlist
 -- ❷ Calculate the next coordinates from the first element in bitlist. Pop this element from bitlist.
--- ❸ Select the new values and increate sym_id by one
--- ❹ Repeat until the bitlist is empty
+-- ❸ Repeat until the bitlist is empty
+-- ❹ Select the new values and increate sym_id by one
 -- Recurring table: Stores sym_id for all coordinates
 -- Working Table: Stores current coordinates of agent and current bitlist
 
@@ -35,7 +35,7 @@ WITH RECURSIVE bishop (
 
     (
     -- ❷ Calculate the next coordinates from the first element in bitlist. Pop this element from bitlist.
-    WITH new(x,y,bitlist) AS (
+    WITH new(x, y, bitlist, is_end) AS (
         SELECT
             CASE 
                 WHEN bitlist[1][2] == '0' 
@@ -47,23 +47,23 @@ WITH RECURSIVE bishop (
                 THEN greatest(0, y-1)       -- don't move past borders
                 ELSE least(height()-1, y+1)
             END AS y,
-            array_pop_front(bitlist)
+            array_pop_front(bitlist),
+            length(bitlist) = 1             -- last element only
         FROM bishop
+        WHERE length(bitlist) > 0           -- ❸ Repeat until the bitlist is empty
     )
-    -- ❸ Select the new values and increate sym_id by one
+    -- ❹ Select the new values and increate sym_id by one
     SELECT 
         new.x,
         new.y,
         -- if field has not been visited before, result is NULL
         coalesce(field_to.sym_id + 1, 1),
         new.bitlist,
-        length((SELECT bitlist FROM bishop)) = 1
+        new.is_end
     FROM 
         new 
         LEFT OUTER JOIN recurring.bishop AS field_to
                         ON field_to.x = new.x AND field_to.y = new.y
-    -- ❹ Repeat until the bitlist is empty
-    WHERE length((SELECT bitlist FROM bishop)) > 0
    )
 )
 SELECT x, y, sym_id, is_end

@@ -36,12 +36,46 @@ A fingerprint is a string of hexadecimal numbers. In practice, remembering and c
 
 == Creating an image from a fingerprint
 
+#let width = "width"
+#let height = "height"
+
 The rules of converting an array of hexadecimal numbers to an ASCII-image are quite simple. The basic idea is to place a bishop, the chess piece, on a two dimensional field and track its movement, which is defined by the fingerprint.
 
-In chess, the bishops can only move diagonally. 
+We start on an empty grid of dimensions $width times height$, where $width = 17$ and $height = 9$ for the standard implementation. We place the bishop in the middle of the board. 
 
-TODO: explain basics
+In chess, the bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four (or less, if it is at a corner) directions. Which of those directions the bishop takes in each step is being defined by the fingerprint.
 
+@bishop_conversion shows how the fingerprint is translated and read. First, we convert the fingerprint from hexadecimal to binary representation. The resulting bytes are then read from left to right, and within each byte, the bit-pairs are read from right to left.
+For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. 
+
+#figure(
+  table(
+    columns: 12,
+    rows: 3,
+    stroke: none,
+    [Fingerprint], [fc], [:], [94], [:], [b0], [:], [c1], [:], [...], [:], [b7],
+    [Bits], [11 11 11 00], [:], [10 01 01 00], [:], [10 11 00 00], [:], [11 00 00 01], [:], [...], [:], [10 11 01 11],
+    [Step], 
+  )
+) <bishop_conversion>
+
+#figure(
+  caption: [],
+  table(
+    columns: 2,
+    rows: 4,
+    stroke: none,
+    table.header([Bits], [Direction]),
+    table.hline(stroke: 0.5pt),
+    [00], [up-left],
+    [01], [up-right],
+    [10], [down-left],
+    [11], [down-right]
+  )
+) <bishop_directions>
+
+
+The bishop leaves a trail ... TODO
 
 == Query start
 
@@ -111,3 +145,80 @@ TODO: explain basics
     ]
   )
 ) <bisho_base_case>
+
+== Outer queries
+
+Before we look at the recursive step, let us look at the outer queries to get a feeling for the key difference between the queries. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise (@bishop_outer_queries).
+
+#figure(
+  caption: [Outer query of drunken bishop for classic (left) and using-key (right)],
+  grid(
+    columns: 2,
+    gutter: 15pt,
+    [
+      ```sql
+      SELECT x, y, count(*), bool_or(is_end)
+      FROM bishop
+      GROUP BY x, y;
+      ```
+    ],
+    [
+      ```sql
+      SELECT x, y, sym_id, is_end
+      FROM bishop;  
+      ```
+    ]
+  )
+) <bishop_outer_queries>
+
+TODO: Explain further.
+
+== Recursive step: classic
+
+#figure(
+  caption: [Recursive step of drunken bishop for classic],
+  [
+    ```sql
+    SELECT
+        CASE 
+            WHEN bitlist[1][2] == '0' 
+            THEN greatest(0, x-1)       
+            ELSE least(width()-1, x+1)
+        END,
+        CASE 
+            WHEN bitlist[1][1] == '0' 
+            THEN greatest(0, y-1)       
+            ELSE least(height()-1, y+1)
+        END,
+        array_pop_front(bitlist),
+        length(bitlist) = 1             
+    FROM bishop
+    WHERE length(bitlist) > 0
+    ```
+  ]
+)
+
+
+== Recursive step: using-key
+
+#figure(
+  caption: [Recursive step of drunken bishop for using-key],
+  [
+    ```sql
+    WITH new(x, y, bitlist, is_end) AS (
+        <classic recursive step>
+    )
+    SELECT 
+        new.x,
+        new.y,
+        coalesce(field_to.sym_id + 1, 1),
+        new.bitlist,
+        new.is_end
+    FROM 
+        new 
+        LEFT OUTER JOIN recurring.bishop AS field_to
+                        ON field_to.x = new.x AND field_to.y = new.y
+
+    ```
+  ]
+)

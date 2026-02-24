@@ -10,7 +10,8 @@ class Plot:
             'astar': 'expanded_count',
             'lcs': 'length_string1',
             'needleman': 'length_string1',
-            'knapsack': 'items_count'
+            'knapsack': 'items_count',
+            'bishop': 'fingerprint_length'
         }
         self.default_query = '''
             SELECT 
