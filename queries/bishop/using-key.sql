@@ -61,7 +61,7 @@ WITH RECURSIVE bishop (
     FROM 
         new 
         LEFT OUTER JOIN recurring.bishop AS field_to
-        ON field_to.x = new.x AND field_to.y = new.y
+                        ON field_to.x = new.x AND field_to.y = new.y
     -- ❹ Repeat until the bitlist is empty
     WHERE length((SELECT bitlist FROM bishop)) > 0
    )

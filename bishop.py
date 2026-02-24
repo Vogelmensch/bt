@@ -53,12 +53,11 @@ def print_fingerprint(fp, symbols, height=9, width=17):
                 elif t[3]:
                     sym = end_symbol
                 else:
-                    sym = symbols[t[2]]
-
-                try:
-                    print(sym, end='')
-                except IndexError:
-                    print('M', end='')
+                    try:
+                        sym = symbols[t[2]]
+                    except IndexError:
+                        sym = 'M'
+                print(sym, end='')
                 fp.pop(0)
             else:
                 print(symbols[0], end='')
