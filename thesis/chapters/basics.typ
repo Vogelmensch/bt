@@ -1,6 +1,6 @@
 #set heading(numbering: "1.1")
 
-#import "rec_ctes_img.typ": it2, im2
+#import "rec_ctes_img.typ" as imgs
 
 #let colgut = 15pt
 #let rowgut = 10pt
@@ -54,12 +54,12 @@ In order for SQL to become turing complete, some kind of iteration mechanism had
 See @cte_recursive for the general layout and an example. As we are dealing with a recursive query now, we need to provide an initial case and a recursive step. The latter needs a break condition in order to avoid infinite recursion; in this example, the break condition is `WHERE n < 10`.
 
 #figure(
-  caption: [Recursive CTE outline and example.],
+  caption: [The general outline of recursive CTEs (left) and applying a recursive CTE to calculate the first ten powers of two (right)],
   gap: gap,
   grid(
     columns: 2,
-    rows: 2,
-    column-gutter: colgut,
+    rows: 1,
+    column-gutter: 30pt,
     row-gutter: rowgut,
     [
       ```sql
@@ -88,8 +88,6 @@ See @cte_recursive for the general layout and an example. As we are dealing with
       FROM pow2;
       ```
     ],
-    [General outline of a recursive CTE],
-    [Example: Calculating $2^10$ using a recursive CTE.]
   )
 ) <cte_recursive>
 
@@ -99,19 +97,7 @@ Internally, DuckDB uses three tables to perform the recursive computation.
 - At the end of each iteration, the values in the intermediate table get copied to the *working table*. Thus, in the next iteration, we can use the results of the previous iteration.
 - The results of all iterations are accumulated in the *union table*.
 
-Following the example introduced in @cte_recursive, we visualize the process of iterative computation using recursive CTEs. @example_it shows the tables the recursive query uses as input and output: it has access to the working table and stores its results by writing to the intermediate table and appending the union table. @example_im shows how the working table gets overwritten in between iterations by the values stored in the intermediate table. This way, the query can always access the results from the previous iteration.
-
-#figure(
-  placement: top,
-  caption: [The CTE calculates the 2nd iteration using data from the working table and writing to the intermediate- and union table respectively.],
-  it2
-) <example_it>
-
-#figure(
-  placement: top,
-  caption: [The working table gets overwritten by the intermediate table between the 2nd and 3rd iterations.],
-  im2
-) <example_im>
+Following the example introduced in @cte_recursive, we visualize the process of iterative computation using recursive CTEs. ... shows the tables the recursive query uses as input and output: it has access to the working table and stores its results by writing to the intermediate table and appending the union table. ... shows how the working table gets overwritten in between iterations by the values stored in the intermediate table. This way, the query can always access the results from the previous iteration.
 
 
 == The problem with recursive CTEs

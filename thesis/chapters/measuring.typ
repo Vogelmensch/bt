@@ -4,6 +4,8 @@ Introduction here
 
 == A\*
 
+=== Methods
+
 We chose the graphs of New York City from the "9th DIMACS Implementation Challenge"@dimacs as basis for the first benchmark. In this graph, the nodes correspond to intersections, while the edges correspond to roads between them. The edge weights come in two flavors: Distance in meters and average travel time in seconds, where the latter takes the type of road into account. A separate table contains coordinates for each node. 
 
 A graph representing a physical map is an obvious choice for testing A\*, because we can use the physical distance between a node and the goal node as the heuristic function. Naturally, we chose the distance graph for our measurements. @nyc_facts shows some facts.
@@ -35,6 +37,7 @@ As start node, we chose `node_id = 189104`, which lies within central park. From
     columns: 2,
     rows: 1,
     column-gutter: 15pt,
+    align: horizon,
     table(
       columns: 2,
       [nodes],[1526],
@@ -135,4 +138,31 @@ Update: the memory measurement turned out to be ass. So I started another.
 
 Hopefully, I'll get some better results from this one. Maybe I should do a similar one with time as well.
 
+
+== Drunken Bishop
+
+=== Methods
+
+We randomly generated hexstrings of different lengths. The image dimensions were scaled by a factor of $3$, because at lower dimensions, the entire image frame would simply be filled with larger input strings. 
+
+```
+python bishop.py -r $(seq 20 20 500) -uc --scale 3 -tx -f large_measurements/bishop_0227_1716.csv --timeout 30 --repeat 10
+```
+=== Results
+
+#figure(
+  caption: [Execution time of drunken-bishop. The left plot shows a comparison between the two used queries, while the right plot shows classic only to visualize its shape.],
+  grid(
+    columns: 2,
+    image("images/bishop_0227.svg"),
+    image("images/bishop_classic_0227.svg")
+  )
+) <bishop_plot>
+
+
+We can clearly see the increase in execution time in @bishop_plot for using-key, while classic appears to be staying constant at this scale. However we can see a linear increase in execution time when displaying the values for classic only.
+
+
 #bibliography("../references.bib")
+
+

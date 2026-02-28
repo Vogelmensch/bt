@@ -209,6 +209,7 @@ if __name__ == '__main__':
     total_repeats = len(args.fingerprint) if args.fingerprint else len(args.random)
 
     while args.fingerprint and len(args.fingerprint) > 0 or args.random and len(args.random) > 0:
-        print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
+        if args.suppress_solution:
+            print(f'\rPerforming query {current_repeat}/{total_repeats}', end='')
         current_repeat += 1
         perform_query(args)

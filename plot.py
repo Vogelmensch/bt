@@ -46,18 +46,39 @@ class Plot:
         for script in scripts:
             d = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
 
+            colors = {'classic.sql': 'tab:blue', 'using-key.sql': 'tab:orange'}
+            color = colors.get(script, None)
+
             if errorbars:
-                plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script)
+                plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script, color=color)
             else:
-                plt.plot(d['x'], d['y'], '.', label=script)
+                plt.plot(d['x'], d['y'], '.', label=script, color=color)
+
+            if args.fit:
+                fit = np.polyfit(d['x'], d['y'], args.fit) # returns degree of polynomial
+                p = np.poly1d(fit) # can be applied to x-values
+                xs = np.linspace(min(d['x']), max(d['x']))
+
+                suffixes = {1: 'st', 2: 'nd', 3: 'rd'}
+                degree_suffix = suffixes.get(args.fit, 'th')
+
+                print(f'Fitted data to {args.fit}{degree_suffix} degree:')
+                print(p)
+ 
+                fit_colors = {'classic.sql': 'tab:red', 'using-key.sql': 'tab:green'}
+                fit_color = fit_colors.get(script, None)
+
+                plt.plot(xs, p(xs), label=f'{args.fit}{degree_suffix} degree fit', color=fit_color)
 
         if logy:
             plt.yscale('log')
         plt.xlabel(xlabel if xlabel else x_value)
         plt.ylabel(ylabel if ylabel else y_value)
         plt.grid()
-        plt.legend()
+        plt.legend(loc='upper left')
 
+
+    # --- Astar-specific functions ---
     def edge_weights(self):
         w = np.loadtxt('all_weights.csv', skiprows=1)
         plt.hist(w, bins=500)
@@ -95,6 +116,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
     parser.add_argument('--logy', action='store_true')
+    parser.add_argument('--fit', type=int, help='fit data to polynomial of given degree')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 

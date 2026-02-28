@@ -4,7 +4,7 @@
 
 SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint.
 
-A fingerprint is a string of hexadecimal numbers. In practice, remembering and comparing such a string proves to be impractical. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from an fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation. The algorithm that draws the image from the fingerprint string is called the "drunken bishop algorithm".
+A fingerprint is a string of hexadecimal numbers. In practice, remembering and comparing such a string proves to be impractical. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from an fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation (that kind of looks like a chicken). The algorithm that draws the image from the fingerprint string is called the "drunken bishop algorithm".
 
 #figure(
   caption: "Example ssh-fingerprint as string of hexadecimal numbers (left) and as an image (right)",
@@ -13,20 +13,20 @@ A fingerprint is a string of hexadecimal numbers. In practice, remembering and c
     gutter: 15pt,
     align: horizon,
     [
-      `fc:94:b0:c1:e5:b0:98:7c:58:43:99:76:97:ee:9f:b7`
+      `7f:21:fa:08:d6:a6:47:28:a5:d0:ef:71:66:59:32:d9`
     ],
     [
       ```
       +-----------------+
-      |       .=o.  .   |
-      |     . *+*. o    |
-      |      =.*..o     |
-      |       o + ..    |
-      |        S o.     |
-      |         o  .    |
-      |          .  . . |
-      |              o .|
-      |               E.|
+      |                 |
+      |                 |
+      |   .     o       |
+      |  . . . + E      |
+      |   . + .S=. .    |
+      |    o +.*o . .   |
+      |     oo*+ . .    |
+      |     ..+.o .     |
+      |      ... .      |
       +-----------------+
       ```
     ]
@@ -46,36 +46,49 @@ We start on an empty grid of dimensions $width times height$, where $width = 17$
 In chess, the bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four (or less, if it is at a corner) directions. Which of those directions the bishop takes in each step is being defined by the fingerprint.
 
 @bishop_conversion shows how the fingerprint is translated and read. First, we convert the fingerprint from hexadecimal to binary representation. The resulting bytes are then read from left to right, and within each byte, the bit-pairs are read from right to left.
-For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. 
+For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. The bishop cannot move beyond the edges of the board. When given a direction that would lead beyond an edge, the bishop must move parallel to the edge. Becaues of this, the bishop is able to visit every square of the board, in contrast to the bishops in chess.
 
 #figure(
+  caption: [Order of bit-processing],
   table(
     columns: 12,
     rows: 3,
     stroke: none,
-    [Fingerprint], [fc], [:], [94], [:], [b0], [:], [c1], [:], [...], [:], [b7],
-    [Bits], [11 11 11 00], [:], [10 01 01 00], [:], [10 11 00 00], [:], [11 00 00 01], [:], [...], [:], [10 11 01 11],
-    [Step], 
+    align: (x, y) => if y > 0 and x > 0 {left} else {center},
+    [Fingerprint], [7f], [:], [21], [:], [fa], [:], [08], [:], [...], [:], [d9],
+    [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [00 00 10 00], [:], [...], [:], [11 01 10 01],
+    [Step], [04 03 02 01], [], [08 07 06 05], [], [12 11 10 09], [], [16 15 14 13], [], [...], [], [64 63 62 61]
   )
 ) <bishop_conversion>
 
 #figure(
-  caption: [],
+  caption: [Direction the bishop takes for each bit-pair],
   table(
     columns: 2,
     rows: 4,
     stroke: none,
     table.header([Bits], [Direction]),
     table.hline(stroke: 0.5pt),
-    [00], [up-left],
-    [01], [up-right],
-    [10], [down-left],
-    [11], [down-right]
+    [00], [↖],
+    [01], [↗],
+    [10], [↙],
+    [11], [↘]
   )
 ) <bishop_directions>
 
 
-The bishop leaves a trail ... TODO
+The bishop leaves a footprint on every square they visit. When visiting the same square multiple times, the footprint gets "deeper" for each visit. This creates a unique trail for the path the bishop has taken. To represent the "depth" of the footprints, we work through the symbols shown in @footprints. Additionally, we mark the start- and end-positions of the bishop with the letters S and E, respectively.
+
+#figure(
+  caption: [ASCII symbols to represent the bishop's trail],
+  table(
+    columns: 16,
+    rows: 2,
+    stroke: 0.5pt,
+    [Step], ..range(15).map(str),
+    [Symbol], [], [.], [o], [+], [=], [\*], [B], [O], [X], [@], [%], [&], [\#], [/], [^]
+  )
+) <footprints>
 
 == Query start
 
