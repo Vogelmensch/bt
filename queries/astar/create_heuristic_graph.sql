@@ -1,4 +1,6 @@
 -- make sure to convert coords into correct unit!
+INSTALL spatial;
+LOAD spatial;
 
 CREATE OR REPLACE MACRO goal_node() AS {goal_node};
 

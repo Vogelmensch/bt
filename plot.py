@@ -29,6 +29,16 @@ class Plot:
             WHERE script=\'{script}\' 
             GROUP BY {x_value}
         '''
+        self.map_query = '''
+            SELECT 
+                f.long AS from_long, f.lat AS from_lat,
+                t.long AS to_long, t.lat AS to_lat
+            FROM 
+                h_dists AS d JOIN 
+                coords AS f ON d.node_from = f.node_id JOIN 
+                coords as t ON d.node_to = t.node_id
+            WHERE d.h < {radius}
+        '''
         plt.figure()
 
     def show(self):
@@ -43,7 +53,7 @@ class Plot:
 
         query = self.default_query if not errorbars else self.errorbar_query
 
-        for script in scripts:
+        for script_idx, script in enumerate(scripts):
             d = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
 
             colors = {'classic.sql': 'tab:blue', 'using-key.sql': 'tab:orange'}
@@ -55,20 +65,29 @@ class Plot:
                 plt.plot(d['x'], d['y'], '.', label=script, color=color)
 
             if args.fit:
-                fit = np.polyfit(d['x'], d['y'], args.fit) # returns degree of polynomial
+                try:
+                    deg = args.fit[script_idx]
+                    if deg == 0:
+                        continue
+                except IndexError:
+                    print(f'Fitting failed for {script}: No degree was provided.\n')
+                    continue
+
+                fit = np.polyfit(d['x'], d['y'], deg) # returns coefficients of polynomial
                 p = np.poly1d(fit) # can be applied to x-values
                 xs = np.linspace(min(d['x']), max(d['x']))
 
                 suffixes = {1: 'st', 2: 'nd', 3: 'rd'}
-                degree_suffix = suffixes.get(args.fit, 'th')
+                degree_suffix = suffixes.get(deg, 'th')
 
-                print(f'Fitted data to {args.fit}{degree_suffix} degree:')
+                print(f'Fitted data for {script} to {deg}{degree_suffix} degree:')
                 print(p)
+                print()
  
                 fit_colors = {'classic.sql': 'tab:red', 'using-key.sql': 'tab:green'}
                 fit_color = fit_colors.get(script, None)
 
-                plt.plot(xs, p(xs), label=f'{args.fit}{degree_suffix} degree fit', color=fit_color)
+                plt.plot(xs, p(xs), label=f'{deg}{degree_suffix} degree fit', color=fit_color)
 
         if logy:
             plt.yscale('log')
@@ -86,19 +105,34 @@ class Plot:
         plt.ylabel('number of edges')
         plt.title('Distribution of edge weights in New York')
 
-    def map(self, coords_file, path_file='path.txt'):
+    def map(self, coords_file):
         coords = np.loadtxt(coords_file, skiprows=1, delimiter=',')
-        lat = coords[:,0]
-        long = coords[:,1]
+        lat = coords[:,1]
+        long = coords[:,0]
         plt.plot(long, lat, '.')
 
-        if path_file:
-            path_coords = np.loadtxt(path_file, skiprows=1, delimiter=' -> ')
-            lat = path_coords[:,0]
-            long = path_coords[:,1]
-            plt.plot(long, lat, '.')
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
 
-    
+    # plot map from center with provided radius
+    def roadmap(self, db, center, radius):
+        # use heuristic query to get distances of nodes to center
+        with open('queries/astar/create_heuristic_graph.sql') as f:
+            heuristic_query = f.read()
+        heuristic_query = heuristic_query.format(goal_node=center, graph='h_dists')
+
+        query = heuristic_query + self.map_query
+
+        with duckdb.connect(db) as con:
+            coords = con.sql(query.format(radius=radius)).fetchnumpy()
+            for i in range(len(coords['from_long'])):
+                x = [coords['from_long'][i], coords['to_long'][i]]
+                y = [coords['from_lat'][i], coords['to_lat'][i]]
+                plt.plot(x, y, color='Black', linewidth=0.5)
+        
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -111,17 +145,19 @@ if __name__ == '__main__':
 
     parser.add_argument('-x', '--x_value', type=str)
 
+    parser.add_argument('--title', type=str)
     parser.add_argument('--xlabel', type=str)
     parser.add_argument('--ylabel', type=str)
 
     parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
     parser.add_argument('--logy', action='store_true')
-    parser.add_argument('--fit', type=int, help='fit data to polynomial of given degree')
+    parser.add_argument('--fit', type=int, nargs='*', help='fit data to polynomial of given degree; provide multiple values for multiple measurements within one plot (0 -> no fit)')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
     parser.add_argument('--edge', action='store_true')
-    parser.add_argument('--map', type=str, help='coords-file')
+    parser.add_argument('--map', type=str, nargs='*', help='coords-files')
+    parser.add_argument('--roadmap', nargs=3, help='Provide FILE, CENTER, RADIUS')
 
     args = parser.parse_args()
 
@@ -130,10 +166,15 @@ if __name__ == '__main__':
     if args.edge:
         plot.edge_weights()
     elif args.map:
-        plot.map(args.map)
+        for map in args.map:
+            plot.map(map)
+    elif args.roadmap:
+        plot.roadmap(args.roadmap[0], int(args.roadmap[1]), int(args.roadmap[2]))
     else:
         plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.logy)
 
+    if args.title:
+        plt.title(args.title)
     if args.store == 'DONT STORE':
         plot.show()
     else:
