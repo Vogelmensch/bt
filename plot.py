@@ -39,6 +39,11 @@ class Plot:
                 coords as t ON d.node_to = t.node_id
             WHERE d.h < {radius}
         '''
+        self.get_coordinate_from_id_query = '''
+            SELECT long, lat
+            FROM coords
+            WHERE node_id = {node}
+        '''
         plt.figure()
 
     def show(self):
@@ -47,7 +52,7 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, logy=False):
+    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, logy=False, ms=5):
         if not args.x_value:
             x_value = self.default_x_values[algorithm]
 
@@ -62,7 +67,7 @@ class Plot:
             if errorbars:
                 plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script, color=color)
             else:
-                plt.plot(d['x'], d['y'], '.', label=script, color=color)
+                plt.plot(d['x'], d['y'], '.', label=script, color=color, ms = ms)
 
             if args.fit:
                 try:
@@ -130,6 +135,10 @@ class Plot:
                 y = [coords['from_lat'][i], coords['to_lat'][i]]
                 plt.plot(x, y, color='Black', linewidth=0.5)
         
+            center_coords = con.sql(self.get_coordinate_from_id_query.format(node=center)).fetchnumpy()
+            x, y = center_coords['long'], center_coords['lat']
+            plt.plot(x, y, 'o', color='Red')
+
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
 
@@ -148,6 +157,7 @@ if __name__ == '__main__':
     parser.add_argument('--title', type=str)
     parser.add_argument('--xlabel', type=str)
     parser.add_argument('--ylabel', type=str)
+    parser.add_argument('--marker_size', '--ms', type=float)
 
     parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
     parser.add_argument('--logy', action='store_true')
@@ -171,7 +181,7 @@ if __name__ == '__main__':
     elif args.roadmap:
         plot.roadmap(args.roadmap[0], int(args.roadmap[1]), int(args.roadmap[2]))
     else:
-        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.logy)
+        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.logy, args.marker_size)
 
     if args.title:
         plt.title(args.title)

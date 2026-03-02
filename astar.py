@@ -39,11 +39,14 @@ def perform_query(args):
         if args.memory:
             memory.start()
 
+        query = ''
         res = master.run_subprocess(cmd, query, args)
 
         if args.memory:
             memory.stop()
-
+            memory.print()
+            continue
+        
         if res == 'timeout':
             constant_data = [script_name, args.graph, args.start, args.goal]
             if args.time:
