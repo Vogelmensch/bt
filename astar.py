@@ -54,7 +54,7 @@ def perform_query(args):
    
         nodes_count = len(path.split('->')) if path else None
 
-        gnu_data = res.stderr.strip().split(',')
+        gnu_data = res['stderr'].strip().split(',')
 
         if not args.suppress_solution:
             if not path:

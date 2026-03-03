@@ -28,11 +28,12 @@ def perform_query(string1, string2, args):
         if res == 'timeout':
             constant_data = [script_name, len(string1), len(string2)]
             timer.store_timeout(args, constant_data)
+            continue
 
         if not res:
             continue
 
-        out = res.stdout.split('\n')
+        out = res['stdout'].split('\n')
         if args.time:
             timestr = out[-2]
             out = out[4]
@@ -41,7 +42,7 @@ def perform_query(string1, string2, args):
 
         out, timestr = master.get_out_dict(args, res)
 
-        gnu_data = res.stderr.strip().split(',')
+        gnu_data = res['stderr'].strip().split(',')
 
         solutions, table_size = out['solutions'], out['table_size']
         solutions = solutions[1:-1].split(', ')
@@ -66,7 +67,7 @@ def perform_query(string1, string2, args):
                 data += gnu_data
             timer.write_csv(data)
 
-        if args.file == 'DONT STORE' and not args.suppress_solution:
+        if not args.suppress_solution:
             print()
 
 if __name__ == '__main__':

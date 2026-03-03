@@ -1,6 +1,6 @@
 import argparse
 import subprocess
-from measure.measure import Timer, Memory
+from measure.measure import Timer
 import duckdb
 import json
 from general_query import GeneralQuery as master
@@ -25,20 +25,11 @@ def perform_query(args, item_table):
         else:
             cmd = ''
 
-        if args.memory:
-            memory.start()
-
         res = master.run_subprocess(cmd, query, args)
-
-        if args.memory:
-            memory.stop()
 
         if res == 'timeout':
             constant_data = [script_name, item_table, args.max_weight]
-            if args.time:
-                master.store_timeout(args, constant_data, timer)
-            if args.memory:
-                master.store_timeout(args, constant_data, memory)
+            timer.store_timeout(args, constant_data)
             continue
 
         if not res:
@@ -53,6 +44,8 @@ def perform_query(args, item_table):
         items_count = out['items_count']
         table_size = out['table_size']
 
+        gnu_data = res['stderr'].strip().split(',')
+
         if not args.suppress_solution:
             print(f'Max Value: {max_value}')
             print(f'{items_count} items in table')
@@ -62,17 +55,17 @@ def perform_query(args, item_table):
             print(timestr)
 
         if args.memory and not args.suppress_solution:
-            memory.print()
+            master.print_memory(gnu_data)
 
         # data to store to csv
         if args.file != 'DONT STORE':
             data = [script_name, item_table, args.max_weight, items_count, max_value, table_size]
             if args.time:
                 timelist = timestr.split()
-                timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
-                timer.write_csv(data)
+                data += timelist[4:9:2]
             if args.memory:
-                memory.write_csv(data)
+                data += gnu_data
+            timer.write_csv(data)
 
         if not args.suppress_solution:
             print()
@@ -98,10 +91,7 @@ if __name__ == '__main__':
 
     header = ['script','item_table','max_weight','items_count','max_value','table_size']
 
-    if args.time:
-        timer = Timer('knapsack', args.file, header[:])
-    if args.memory:
-        memory = Memory('knapsack', args.file, header[:])
+    timer = Timer('knapsack', args.file, header[:])
 
     random_tables = []
     if args.random:

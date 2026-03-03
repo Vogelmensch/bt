@@ -87,6 +87,24 @@ We wrote a random string generator to provide the input for LCS. The generator u
 
 To limit the total runtime of the experiment, we defined a timeout of $30 "seconds"$ for each measurement. @lcs_times shows the number of timeouts for each query type and the strings lengths at which they occured.
 
+Memory:
+
+First part:
+```
+python lcs.py -r $(seq 10 10 150) -uctm --file large_measurements/lcs_with_gnu.csv --repeat 20 --timeout 60 -x
+```
+
+Second part:
+```
+python lcs.py -r $(seq 160 10 200) -uctm --file large_measurements/lcs_with_gnu_long.csv --repeat 5 --timeout 300 -x
+```
+
+Then again because uncertainty went brrr:
+```
+python lcs.py -r $(seq 160 10 200) -uctm --file large_measurements/lcs_with_gnu_long_2.csv --repeat 20 --timeout 300 -x
+```
+
+=== Results
 
 #figure(
   caption: [Number of timeouts per string length for each query type (left) and time measurement as means an standard deviations of LCS (right)],
@@ -107,6 +125,15 @@ To limit the total runtime of the experiment, we defined a timeout of $30 "secon
     image("images/lcs_10_to_200.svg")
   )
 ) <lcs_times>
+
+#figure(
+  caption: [Mean and standard deviation of LCS measurements for time (left) and memory consumption (right)],
+  grid(
+    columns: 2,
+    image("images/lcs_10_to_200.svg"),
+    image("images/lcs_memory_10_to_200.svg")
+  )
+) <lcs_results>
 
 == Needleman-Wunsch
 

@@ -2,7 +2,7 @@ import argparse
 from itertools import chain
 import subprocess
 from generators.hexstring import generate
-from measure.measure import Timer, Memory
+from measure.measure import Timer
 from general_query import GeneralQuery as master
 
 
@@ -114,27 +114,19 @@ def perform_query(args):
             cmd = '.timer on'
         else:
             cmd = ''
-        if args.memory:
-            memory.start()
 
         res = master.run_subprocess(cmd, query, args, result_format='-list')
 
-        if args.memory:
-            memory.stop()
-
         if res == 'timeout':
             constant_data = [script_name, len(fp_list), scale] 
-            if args.time:
-                master.store_timeout(args, constant_data, timer)
-            if args.memory:
-                master.store_timeout(args, constant_data, memory)
+            timer.store_timeout(args, constant_data)
             continue
 
         if not res:
             continue
 
         # Format result into 'out'
-        out = res.stdout.split('\n')
+        out = res['stdout'].split('\n')
         out = list(map(lambda s: tuple(s.split('|')), out))
         # Cut list depending on whether we measured time
         if args.time:
@@ -150,6 +142,8 @@ def perform_query(args):
 
         out.sort(key = lambda t: t[1] * WIDTH + t[0]) # sort by y, then by x
 
+        gnu_data = res['stderr'].strip().split(',')
+
         if args.print_result:
             print(out)
 
@@ -160,18 +154,18 @@ def perform_query(args):
             print(timestr)
 
         if args.memory and not args.suppress_solution:
-            memory.print()
+            master.print_memory(gnu_data)
 
         if args.file != 'DONT STORE':
             data = [script_name, len(fp_list), scale] 
             if args.time:
                 timelist = timestr.split()
-                timer.foreign_measurement(timelist[4:9:2])
-                timer.write_csv(data)
+                data += timelist[4:9:2]
             if args.memory:
-                memory.write_csv(data)
+                data += gnu_data
+            timer.write_csv(data)
         
-        if args.file == 'DONT STORE' and not args.suppress_solution:
+        if not args.suppress_solution:
             print()
 
 
@@ -195,10 +189,7 @@ if __name__ == '__main__':
 
     header=['script', 'fingerprint_length', 'image_scale']
 
-    if args.time:
-        timer = Timer('bishop', args.file, header[:])
-    if args.memory:
-        memory = Memory('bishop', args.file, header[:])
+    timer = Timer('bishop', args.file, header[:])
 
     if args.repeat and args.fingerprint:
         args.fingerprint *= args.repeat

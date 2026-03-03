@@ -1,7 +1,7 @@
 import subprocess
 import argparse
 import generators.dna as dna
-from measure.measure import Timer, Memory
+from measure.measure import Timer
 from general_query import GeneralQuery as master
 
 def perform_query(string1, string2, args):
@@ -22,20 +22,12 @@ def perform_query(string1, string2, args):
             cmd = '.timer on'
         else:
             cmd = ''
-        if args.memory:
-            memory.start()
 
         res = master.run_subprocess(cmd, query, args)
 
-        if args.memory:
-            memory.stop()
-
         if res == 'timeout':
             constant_data = [script_name, len(string1), len(string2)]
-            if args.time:
-                master.store_timeout(args, constant_data, timer)
-            if args.memory:
-                master.store_timeout(args, constant_data, memory)
+            timer.store_timeout(args, constant_data)
             continue
 
         if not res:
@@ -46,6 +38,8 @@ def perform_query(string1, string2, args):
         l1 = out['list1'][1:-1].split(', ')
         l2 = out['list2'][1:-1].split(', ')
 
+        gnu_data = res['stderr'].strip().split(',')
+
         if not args.suppress_solution:
             for s1, s2 in zip(l1, l2):
                 print(s1)
@@ -55,17 +49,17 @@ def perform_query(string1, string2, args):
         if args.time and not args.suppress_solution:
             print(timestr)
 
-        if args.memory:
-            memory.print()
+        if args.memory and not args.suppress_solution:
+            master.print_memory(gnu_data)
 
         if args.file != 'DONT STORE':
             data = [script_name, len(string1), len(string2), len(l1)]
             if args.time:
                 timelist = timestr.split()
-                timer.foreign_measurement(timelist[4:9:2])
-                timer.write_csv(data)
+                data += timelist[4:9:2]
             if args.memory:
-                memory.write_csv(data)
+                data += gnu_data
+            timer.write_csv(data)
 
         if not args.suppress_solution:
             print()
@@ -88,10 +82,7 @@ if __name__ == '__main__':
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count']
     
-    if args.time:
-        timer = Timer('needleman', args.file, header[:])
-    if args.memory:
-        memory = Memory('needleman', args.file, header[:])
+    timer = Timer('needleman', args.file, header[:])
 
     if args.repeat:
         repeats = args.repeat

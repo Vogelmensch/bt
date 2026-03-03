@@ -1,8 +1,9 @@
 import argparse
 import subprocess as sp
+import os
+from signal import SIGTERM
 import json
 from measure.measure import Measurer, Timer
-from time import sleep
 
 # Code that every query-evaluating python-file needs!
 class GeneralQuery:
@@ -37,28 +38,31 @@ class GeneralQuery:
         except AttributeError:
             timeout = None
 
+        # manually create process in order to cleanly kill it later
+        proc = sp.Popen(['/usr/bin/time', '-f', '%e,%S,%U,%M,%t', 'duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], text=True, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE, start_new_session=True)
         try:
-            res = sp.run(['/usr/bin/time', '-f', '%e,%S,%U,%M,%t', 'duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
+            stdout, stderr = proc.communicate(input=query, timeout=timeout)
         except sp.TimeoutExpired:
             if not args.suppress_solution:
-                print('query timed out.\n')
+                print('query timed out.')
             # The timeout killed /usr/bin/time, but not duckdb, as the latter is a child process of the former
             # => kill it manually
-            kill_res = sp.run(['pkill', 'duckdb'])
+            os.killpg(os.getpgid(proc.pid), SIGTERM)
+            proc.wait()
             return 'timeout'
 
-        if res.returncode != 0:
+        if proc.returncode != 0:
             print('An error occured during query execution:')
-            print(res.stderr)
+            print(stderr)
             return
 
-        return res
+        return {'stdout': stdout, 'stderr': stderr}
 
 
     # get dictionary of the query's output values
     # also get timestr
     def get_out_dict(args, res):
-        results = res.stdout.split('\n')
+        results = res['stdout'].split('\n')
         if args.time:
             # timestr is always the second-to-last item (last item is always empty),
             # and json_string is always the item before that
