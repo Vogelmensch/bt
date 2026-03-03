@@ -1,5 +1,5 @@
 import argparse
-from measure.measure import Timer, Memory
+from measure.measure import Timer
 from general_query import GeneralQuery as master
 from random import sample
 
@@ -36,23 +36,11 @@ def perform_query(args):
         else:
             cmd = ''
 
-        if args.memory:
-            memory.start()
-
-        query = ''
         res = master.run_subprocess(cmd, query, args)
-
-        if args.memory:
-            memory.stop()
-            memory.print()
-            continue
         
         if res == 'timeout':
             constant_data = [script_name, args.graph, args.start, args.goal]
-            if args.time:
-                master.store_timeout(args, constant_data, timer)
-            if args.memory:
-                master.store_timeout(args, constant_data, memory)
+            timer.store_timeout(args, constant_data)
             continue
         
         if not res:
@@ -65,6 +53,8 @@ def perform_query(args):
         path, total_weight, expanded_count, table_size = out['Path'], out['Distance'], out['Expanded Nodes'], out['Table Size']
    
         nodes_count = len(path.split('->')) if path else None
+
+        gnu_data = res.stderr.strip().split(',')
 
         if not args.suppress_solution:
             if not path:
@@ -79,17 +69,17 @@ def perform_query(args):
             print(timestr)
 
         if args.memory and not args.suppress_solution:
-            memory.print()
+            master.print_memory(gnu_data)
 
         # data to store to csv
         if args.file != 'DONT STORE':
             data = [script_name, args.graph, args.start, args.goal, path, nodes_count, total_weight, expanded_count, table_size]
             if args.time:
                 timelist = timestr.split()
-                timer.foreign_measurement(timelist[4:9:2]) # get time data out of timelist
-                timer.write_csv(data)
+                data += timelist[4:9:2]
             if args.memory:
-                memory.write_csv(data)
+                data += gnu_data
+            timer.write_csv(data)
 
         if not args.suppress_solution:
             print()
@@ -128,11 +118,7 @@ if __name__ == '__main__':
     # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.
     # for measuring performance, total_visiting_count seems to be the better metric.
     header = ['script','graph','start_node','goal_node','path','nodes_count','total_weight','expanded_count','table_size']
-
-    if args.time:
-        timer = Timer('astar', args.file, header[:])
-    if args.memory:
-        memory = Memory('astar', args.file, header[:])
+    timer = Timer('astar', args.file, header[:])
 
     if args.nyc_random:
         nyc_spots = range(1, 264346+1)

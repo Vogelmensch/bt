@@ -1,7 +1,8 @@
 import argparse
 import subprocess as sp
 import json
-from measure.measure import Measurer, Timer, Memory
+from measure.measure import Measurer, Timer
+from time import sleep
 
 # Code that every query-evaluating python-file needs!
 class GeneralQuery:
@@ -37,34 +38,22 @@ class GeneralQuery:
             timeout = None
 
         try:
-            res = sp.run(['duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
+            res = sp.run(['/usr/bin/time', '-f', '%e,%S,%U,%M,%t', 'duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], input=query, text=True, capture_output=True, timeout=timeout)
         except sp.TimeoutExpired:
             if not args.suppress_solution:
                 print('query timed out.\n')
-            
+            # The timeout killed /usr/bin/time, but not duckdb, as the latter is a child process of the former
+            # => kill it manually
+            kill_res = sp.run(['pkill', 'duckdb'])
             return 'timeout'
-        
-        if res.stderr != '':
+
+        if res.returncode != 0:
             print('An error occured during query execution:')
             print(res.stderr)
             return
 
         return res
 
-    # Store data that exists even without completed measurement
-    # Store timeout-time in seconds for t_real and NULL for the rest
-    def store_timeout(args, constant_data, measurer: Measurer):
-        if args.file == 'DONT STORE':
-            return
-        n_dynamic_data = len(measurer.header) - len(constant_data)
-        if args.time:
-            data = constant_data + (n_dynamic_data-3) * [None]
-            timelist = [args.timeout] + 2 * [None]
-            measurer.foreign_measurement(timelist)
-            measurer.write_csv(data)
-        if args.memory:
-            data = constant_data + (n_dynamic_data-2) * [None]
-            measurer.write_csv(data)
 
     # get dictionary of the query's output values
     # also get timestr
@@ -98,3 +87,22 @@ class GeneralQuery:
             scripts.append(f'queries/{query_name}/using-key.sql')
 
         return scripts
+
+    def print_memory(gnu_data):
+        mem_max = int(gnu_data[-2])
+        mem_avg = int(gnu_data[-1])
+
+        print(f'Max RSS: {GeneralQuery._format_memory(mem_max)}')
+        print(f'Avg RSS: {GeneralQuery._format_memory(mem_avg)}')
+
+    def _format_memory(n):
+        units = ['KB', 'MB', 'GB']
+        idx = 0
+
+        while n > 1024:
+            idx += 1
+            n /= 1024
+        
+        n = round(n, 2)
+        
+        return f'{n} {units[idx]}'

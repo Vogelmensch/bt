@@ -1,6 +1,6 @@
 import argparse
 from generators.rstring import generate
-from measure.measure import Timer, Memory
+from measure.measure import Timer
 from general_query import GeneralQuery as master
 
 def perform_query(string1, string2, args):
@@ -22,21 +22,12 @@ def perform_query(string1, string2, args):
             cmd = '.timer on'
         else:
             cmd = ''
-        if args.memory:
-            memory.start()
 
         res = master.run_subprocess(cmd, query, args)
 
-        if args.memory:
-            memory.stop()
-
         if res == 'timeout':
             constant_data = [script_name, len(string1), len(string2)]
-            if args.time:
-                master.store_timeout(args, constant_data, timer)
-            if args.memory:
-                master.store_timeout(args, constant_data, memory)
-            continue
+            timer.store_timeout(args, constant_data)
 
         if not res:
             continue
@@ -50,6 +41,8 @@ def perform_query(string1, string2, args):
 
         out, timestr = master.get_out_dict(args, res)
 
+        gnu_data = res.stderr.strip().split(',')
+
         solutions, table_size = out['solutions'], out['table_size']
         solutions = solutions[1:-1].split(', ')
 
@@ -62,16 +55,16 @@ def perform_query(string1, string2, args):
             print(timestr)
 
         if args.memory and not args.suppress_solution:
-            memory.print()
+            master.print_memory(gnu_data)
 
         if args.file != 'DONT STORE':
             data = [script_name, len(string1), len(string2), len(solutions), table_size]
             if args.time:
                 timelist = timestr.split()
-                timer.foreign_measurement(timelist[4:9:2])
-                timer.write_csv(data)
+                data += timelist[4:9:2]
             if args.memory:
-                memory.write_csv(data)
+                data += gnu_data
+            timer.write_csv(data)
 
         if args.file == 'DONT STORE' and not args.suppress_solution:
             print()
@@ -91,11 +84,7 @@ if __name__ == '__main__':
     master.check_combos(args)
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count', 'table_size']
-
-    if args.time:
-        timer = Timer('lcs', args.file, header[:])
-    if args.memory:
-        memory = Memory('lcs', args.file, header[:])
+    timer = Timer('lcs', args.file, header[:])
 
     # Repeat by expanding input by given length
     if args.repeat and args.strings:

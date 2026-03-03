@@ -36,26 +36,27 @@ class Measurer:
 class Timer(Measurer):
     def __init__(self, query_name, filepath, header=None):
         if header:
-            header += ['t_real', 't_user', 't_sys']
+            header += ['t_real', 't_user', 't_sys', 'gnu_t_real', 'gnu_t_user', 'gnu_t_sys', 'gnu_rss_max', 'gnu_rss_avg']
         super().__init__(query_name, filepath, header)
         self.time_start = 0
         self.time_stop = 0
 
-    def foreign_measurement(self, time_data):
-        self.foreign_time = time_data
-
-    # Add current time to measurement
-    def write_csv(self, data):
-        if self.foreign_time:
-            super().write_csv(data + self.foreign_time)
-        else:
-            raise Exception('This feature is deprecated. Use DuckDB\'s internal time measurement from now on.')
+    def add_duckdb_time(self, timestr):
+        timelist = timestr.split()
 
     def start(self):
         self.time_start = time.process_time()
 
     def stop(self):
         self.time_stop = time.process_time()
+
+    # Store data that exists even without completed measurement
+    def store_timeout(self, args, constant_data):
+        if args.file == 'DONT STORE':
+            return
+        n_dynamic_data = len(self.header) - len(constant_data)
+        data = constant_data + n_dynamic_data * [None]
+        self.write_csv(data)
 
     def print_elapsed(self):
         time_elapsed = self.time_stop - self.time_start
@@ -70,38 +71,4 @@ class Timer(Measurer):
         print('CPU time: {0:.2f} {1}'.format(time_elapsed, unit))
         print()
 
-class Memory(Measurer):
-    def __init__(self, query_name, filepath, header=None):
-        if header:
-            header += ['memory_size', 'memory_peak']
-        super().__init__(query_name, filepath, header)
-        tracemalloc.start()
-
-    def write_csv(self, data):
-        super().write_csv(data + [self.size, self.peak])
-
-    def start(self):
-        tracemalloc.reset_peak()
-
-    def stop(self):
-        self.size, self.peak = tracemalloc.get_traced_memory()
-
-    def print(self):
-        size = self._append_unit(self.size)
-        peak = self._append_unit(self.peak)
-
-        print(f'Size: {size}')
-        print(f'Peak: {peak}')
-        print()
-
-    def _append_unit(self, n):
-        units = ['B', 'KB', 'MB', 'GB']
-        idx = 0
-
-        while n > 1000:
-            idx += 1
-            n /= 1000
-        
-        n = round(n, 2)
-        
-        return f'{n} {units[idx]}'
+    
