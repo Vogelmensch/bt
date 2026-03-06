@@ -1,6 +1,38 @@
 = Measuring
 
-Introduction here
+For all algorithms presented in TODO, we measured execution time and memory consumption of both variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
+
+To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by `;`. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time, respectively. We always present the sum of user time and system time in our results.
+
+To measure memory consumption, we used the GNU Project's `time` command as shown in @gnu_time_command. The option `-f %M` returns the "Maximum resident set size of the process during its lifetime" @gnu_time. 
+
+#figure(
+  caption: [Measuring memory consumption using GNU's `time`. For `[OPTIONS]`, we entered appropriate CLI-options, depending on the query we evaluated.],
+  [
+    ```bash
+    /usr/bin/time -f %M duckdb [OPTIONS]
+    ```
+  ]
+) <gnu_time_command>
+
+
+All measurements were taken on the same machine, the specifications for which are shown in @specs.
+
+#figure(
+  caption: [Machine specifications],
+  table(
+    columns: 2,
+    stroke: none,
+    table.header([*Item*], table.vline(stroke: .5pt), [*Value*]),
+    table.hline(stroke: .5pt),
+    [Operating System], [CachyOS x86_64],
+    [CPU], [AMD Ryzen 7 7800X3D (16) @ 5.053GHz],
+    [Memory], [32 GB],
+    [Kernel], [6.18.13-arch1-1],
+    [DuckDB version], [v1.4.4 (Andium) 6ddac802ff]
+  )
+) <specs>
+
 
 == A\*
 
@@ -27,19 +59,19 @@ As the start node, we chose `node_id = 189104`, which lies within central park. 
       table.hline(stroke: .5pt),
       [number of edges],[5016], 
       table.hline(stroke: .5pt),
-      [mean edge weight],[1273.09],
+      [mean edge weight],[1273],
       table.hline(stroke: .5pt),
-      [stdev of edge weight],[855.33],
+      [stdev of edge weight],[855],
     ),
 
     image("images/nyc_roads.svg")
   )
 ) <central_park_facts>
 
-Then, we took the graph of California and Nevada and chose `node_id = 1791103` as the start node, which lies within Las Vegas. As goals, we selected 582 random nodes within a radius of 3 km from the start node. @vegas_facts shows an overview of this subgraph.
+Then, we took the graph of California and Nevada and chose `node_id = 1791103` as the start node, which lies within Las Vegas. For each distance $d in {500, 1000, 1500, ..., 10000}$, we randomly selected five points with h-values close the the respective distance as goal nodes, resulting in 100 goal nodes. @vegas_facts shows an overview over this subgraph.
 
 #figure(
-  caption: [Las Vegas graph in numbers (left) and visually represented as a map (right), analogously to @central_park_facts. One can identify the area south-west to the starting point as downtown Las Vegas.],
+  caption: [Las Vegas graph in numbers (left) and visually represented as a map (right) showing all edges within a 10 km radius around the start node. The red dot represents the starting position for A\*, the magenta dots represent the randomly chosen goal nodes. ],
   grid(
     columns: 2,
     rows: 2,
@@ -48,35 +80,54 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
     table(
       columns: 2,
       stroke: none,
-      [number of nodes],table.vline(stroke: .5pt), [1638],
+      [number of nodes],table.vline(stroke: .5pt), [15890],
       table.hline(stroke: .5pt),
-      [number of edges],[4988], 
+      [number of edges],[42130], 
       table.hline(stroke: .5pt),
-      [mean edge weight],[1299.16],
+      [mean edge weight],[1347.5],
       table.hline(stroke: .5pt),
-      [stdev of edge weight],[873.34],
+      [stdev of edge weight],[1071],
     ),
 
-    image("images/vegas_map.svg")
+    image("images/vegas_10_km.svg")
   )
 ) <vegas_facts>
 
 === Results
 
-The results are shown in @astar_times. For both queries, the values are linearly distributed. It can clearly be seen how the classic CTE has a longer runtime for all number of expanded nodes. 
-
-Unexpectedly, the runtimes for both types of queries separate into two distinct lines each. The same phenomenon can be observed in both, `t_user` and `t_sys`, but not in `t_real`. At the moment, I have no idea what this means.
-
 #figure(
-  caption: [Execution time of A\* on the graph of New York City (left) and on the graph of Las Vegas (right)],
+  caption: [Execution time (left) and memory usage (right) of A\* on the graph of New York City],
   grid(
     columns: 2,
     image("images/astar_3_km.svg"),
-    image("images/astar_vegas.svg")
+    image("images/astar_nyc_memory.svg")
+  )
+) <astar_nyc>
 
+#figure(
+  caption: [Execution time (left) and memory usage (right) of A\* on the graph of Las Vegas],
+  grid(
+    columns: 2,
+    image("images/astar_vegas.svg"),
+    image("images/astar_vegas_memory.svg")
   )
 
-) <astar_times>
+) <astar_vegas>
+
+#figure(
+  caption: [Coefficients of polynomial fits for memory measurements of A\*],
+  table(
+    columns: 6,
+    stroke: none,
+    table.header([*Graph*], [*Algorithm*], [*Unit*], table.vline(stroke: .5pt), [*$x^2$*], [*$x$*], [*$1$*]),
+    table.hline(stroke: .5pt),
+    [NYC], [classic], [MB], [$1.78 dot 10^(-5)$], [$0.028$], [$266.8$],
+    [NYC], [using-key], [MB], [-], [$0.003$], [$262$],
+    [Vegas], [classic], [GB], [$3 dot 10^(-8)$], [$3.243 dot 10^(-5)$], [$0.763$],
+    [Vegas], [using-key], [GB], [-], [$2.078 dot 10^(-6)$], [$0.682$]
+  )
+)
+
 
 
 == LCS

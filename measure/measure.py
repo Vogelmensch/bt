@@ -34,10 +34,12 @@ class Measurer:
 
 
 class Timer(Measurer):
-    def __init__(self, query_name, filepath, header=None):
-        if header:
-            header += ['t_real', 't_user', 't_sys', 'gnu_t_real', 'gnu_t_user', 'gnu_t_sys', 'gnu_rss_max', 'gnu_rss_avg']
-        super().__init__(query_name, filepath, header)
+    def __init__(self, query_name, args, header=None):
+        if header and args.time:
+            header += ['t_real', 't_user', 't_sys']
+        if header and args.memory:
+            header += ['gnu_rss_max']
+        super().__init__(query_name, args.file, header)
         self.time_start = 0
         self.time_stop = 0
 

@@ -52,7 +52,7 @@ class Plot:
     def store(self, name):
         plt.savefig(name)
 
-    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, logy=False, ms=5):
+    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, histogram=None, logy=False, ms=5):
         if not args.x_value:
             x_value = self.default_x_values[algorithm]
 
@@ -66,6 +66,8 @@ class Plot:
 
             if errorbars:
                 plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script, color=color)
+            elif histogram:
+                plt.hist(d['y'], bins=histogram, label=script, color=color, log=logy, histtype='step')
             else:
                 plt.plot(d['x'], d['y'], '.', label=script, color=color, ms = ms)
 
@@ -96,11 +98,10 @@ class Plot:
 
         if logy:
             plt.yscale('log')
-        plt.xlabel(xlabel if xlabel else x_value)
-        plt.ylabel(ylabel if ylabel else y_value)
+        plt.xlabel(xlabel if xlabel else y_value if histogram else x_value)
+        plt.ylabel(ylabel if ylabel else 'count' if histogram else y_value)
         plt.grid()
         plt.legend(loc='upper left')
-
 
     # --- Astar-specific functions ---
     def edge_weights(self):
@@ -120,7 +121,7 @@ class Plot:
         plt.ylabel('Latitude')
 
     # plot map from center with provided radius
-    def roadmap(self, db, center, radius):
+    def roadmap(self, db, center, radius, goals):
         # use heuristic query to get distances of nodes to center
         with open('queries/astar/create_heuristic_graph.sql') as f:
             heuristic_query = f.read()
@@ -135,9 +136,16 @@ class Plot:
                 y = [coords['from_lat'][i], coords['to_lat'][i]]
                 plt.plot(x, y, color='Black', linewidth=0.5)
         
+            # Plot start node
             center_coords = con.sql(self.get_coordinate_from_id_query.format(node=center)).fetchnumpy()
             x, y = center_coords['long'], center_coords['lat']
             plt.plot(x, y, 'o', color='Red')
+
+            # Plot goal nodes
+            for goal in goals:
+                goal_coords = con.sql(self.get_coordinate_from_id_query.format(node=goal)).fetchnumpy()
+                x, y = goal_coords['long'], goal_coords['lat']
+                plt.plot(x, y, '.', color='magenta')
 
         plt.xlabel('Longitude')
         plt.ylabel('Latitude')
@@ -165,9 +173,10 @@ if __name__ == '__main__':
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
 
+    parser.add_argument('--hist', type=int, help='Print y_value as histogram with HIST many bins')
     parser.add_argument('--edge', action='store_true')
     parser.add_argument('--map', type=str, nargs='*', help='coords-files')
-    parser.add_argument('--roadmap', nargs=3, help='Provide FILE, CENTER, RADIUS')
+    parser.add_argument('--roadmap', nargs='+', help='Provide DB-FILE, CENTER, RADIUS, GOALS [OPTIONAL])')
 
     args = parser.parse_args()
 
@@ -179,9 +188,11 @@ if __name__ == '__main__':
         for map in args.map:
             plot.map(map)
     elif args.roadmap:
-        plot.roadmap(args.roadmap[0], int(args.roadmap[1]), int(args.roadmap[2]))
+        if len(args.roadmap) < 3:
+            raise Exception('Wrong number of arguments for --roadmap.')
+        plot.roadmap(args.roadmap[0], int(args.roadmap[1]), int(args.roadmap[2]), args.roadmap[3:-1])
     else:
-        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.logy, args.marker_size)
+        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.hist, args.logy, args.marker_size)
 
     if args.title:
         plt.title(args.title)

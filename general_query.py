@@ -39,7 +39,7 @@ class GeneralQuery:
             timeout = None
 
         # manually create process in order to cleanly kill it later
-        proc = sp.Popen(['/usr/bin/time', '-f', '%e,%S,%U,%M,%t', 'duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], text=True, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE, start_new_session=True)
+        proc = sp.Popen(['/usr/bin/time', '-f', '%M', 'duckdb', db, result_format, '-cmd', 'INSTALL spatial;', '-cmd', 'LOAD spatial;', '-cmd', cmd], text=True, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE, start_new_session=True)
         try:
             stdout, stderr = proc.communicate(input=query, timeout=timeout)
         except sp.TimeoutExpired:

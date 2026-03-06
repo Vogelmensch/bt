@@ -85,7 +85,7 @@ if __name__ == '__main__':
     master.check_combos(args)
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count', 'table_size']
-    timer = Timer('lcs', args.file, header[:])
+    timer = Timer('lcs', args, header[:])
 
     # Repeat by expanding input by given length
     if args.repeat and args.strings:

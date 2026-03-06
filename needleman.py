@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     header=['script', 'length_string1', 'length_string2', 'solutions_count']
     
-    timer = Timer('needleman', args.file, header[:])
+    timer = Timer('needleman', args, header[:])
 
     if args.repeat:
         repeats = args.repeat

@@ -118,7 +118,7 @@ if __name__ == '__main__':
     # table_size counts the number of total visits. That means, if a node gets visited again, it counts again.
     # for measuring performance, total_visiting_count seems to be the better metric.
     header = ['script','graph','start_node','goal_node','path','nodes_count','total_weight','expanded_count','table_size']
-    timer = Timer('astar', args.file, header[:])
+    timer = Timer('astar', args, header[:])
 
     if args.nyc_random:
         nyc_spots = range(1, 264346+1)

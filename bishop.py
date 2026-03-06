@@ -189,7 +189,7 @@ if __name__ == '__main__':
 
     header=['script', 'fingerprint_length', 'image_scale']
 
-    timer = Timer('bishop', args.file, header[:])
+    timer = Timer('bishop', args, header[:])
 
     if args.repeat and args.fingerprint:
         args.fingerprint *= args.repeat
