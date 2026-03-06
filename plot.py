@@ -94,7 +94,7 @@ class Plot:
                 fit_colors = {'classic.sql': 'tab:red', 'using-key.sql': 'tab:green'}
                 fit_color = fit_colors.get(script, None)
 
-                plt.plot(xs, p(xs), label=f'{deg}{degree_suffix} degree fit', color=fit_color)
+                plt.plot(xs, p(xs), label=f'{deg}{degree_suffix} degree fit', color=fit_color, zorder=-1)
 
         if logy:
             plt.yscale('log')

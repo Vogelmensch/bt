@@ -93,11 +93,9 @@ class GeneralQuery:
         return scripts
 
     def print_memory(gnu_data):
-        mem_max = int(gnu_data[-2])
-        mem_avg = int(gnu_data[-1])
+        mem_max = int(gnu_data[-1])
 
         print(f'Max RSS: {GeneralQuery._format_memory(mem_max)}')
-        print(f'Avg RSS: {GeneralQuery._format_memory(mem_avg)}')
 
     def _format_memory(n):
         units = ['KB', 'MB', 'GB']

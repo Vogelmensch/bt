@@ -95,6 +95,12 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
 
 === Results
 
+@astar_nyc shows the results for time and memory measurements on the graph of New York City. We can clearly see that the execution time follows a linear distribution for both queries, with the values for using-key increasing more slowly. TODO shows the coefficients for linear fits. The difference would then be TODO.
+
+It is noticeable that measured times separate into two distinct branches. While we do not have a definitive explanation for this behaviour, we suspect the nature of the graph to be the reason for it. TODO: further
+
+@astar_vegas shows the results for the graph of Las Vegas. 
+
 #figure(
   caption: [Execution time (left) and memory usage (right) of A\* on the graph of New York City],
   grid(
@@ -126,7 +132,7 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
     [Vegas], [classic], [GB], [$3 dot 10^(-8)$], [$3.243 dot 10^(-5)$], [$0.763$],
     [Vegas], [using-key], [GB], [-], [$2.078 dot 10^(-6)$], [$0.682$]
   )
-)
+) <astar_fit>
 
 
 
@@ -134,48 +140,12 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
 
 === Setup
 
-We wrote a random string generator to provide the input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both flavors and measured execution time. We repeated the measurements ten times to yield the final results. The entire procedure was repeated analogously for measuring memory consumption.
+We wrote a random string generator to provide the input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both flavors and measured execution time and memory usage. We repeated the measurements ten times to yield the final results. 
 
-To limit the total runtime of the experiment, we defined a timeout of $30 "seconds"$ for each measurement. @lcs_times shows the number of timeouts for each query type and the strings lengths at which they occured.
+To limit the total runtime of the experiment, we defined a timeout of $5 "minutes"$ for each measurement. This limit has been reached for classic, twice for $l = 180$ and once for $l = 190$.
 
-Memory:
-
-First part:
-```
-python lcs.py -r $(seq 10 10 150) -uctm --file large_measurements/lcs_with_gnu.csv --repeat 20 --timeout 60 -x
-```
-
-Second part:
-```
-python lcs.py -r $(seq 160 10 200) -uctm --file large_measurements/lcs_with_gnu_long.csv --repeat 5 --timeout 300 -x
-```
-
-Then again because uncertainty went brrr:
-```
-python lcs.py -r $(seq 160 10 200) -uctm --file large_measurements/lcs_with_gnu_long_2.csv --repeat 20 --timeout 300 -x
-```
 
 === Results
-
-#figure(
-  caption: [Number of timeouts per string length for each query type (left) and time measurement as means an standard deviations of LCS (right)],
-  grid(
-    columns: 2,
-    align: horizon,
-    table(
-      columns: 3,
-      stroke: none,
-      table.header([Strings lengths], [classic], [using-key]),
-      table.hline(stroke: .5pt),
-      [150], table.vline(stroke: .5pt), [1], table.vline(stroke: .5pt), [-],
-      [170], [1], [-],
-      [180], [4], [-],
-      [190], [4], [1],
-      [200], [4], [-],
-    ),
-    image("images/lcs_10_to_200.svg")
-  )
-) <lcs_times>
 
 #figure(
   caption: [Mean and standard deviation of LCS measurements for time (left) and memory consumption (right)],
@@ -194,49 +164,60 @@ Brief intro and expectations.
 
 For each measurement, we generated a random string consisting of the characters A, C, G and T, to mimic a DNA sequence. This string was directly used as the first argument. To get the second argument, we copied the first argument character-wise; however, with a probability of $30%$, a copying error would occur, selecting one random character from the available set. Because the same character could be selected with a probability of $25%$, the overall expected difference between the arguments is $75% dot 30% = 22.5%$.
 
-The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm explained in TODO and measured the execution times. 
+The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm explained in TODO and measured the execution times. We used a timeout of 60 seconds.
 
 === Results
 
-We removed two heavy outliers from the plot to make it more visually appealing. The outliers are listed in. 
+@needleman_timeouts lists the timeouts we encountered. We did not represent them in the plots in @needleman_results.
+
+For the respective query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. 
+
 
 #figure(
-  caption: [The two outliers (left) and the rest of the time measurement of Needleman-Wunsch as mean and standard deviation (right)],
+  caption: [Number of timeouts for the measurement of Needleman-Wunsch. A query timed out after time $t > 60 s$.],
+  table(
+    columns: 3,
+    stroke: none,
+    table.header([*String Length*], [*Script*], [*Timeouts*]),
+    table.hline(stroke: 0.5pt),
+    [240], [classic], [1],
+    [250], [classic], [1],
+    [260], [classic], [1],
+    [260], [using-key], [1],
+    [290], [classic], [2],
+    [300], [classic], [3]
+  )
+) <needleman_timeouts>
+
+#figure(
+  caption: [Measured time (left) and memory consumption (right) for Needleman-Wunsch.],
   grid(
     columns: 2,
-    align: horizon,
-    table(
-        rows: 2,
-        columns: 2,
-        stroke: none,
-        table.header([strings length], [time [s]]),
-        table.hline(stroke: .5pt),
-        [150], table.vline(stroke: .5pt), [191.01],
-        [250], [271.78]
-    ),
-    image("images/needleman_err_cleaned.svg")
+    image("images/needleman_march_time.svg"),
+    image("images/needleman_march_memory.svg")
   )
-)
+) <needleman_results>
 
 == Drunken Bishop
 
 === Setup
 
-We randomly generated arrays of hexadecimal numbers according to [CHAPTER THAT EXPLAINS THE ALGORITHM], with array length $l in {20, 40, 60, ..., 500}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
+We performed two measurements. First, we randomly generated arrays of hexadecimal numbers according to [CHAPTER THAT EXPLAINS THE ALGORITHM], with array length $l in {20, 40, 60, ..., 500}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
+
 
 === Results
 
+@bishop_scale3 shows the results for the first measurements. We see that classic massively outperforms using-key in both metrics. 
+
 #figure(
-  caption: [Mean and standard deviation of time measurements for drunken-bishop. The left plot shows a comparison between the two used queries, while the right plot shows classic only, to visualize its shape.],
+  caption: [Execution time (left) and memory usage (right) of drunken bishop.],
   grid(
     columns: 2,
-    image("images/bishop_0227.svg"),
-    image("images/bishop_classic_0227.svg")
+    image("images/bishop_0306_time.svg"),
+    image("images/bishop_0306_memory.svg")
   )
-) <bishop_plot>
+) <bishop_scale3>
 
-
-We can clearly see the increase in execution time in @bishop_plot for using-key, while classic appears to be staying constant at this scale. However we can see a linear increase in execution time when displaying the values for classic only.
 
 #bibliography("../references.bib")
 
