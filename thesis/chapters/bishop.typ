@@ -1,4 +1,4 @@
-#import "../definitions.typ": redbox
+#import "definitions.typ": redbox
 
 = Drunken Bishop
 

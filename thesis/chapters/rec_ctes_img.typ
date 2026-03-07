@@ -25,7 +25,10 @@
       ..content,
       table.hline()
     ),
-    [#table_name]
+    text(
+      table_name,
+      size: 9pt,
+      ),
   )
 )
 
@@ -41,38 +44,60 @@
   )
 )
 
-#let diag_spacing = 2em
+#let arrowtext(content) = text(content, size: 8.5pt)
+
+#let spacing = (0pt, 0pt)
+#let align = (x, y) => if y == 0 {center + horizon} else {left}
+#let codegutter = 40pt
 
 = WITH RECURSIVE
 
 #figure(
   caption: [Pseudocode of classic CTE],
-  [
-  ```
-  union ← base_case()
-  working ← union
+  grid(
+    columns: 2,
+    gutter: codegutter,
+    [
+      ```
+      WITH RECURSIVE T(c1, ..., cn) AS (
+        base_case()
 
-  LOOP
-    intermediate ← recursive_step(working)
-    IF intermediate = ∅
-      THEN BREAK
-    union ← union ∪ intermediate
-    working ← intermediate
-  RETURN union
-  ```
-  ]
+        UNION ALL 
+
+        recursive_step(T)
+      )
+      TABLE T;
+      ```
+    ],
+    [
+    ```
+    union ← base_case()
+    working ← union
+
+    LOOP
+      intermediate ← recursive_step(working)
+      IF intermediate = ∅
+        THEN BREAK
+      union ← union ∪ intermediate
+      working ← intermediate
+    RETURN union
+    ```
+    ],
+  )
 )
 
 == Base case
 
+The base case runs once at query start.
+
 #table(
   rows: 2,
-  columns: (65%, 40%),
-  align: (x, y) => if x == 0 {center} else {left},
+  columns: (50%, 50%),
+  align: align,
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: spacing,
 
     cte_table((-1, 0), "working table", [-], [-]),
     cte_table((0,0), "intermediate table", [-], [-]),
@@ -82,32 +107,36 @@
     SELECT 1, 2
     ```),
 
-    edge((0, -1), (1, 0), bend: 35deg, "->", [writes to])
+    edge((0, -1), "r", (1, 0), "->", arrowtext("appends"))
   ),
-  [Blabla],
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 20pt),
 
     cte_table((-1, 0), "working table", [1], [2]),
     cte_table((0,0), "intermediate table", [-], [-]),
     cte_table((1, 0), "union table", [1], [2]),
 
-    edge((1, 0), (-1, 0), bend: 35deg, "->", [writes to])
+    edge((1, 0), "u,l,l", (-1, 0), "->", arrowtext("overwrites"), label-side: right)
   ),
-  [Blabliblub]
+
+  [1. The base case defines the first values written to the union table.],
+  [2. The union table is being copied to the working table.]
 )
 
 == Recursive step
+
+The recursive step is repeated until the intermediate table is empty after step 3.
+
 #table(
   rows: 2,
-  columns: (65%, 40%),
-  align: (x, y) => if x == 0 {center} else {left},
+  columns: (50%, 50%),
+  align: align,
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 25pt),
 
     cte_table((-1, 0), "working table", [1], [2]),
     cte_table((0,0), "intermediate table", [2], [4]),
@@ -119,33 +148,34 @@
     WHERE n < 10
     ```),
 
-    edge((-1, 0), (0, -1), bend: 45deg, "->", [read by]),
-    edge((0, -1), (0, 0), "->", [writes to])
+    edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left),
+    edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
   ),
-  [Here, things are actually happening. They are ening quite fast to be frank.],
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 25pt),
 
     cte_table((-1, 0), "working table", [2], [4]),
     cte_table((0,0), "intermediate table", [2], [4]),
     cte_table((1, 0), "union table", [1], [2], [2], [4]),
 
-    edge((0, 0), (1, 0), "->", [appends]),
-    edge((0, 0), (-1, 0), "->", [writes to])
+    edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("appends")),
+    edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
   ),
-  [Things are also happening right here. It's tremendous.]
+  [3. The recursive step is being evaluated, reading values from the working table (here: `pow2`), and writing results to the intermediate table. 
+  ],
+  [4. If the intermediate table is empty, terminate. Else, all values within it are written to the working table and appended to the union table. ]
 )
 
 #table(
   rows: 2,
-  columns: (65%, 40%),
-  align: (x, y) => if x == 0 {center} else {left},
+  columns: (50%, 50%),
+  align: align,
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 25pt),
 
     cte_table((-1, 0), "working table", [2], [4]),
     cte_table((0,0), "intermediate table", [3], [8]),
@@ -157,49 +187,83 @@
     WHERE n < 10
     ```),
 
-    edge((-1, 0), (0, -1), bend: 45deg, "->", [read by]),
-    edge((0, -1), (0, 0), "->", [writes to])
+    edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left),
+    edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
   ),
-  [Here, things are actually happening. They are ening quite fast to be frank.],
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 25pt),
 
     cte_table((-1, 0), "working table", [3], [8]),
     cte_table((0,0), "intermediate table", [3], [8]),
     cte_table((1, 0), "union table", [1], [2], [2], [4], [3], [8]),
 
-    edge((0, 0), (1, 0), "->", [appends]),
-    edge((0, 0), (-1, 0), "->", [writes to])
+    edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("appends")),
+    edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
   ),
-  [Things are also happening right here. It's tremendous.]
+  [3. The recursive step is being evaluated, reading values from the working table (here: `pow2`), and writing results to the intermediate table. 
+  ],
+  [4. If the intermediate table is empty, terminate. Else, all values within it are written to the working table and appended to the union table. ]
 )
-
-
-
 
 
 = USING-KEY
 
 #figure(
   caption: [Pseudocode of USING KEY],
-  [
-    ```
+  grid(
+    columns: 2,
+    gutter: codegutter,
+    [
+      ```
+      WITH RECURSIVE T(k1, ..., km, 
+                       c1, ..., cn)
+      USING KEY (k1, ..., km) AS (
+        base_case()
 
+        UNION 
+
+        recursive_step(T, RECURRING T)
+      )
+      TABLE T;
+      ```
+    ],
+    [
     ```
-  ]
+    recurring ← upsert(∅, base_case())
+    working ← recurring
+
+    LOOP
+      intermediate ← recursive_step(working, recurring)
+      IF intermediate = ∅
+        THEN BREAK
+      recurring ← upsert(recurring, intermediate)
+      working ← intermediate
+    RETURN recurring
+    ```
+    ]
+  )
 )
 
-== Base case
+== The `upsert` operation
+
+This operation is at the heart of the entire mechanism. As the name suggests, it stands for updating or inserting values in a table. 
+
+
+
+== Base Case
+
+The base case runs once at query start.
+
 #table(
   rows: 2,
-  columns: (65%, 40%),
-  align: (x, y) => if x == 0 {center} else {left},
+  columns: (50%, 50%),
+  align: align,
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: spacing,
 
     cte_table((-1, 0), "working table", [-], [-]),
     cte_table((0,0), "intermediate table", [-], [-]),
@@ -209,19 +273,62 @@
     SELECT 1, 2
     ```),
 
-    edge((0, -1), (1, 0), bend: 35deg, "->", [writes to])
+    edge((0, -1), "r", (1, 0), "->", arrowtext("upserts")),
   ),
-  [Blabla],
 
   diagram(
     debug: 0,
-    spacing: diag_spacing,
+    spacing: (0pt, 20pt),
 
     cte_table((-1, 0), "working table", [1], [2]),
     cte_table((0,0), "intermediate table", [-], [-]),
     cte_table((1, 0), "recurring table", [1], [2]),
 
-    edge((1, 0), (-1, 0), bend: 35deg, "->", [writes to])
+    edge((1, 0), "u,l,l", (-1, 0), "->", arrowtext("overwrites"), label-side: right),
   ),
-  [Blabliblub]
+
+  [1. The base case defines the first values inserted to the recurring table.],
+  [2. The recurring table is being copied to the working table.]
+)
+
+== Recursive step
+
+#table(
+  rows: 2,
+  columns: (50%, 50%),
+  align: align,
+
+  diagram(
+    debug: 0,
+    spacing: (0pt, 25pt),
+
+    cte_table((-1, 0), "working table", [1], [2]),
+    cte_table((0,0), "intermediate table", [2], [4]),
+    cte_table((1, 0), "recurring table", [1], [2]),
+    rec_step([*Recursive Step*], 
+    ```sql
+    SELECT n+1, x*2
+    FROM pow2
+    WHERE n < 10
+    ```),
+
+    edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left),
+    edge((0, -1), (0, 0), "->", arrowtext("overwrites")),
+    edge((1, 0), "u", (0, -1), "->", arrowtext("read  by"), label-side: right)
+  ),
+
+  diagram(
+    debug: 0,
+    spacing: (0pt, 25pt),
+
+    cte_table((-1, 0), "working table", [2], [4]),
+    cte_table((0,0), "intermediate table", [2], [4]),
+    cte_table((1, 0), "recurring table", [1], [2], [2], [4]),
+
+    edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("upserts")),
+    edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
+  ),
+  [3. The recursive step is being evaluated, reading values from the working table (here: `pow2`) and the recurring table (here: `recurring.TODO`), and writing results to the intermediate table. 
+  ],
+  [4. If the intermediate table is empty, terminate. Else, all values within it are written to the working table and upserted to the union table. ]
 )
