@@ -1,4 +1,4 @@
-#import "../definitions.typ": orange
+#import "definitions.typ": orange
 #let lcs = "LCS"
 
 = Longest Common Subsequence
