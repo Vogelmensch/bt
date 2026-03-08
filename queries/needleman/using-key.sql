@@ -39,16 +39,25 @@ WITH RECURSIVE needleman_wunsch (
             xidx * indel_score(),
             false, false, false
         FROM letters
-        WHERE yidx = 0
+        WHERE xidx = 0 and yidx = 0
 
-        UNION   
+        UNION 
+
+        SELECT 
+            xidx, yidx,
+            xidx * indel_score(),
+            true, false, false
+        FROM letters
+        WHERE xidx > 0 and yidx = 0
+
+        UNION
 
         SELECT 
             xidx, yidx,
             yidx * indel_score(),
-            false, false, false
+            false, true, false
         FROM letters
-        WHERE xidx = 0
+        WHERE xidx = 0 and yidx > 0
     )
 
     UNION
@@ -156,5 +165,5 @@ SELECT list(string1) AS list1, list(string2) AS list2
 FROM (
     SELECT DISTINCT string1, string2
     FROM backtrack
-    WHERE xidx = 0 OR yidx = 0
+    WHERE xidx = 0 AND yidx = 0
 );
