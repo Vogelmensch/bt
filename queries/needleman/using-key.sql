@@ -27,7 +27,7 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
         range(length(s2())+1) AS r(n)
 );
 
-WITH RECURSIVE needleman_wunsch (
+WITH RECURSIVE needleman (
     xidx, yidx,
     score,
     from_lft, from_up, from_diag
@@ -79,10 +79,10 @@ WITH RECURSIVE needleman_wunsch (
                 END
             FROM 
                 letters AS ltrs
-                JOIN recurring.needleman_wunsch AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
-                JOIN recurring.needleman_wunsch AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
-                JOIN recurring.needleman_wunsch AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
-                LEFT OUTER JOIN recurring.needleman_wunsch AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
+                JOIN recurring.needleman AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
+                JOIN recurring.needleman AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
+                JOIN recurring.needleman AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
+                LEFT OUTER JOIN recurring.needleman AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
             WHERE 
                 this.score IS NULL 
         ),
@@ -125,7 +125,7 @@ backtrack(
             '-' || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_lft
@@ -139,7 +139,7 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_up
@@ -153,7 +153,7 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_diag

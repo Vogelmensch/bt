@@ -202,9 +202,9 @@ The two cases shown in @lcs_recursive_using_key automatically terminate as soon 
             diag.len + 1,
             false, false, true
         FROM 
-            letters       AS ltrs JOIN
+            letters       AS ltrs                                   JOIN
             recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                     ltrs.yidx = diag.yidx+1 LEFT OUTER JOIN
+                                     ltrs.yidx = diag.yidx+1        LEFT OUTER JOIN
             recurring.lcs AS this ON ltrs.xidx = this.xidx and
                                      ltrs.yidx = this.yidx
         WHERE 
@@ -220,13 +220,13 @@ The two cases shown in @lcs_recursive_using_key automatically terminate as soon 
             greatest(l.len, u.len),
             l.len >= u.len, u.len >= l.len, false
         FROM 
-            letters       AS ltrs JOIN
-            recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and 
-                                  ltrs.yidx = l.yidx JOIN
-            recurring.lcs AS u ON ltrs.xidx = u.xidx and 
-                                  ltrs.yidx = u.yidx+1 LEFT OUTER JOIN
-            recurring.lcs AS this ON ltrs.xidx = this.xidx and 
-                                     ltrs.yidx = this.yidx    
+            letters       AS ltrs                                   JOIN
+            recurring.lcs AS l      ON ltrs.xidx = l.xidx+1 and 
+                                       ltrs.yidx = l.yidx           JOIN
+            recurring.lcs AS u      ON ltrs.xidx = u.xidx and 
+                                       ltrs.yidx = u.yidx+1         LEFT OUTER JOIN
+            recurring.lcs AS this   ON ltrs.xidx = this.xidx and 
+                                       ltrs.yidx = this.yidx    
         WHERE 
             this.len IS NULL and    
             ltrs.xsym != ltrs.ysym 

@@ -29,11 +29,7 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
         range(length(s2())+1) AS r(n)
 );
 
-WITH RECURSIVE max_row(yidx) AS (
-    SELECT max(yidx)
-    FROM letters
-), 
-needleman_wunsch (
+WITH RECURSIVE needleman (
     xidx, yidx,
     score,
     from_lft, from_up, from_diag
@@ -70,12 +66,7 @@ needleman_wunsch (
 
     -- ❸ Calculate the score for each of the three possible alignments for the next combination of letters
     (
-        WITH current_row(yidx) AS (
-            SELECT max(yidx) + 1
-            FROM needleman_wunsch
-            WHERE xidx = length(s1())
-        ), 
-        scores_intermediate (
+        WITH scores_intermediate (
             xidx, yidx, 
             lft, up, diag
         ) AS (
@@ -90,10 +81,10 @@ needleman_wunsch (
                 END
             FROM 
                 letters AS ltrs
-                JOIN needleman_wunsch AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
-                JOIN needleman_wunsch AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
-                JOIN needleman_wunsch AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
-                LEFT OUTER JOIN needleman_wunsch AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
+                JOIN needleman AS diag ON diag.xidx = ltrs.xidx-1 AND diag.yidx = ltrs.yidx-1
+                JOIN needleman AS lft ON lft.xidx = ltrs.xidx-1 AND lft.yidx = ltrs.yidx 
+                JOIN needleman AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
+                LEFT OUTER JOIN needleman AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
             WHERE 
                 this.score IS NULL 
         ),
@@ -106,20 +97,20 @@ needleman_wunsch (
                 lft, up, diag, greatest(lft, up, diag)
             FROM scores_intermediate
         )
-        -- ❺ Carry the working table
-        SELECT *
-        FROM needleman_wunsch
-        WHERE 
-            (SELECT yidx FROM current_row) <= (SELECT yidx FROM max_row)
-
-        UNION
-
         -- ❹ Highlight the path(s) corresponding to the highest score
         SELECT 
             xidx, yidx,
             max,
             lft = max, up = max, diag = max
         FROM scores
+
+        UNION
+
+        -- ❺ Carry the working table
+        SELECT *
+        FROM needleman
+        WHERE 
+            (SELECT count(*) FROM needleman) < (SELECT count(*) FROM letters)
     )
 ),
 -- ❻ Build the resulting strings in backtracking process, using the highlighted paths
@@ -143,7 +134,7 @@ backtrack(
             '-' || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_lft
@@ -157,7 +148,7 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_up
@@ -171,7 +162,7 @@ backtrack(
             l.ysym || b.string2
         FROM 
             backtrack AS b JOIN 
-            needleman_wunsch AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
+            needleman AS nw ON b.xidx = nw.xidx AND b.yidx = nw.yidx JOIN 
             letters AS l ON nw.xidx = l.xidx AND nw.yidx = l.yidx 
         WHERE
             nw.from_diag

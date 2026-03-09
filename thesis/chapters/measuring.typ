@@ -64,7 +64,7 @@ As the start node, we chose `node_id = 189104`, which lies within central park. 
       [stdev of edge weight],[855],
     ),
 
-    image("images/nyc_roads.svg")
+    image("images/nyc_roads.png")
   )
 ) <central_park_facts>
 
@@ -89,7 +89,7 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
       [stdev of edge weight],[1071],
     ),
 
-    image("images/vegas_10_km.svg")
+    image("images/vegas_10_km.png")
   )
 ) <vegas_facts>
 

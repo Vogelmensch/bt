@@ -49,8 +49,8 @@ class Plot:
     def show(self):
         plt.show()
 
-    def store(self, name):
-        plt.savefig(name)
+    def store(self, name, dpi="figure"):
+        plt.savefig(name, dpi=dpi)
 
     def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, histogram=None, logy=False, ms=5):
         if not args.x_value:
@@ -172,6 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--fit', type=int, nargs='*', help='fit data to polynomial of given degree; provide multiple values for multiple measurements within one plot (0 -> no fit)')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
+    parser.add_argument('--dpi', type=float, help='set resolution of stored image in dpi')
 
     parser.add_argument('--hist', type=int, help='Print y_value as histogram with HIST many bins')
     parser.add_argument('--edge', action='store_true')
@@ -204,4 +205,4 @@ if __name__ == '__main__':
             filename = f'measure/plots/{measurement_filename}.svg'
         else:
             filename = args.store
-        plot.store(filename)
+        plot.store(filename, dpi=args.dpi)
