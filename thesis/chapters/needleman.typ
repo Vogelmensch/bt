@@ -1,5 +1,7 @@
 #import "definitions.typ": orange
 
+#set math.equation(numbering: "(1)")
+
 #let t(len, left, up, diag, color) = table.cell(
     grid(
         rows: 2,
@@ -38,7 +40,7 @@ A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic m
     )
 ) <changing_dna>
 
-There are infinitely many ways to combine those three operations to turn one given DNA sequence into the other. We are interested in the combination that needs the minimal amount of operations. 
+There are infinitely many ways to combine those three operations to turn one given DNA sequence into another. We are interested in the combination that needs the minimal amount of operations. 
 To compare two given sequences, we write them one above the other. Oviously, we cannot change or remove letters from one of the sequences. However, we can insert a special symbol called the "indel", denoted with the sign "`-`". The indel marks the insertion or deletion of a character. @aligning_dna continues the previous example and aligns each sequence pair in this way.
 
 #figure(
@@ -63,15 +65,15 @@ To compare two given sequences, we write them one above the other. Oviously, we 
 ) <aligning_dna>
 
 
-To rate an alignment, we assign scores to each of its pairs of letters, based on a scoring function. There are many different scoring functions; we choose the following: let $(x, y)$ be a pair of letters. Then:
+To rate an alignment, we assign scores to each of its pairs of letters, based on a scoring function. There are many different scoring functions to choose from; we choose the following, very basic one: let $(a, b)$ be a pair of letters. Then:
 
 $
-  "score"(x, y) = cases(
-    +1 &"if" x = y &"match",
-    -1 &"if" x != y &"mismatch",
-    -1 &"if" x = "\"-\"" "or" y = "\"-\"" &"indel"
+  "score"(a, b) = cases(
+    +1 &"if" a = b &"match",
+    -1 &"if" a != b &"mismatch",
+    -1 &"if" a = "\"-\"" "or" b = "\"-\"" &"indel"
   )
-$
+$ <scoring_function>
 
 
 To illustrate this with another example, let us consider the sequences `s1 = GAGA` and `s2 = AATG`. @alignment_example shows four different way to align `s1` and `s2`, and it shows the application of the scoring function for each of them. The highest score is being reached by the rightmost example, which also turns out to be the overall best alignment, i.e., the one resulting in the highest score.
@@ -122,39 +124,44 @@ Similar to LCS, our approach will be to iteratively fill the dynamic programming
         [*T*], [], [], [], [], [],
         [*G*], [], [], [], [], [],
     ),
-)<needleman_table_empty>
+) <needleman_table_empty>
 
-Let $Sigma$ be an alphabet and $Sigma*$ the set of all words over $Sigma$. Let $a, b in Sigma$ and $s_1, s_2 in Sigma*$, and $+$ the concatenation operator.
+We now define functions ... TODO
+
+Let $Sigma$ be an alphabet and $Sigma^*$ the set of all words over $Sigma$. Let $a, b in Sigma$ and $s_1, s_2 in Sigma*$, and $+$ the concatenation operator.
 
 #let score = "score"
 
-BAUSTELLE
+The base case is defined by 
+$
+  score(s_1+a, s_2+b) = 0, "if" a = b = epsilon.
+$ <base_case_function>
 
-$
-  score(s_1+a, s_2+b) = cases(
-    0 &"if" a = b = epsilon,
-    score(s_1, s_2 + b) - 1 &"if" a = epsilon,
-    score(s_1 + a, s_2) - 1 &"if" b = epsilon
-  )
-$
+In @needleman_table_empty, we fill this value into the cell at the top-leftmost corner. The table is then being filled iteratively using  @scoring_function by the recurrence relation 
+
+TODO: relating to the scoring function does not work. the two functions share the same name but are fundamentally different. maybe define another scoring functions using the strings from @needleman_recurrence_relation.
 
 $
   score(s_1 + a, s_2 + b) = max cases(
-    score(s_1 + a, &s_2 &) &- 1,
-    score(s_1, &s_2 + b &) &- 1,
+    score(s_1 + a, &s_2 &) &+ "indel_score",
+    score(s_1, &s_2 + b &) &+ "indel_score",
     score(s_1, &s_2 &) &+ cases(
-        +1 &"if" a = b,
-        -1 &"if" a != b
+        "match_score" &"if" a = b,
+        "mismatch_score" &"if" a != b
     )
-  )
-$
+  ),
+$ <needleman_recurrence_relation>
+
+where, because of @base_case_function, we can assume that either $a != epsilon$ or $b != epsilon$. 
+
+TODO: explain @needleman_recurrence_relation.
 
 == Query Layout
 
-Equivalent to the query start in LCS, we create macros `s1()` and `s2()` to hold the strings, and create the `letters` table to hold all combinations of characters from those strings. See TODO: Link to LCS. Additionally, we define the scoring system using macros, see @scoring_macros.
+Equivalent to the layout of LCS, we create macros `s1()` and `s2()` to hold the strings, and create the `letters` table to hold all combinations of characters from those strings. See TODO: Link to LCS. Additionally, we define the scoring system using macros, see @scoring_macros.
 
 #figure(
-    caption: [],
+    caption: [Definition of exemplary scoring function using macros],
     ```sql
     CREATE MACRO match_score() AS 1;
     CREATE MACRO mismatch_score() AS -1;
@@ -166,8 +173,10 @@ Equivalent to the query start in LCS, we create macros `s1()` and `s2()` to hold
 
 Also equivalent to LCS is the approach of filling the dynamic programming table not with partial solutions, but with integer-valued scores and boolean-valued directions instead. After the table has been filled, we will backtrack the entries to construct the actual solutions.
 
+TODO: Explain columns
+
 #figure(
-    caption: [],
+    caption: [Layout of Needleman-Wunsch for classic (left) and using-key (right)],
     grid(
         columns: 2,
         gutter: 25pt,
@@ -207,11 +216,12 @@ Also equivalent to LCS is the approach of filling the dynamic programming table 
 
 == Base case
 
-The base case is equivalent for both variants...
+The base case is equivalent for both variants. It is divided into three sections, marked in @needleman_base_case using SQL comments. Case ❶ takes care of the base case shown in @base_case_function. Cases ❷ and ❸ define all the cases occuring within @needleman_recurrence_relation in which either $a = epsilon$ or $b = epsilon$. Intuitively, in those cases, one word has already been written down completely, while the other has still letters left. Those letters are then all being paired with indels. See TODO for backtracking.
 
 #figure(
-    caption: [],
+    caption: [Base case for Needleman-Wunsch],
     ```sql
+    -- ❶ a = b = ε
     SELECT 
         xidx, yidx,
         xidx * indel_score(),
@@ -221,26 +231,28 @@ The base case is equivalent for both variants...
 
     UNION 
 
-    SELECT 
-        xidx, yidx,
-        xidx * indel_score(),
-        true, false, false
-    FROM letters
-    WHERE xidx > 0 and yidx = 0
-
-    UNION
-
+    -- ❷ a = ε, b ≠ ε
     SELECT 
         xidx, yidx,
         yidx * indel_score(),
         false, true, false
     FROM letters
     WHERE xidx = 0 and yidx > 0
+
+    UNION
+
+    -- ❸ a ≠ ε, b = ε
+    SELECT 
+        xidx, yidx,
+        xidx * indel_score(),
+        true, false, false
+    FROM letters
+    WHERE xidx > 0 and yidx = 0
     ```
 ) <needleman_base_case>
 
 
-...
+@needleman_table_after_base_case shows the dynamic programming table after the base case.
 
 #figure(
     caption: [Dynamic programming table after base case],
@@ -256,13 +268,17 @@ The base case is equivalent for both variants...
         [*T*], t(-3, false, true, false, white), e, e, e, e,
         [*G*], t(-4, false, true, false, white), e, e, e, e,
     ),
-)
+) <needleman_table_after_base_case>
 
 
 == Recursive step: using-key
 
+Again, we examine using-key first and address classic later, because using-key will be contained within classic.
+
+...
+
 #figure(
-    caption: [],
+    caption: [Recursive step of Needleman-Wunsch for using-key],
     ```sql
     WITH scores_intermediate (
         xidx, yidx, 
@@ -299,7 +315,6 @@ The base case is equivalent for both variants...
         FROM scores_intermediate
     )
 
-    -- ❹ Highlight the path(s) corresponding to the highest score
     SELECT 
         xidx, yidx,
         max,

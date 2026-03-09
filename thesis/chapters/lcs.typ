@@ -33,7 +33,7 @@ In words, the second property states that, if two strings end with different let
 We can combine the two properties to form the recurrence relation. We use the above definitions for the syntax, with the generalization that it is unknown whether $a$ and $b$ are equal or not. Also, let $epsilon$ be the empty word. Then:
 
 $ lcs(s_1 + a, s_2 + b) = cases(
-    epsilon &"if" s_1 + a = epsilon "or" s_2 + b = epsilon,
+    epsilon &"if" a = epsilon "or" b = epsilon,
     lcs(s_1, s_2) + a &"if" a = b,
     max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%) &"if" a != b
 ) $ 
