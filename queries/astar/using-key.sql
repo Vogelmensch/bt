@@ -35,12 +35,9 @@ WITH RECURSIVE astar (
     (
     -- ❸ Select the node with minimal f-value; choose one at random if multiple exist
     WITH min_node(id) AS (
-        SELECT node_id
+        SELECT argmin(node_id, f)
         FROM recurring.astar
-        WHERE 
-            NOT visited AND 
-            f = (SELECT min(f) FROM recurring.astar WHERE NOT visited)
-        LIMIT 1
+        WHERE NOT visited
     )
 
     -- ❹ Set 'visited' to TRUE for the unvisited node with smallest distance
