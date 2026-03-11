@@ -88,7 +88,7 @@ WITH RECURSIVE astar (
             filtered_astar AS old ON nbs.node_to = old.node_id                   -- old dist and prev of neighbors
         WHERE 
             sml.node_id = (SELECT id FROM min_node) AND                             -- sml is the smallest node in the front
-            sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT)) AND    -- modify only neighbors with smaller distances
+            sml.dist + nbs.weight < coalesce(old.dist, 'inf' :: FLOAT) AND    -- modify only neighbors with smaller distances
             sml.node_id != goal_node()                                              -- stop when path to goal node has been found
 
         UNION 

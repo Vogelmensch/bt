@@ -101,7 +101,7 @@ For our train journey, when considering to visit a station located in the opposi
 
 Because including a heuristic function would make following the running example unnecessarily confusing, we decided not to include one for it; we set all values $h = 0$, as shown in @graph_example. The explanation below still covers the full A\* search algorithm though. For our measurements in (TODO: Link to chapter), we used a heuristic function which be explain in TODO.
 
-== Query Layout
+== Query Layout <astar_layout>
 
 For both variants, we first define two macros for the ids of start- and goal-node respectively, shown in @dijkstra_macros. 
 
@@ -171,10 +171,10 @@ During runtime, the values `dist`, `f` and `prev` and constantly being updated a
 
 == Base Case
 
-In the base case, the only node known to us is `start_node()`, with a distance from `start_node()` of $"dist"=0$, no previous node, $"prev" = "NULL"$, and the visited flag set to $"visited" = "false"$.
+In the base case, the only known node is `start_node()`, with a distance from `start_node()` of `dist = 0`, the f-value simply being the heuristic function's value for this node, `f = h(start_node())`, no previous node, `prev = NULL`, and the visited flag set to `visited = false`.
 
 #figure(
-  caption: [],
+  caption: [Base case for A\*.],
   ```sql
   SELECT 
       start_node(), 
@@ -187,48 +187,47 @@ In the base case, the only node known to us is `start_node()`, with a distance f
 
 == Recursive Step: using-key
 
-The recursive step is the important part of the query. We shall see later that the classic version can be written as an extension of using-key, which is why we start with the latter. @dijkstra_recursive shows the relevant code. It is a CTE that can be separated into three logical parts. Notice that, in every part, we select from the recurring table.
+We will later see that the classic version of A\* can be written as an extension of using-key, which is why we start with the latter. @astar_recursive shows the recursive step of the query. It is itself a CTE that can be separated into three logical parts. Notice that, in every part, we select from the recurring table.
+To follow along, @astar_example illustrates each step for our running example in the first four iterations. 
 
-❶st, we select one single node from the recurring table and bind its id to `min_node(id)`. This node has to meet two criteria, as can be seen in the `WHERE` clause: First, it must not be visited. Second, its f-value must be minimal. 
-In the first iteration, the only node in the recurring table is the start node. 
+❶st, we select one node with minimal f-value from the recurring table and bind its id to `min_node(id)`. Because every node can be `visited` only once in the entire process, it must not have been `visited` before, as stated in the `WHERE` clause.
 
-❷nd step: We want so visit each node at most once. For this reason, we introduced the `visited` variable at the query start. The `node_id` of the node we are currently visiting has been bound to `min_node(id)` in ❶. Thus, we should udpate its `visited` value to `true`.
-Keep in mind that we are currently working with using-key. Because we set the `key` to `node_id` at the start, when updating the values for the currently visited node, the values get updated in the dictionary. 
+❷nd step: We now mark `min_node` as `visited` for future iterations. If `min_node` turns out to be the `goal_node()`, we end the iteration, as defined by the condtion `node_id != goal_node()` in this and the next step.
 
-❸rd step: The goal of this step is to take all neighbors of `min_node` and update their `dist`-values, if it turns out that the path over `min_node` is shorter. 
+❸rd step: The goal of this step is to take all neighbors of `min_node` and update their values for `dist`, `f` and `prev`, if it turns out that the path over `min_node` is shorter than the respective shortest path found so far. We will explain this step in the following paragraphs.
 
-First, notice that the first line of the `FROM`-clause and the first two lines of the `WHERE`-clause are identical to ❷, the only difference being that we bind `mind_node` to the name `sml` (standing for "smallest") here. The second line in the `FROM`-clause binds the graph to the name `nbs` ("neighbors"), on the condition `sml.node_id = nbs.node_from`. With this, we can select the `node_id`s of all neighbors of `min_node` by selecting `nbs.node_to`. We immediately use this in the third line of the `FROM`-clause, where we bind the recurring table to the name `old`, on the conidtion `nbs.node_to = old.node_id`. With this, we have access to the values of `smallest`'s neighbors, by selecting `old`. Notice that we used a `LEFT OUTER JOIN` to join `old`, which returns `NULL`-values for neighbors which are not part of the dictionary yet.
+First, notice that the first line of the `FROM`-clause and the first two lines of the `WHERE`-clause are identical to ❷, the only difference being that we bind `min_node` to the name `sml` (standing for "smallest") here. The second line in the `FROM`-clause binds the _graph_ to the name `nbs` ("neighbors"), on the condition `sml.node_id = nbs.node_from`. With this, we can select the `node_id`s of all neighbors of `min_node` by selecting `nbs.node_to`. We immediately use this in the third line of the `FROM`-clause, where we bind the recurring table to the name `old`, on the conidtion `nbs.node_to = old.node_id`. With this, we have access to the values of `min_nodes`' neighbors, by selecting from `old`. Notice the `LEFT OUTER JOIN` we used to join `old`, which returns `NULL`-values for neighbors which are not part of the recurring table yet.
 
-With this preparation, we are able to understand the third line of the `WHERE`-clause. This line is the heart of Dijkstra's algorithm. It defines the final condition on which values are being selected. Rewriting the `coalesce`-function in a mathematical way, it looks like this:
-
-$ 
-  "coalesce"(a, b) = cases(
-    a "if" a != "NULL",
-    b "else"
-  )
-$
-
-`old.dist` can be `NULL`, as explained in the previous paragraph. In this case, the condition is `true` by default. Otherwise we evaluate the condition, `sml.dist + nbs.weight < old.dist`. Only nodes for which this condition is `true`, i.e. nodes for which the path over `min_node` is smaller than their current shortest path, will be selected in this step.
-
-Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we have just found a set of neighbors which either have never been selected before, or for which we found a shorter path. We now set or update those neighbor's entries in the dictionary, respectively.
-- `nbs.node_to` is the neighbor's `node_id`, as explained above.
-- as `sml.dist + nbs.weight` is the shortest path currently known to reach this neighbor, we set both `dist` and `f` to this value.
-- as we found this smallest path by going over `min_node`, we set its id, `sml.node_id`, to be previous node `prev` in the path to reach the neighbor.
-- the neighbor has still not been visited yet. 
+With this preparation, we are able to understand the third line of the `WHERE`-clause. This line is the heart of Dijkstra's algorithm. It defines the final condition on which values are being selected. @coalesce shows the `coalesce`-function in mathematical notation: It selects a value only if it is not `NULL`, and provides an alternative otherwise.
 
 #figure(
-  
-  caption: [Recursive step of Dijkstra's algorithm for using-key],
+  caption: [Function `coalesce` written in mathematical notation],
+  $ 
+    "coalesce"(a, b) = cases(
+      a "if" a != "NULL",
+      b "else"
+    )
+  $
+) <coalesce>
+
+`old.dist` is  `NULL` if `old` has not been selected before. In this case, the condition is `true` by default, as $x < infinity, forall x in RR$. Otherwise we evaluate the condition, `sml.dist + nbs.weight < old.dist`. Only nodes for which this condition is `true`, i.e. nodes for which the path over `min_node` is shorter than their currently known shortest path, will be selected in this step.
+
+Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we have just found a set of neighbors which either have never been selected before, or for which we found a shorter path by going over `min_node`. We now update or insert those neighbor's entries in the recurring table:
+- `nbs.node_to` is the neighbor's `node_id`, as explained above.
+- as `sml.dist + nbs.weight` is the shortest path currently known to reach this neighbor, we set `dist` to this value.
+- we add the heuristic to `dist` to get the `f`-value, `sml.dist + nbs.weight + nbs.h`.
+- as we found this smallest path by going over `min_node`, we set `sml.node_id`, to be the previous node `prev` in the path to reach this neighbor.
+- the neighbor has still not been `visited` yet. 
+
+#figure(
+  caption: [Recursive step of A\* for using-key],
   [
     ```sql
     -- ❶ Find node_id of the node with minimal f-value
     WITH min_node(id) AS (
-        SELECT node_id
+        SELECT argmin(node_id, f)
         FROM recurring.astar
-        WHERE 
-            NOT visited AND 
-            f = (SELECT min(f) FROM recurring.astar WHERE NOT visited)
-        LIMIT 1
+        WHERE NOT visited
     )
 
     -- ❷ Set visited = true for the minimal node
@@ -254,64 +253,15 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
         false                                   
     FROM
         recurring.astar AS sml JOIN                                              
-        {graph}         AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN
+        graph         AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN
         recurring.astar AS old ON nbs.node_to = old.node_id                      
     WHERE 
         sml.node_id = (SELECT id FROM min_node) AND                             
         sml.node_id != goal_node() AND 
-        sml.dist + nbs.weight < coalesce(old.dist, CAST('inf' AS FLOAT))
+        sml.dist + nbs.weight < coalesce(old.dist, 'inf' :: FLOAT)
     ```
   ]
-) <dijkstra_recursive>
-
-
-== Recursive Step: classic
-
-The classic version of A\* can be viewed as an extension of the using-key version. We follow the same approach, however, because we can only access values which have been calculated in the previous iteration, we have to carry all values manually. This vastly increases the size of the union table.
-
-@dijkstra_classic shows the relevant code. The dict-based recursive step from @dijkstra_recursive can be inserted at the marked spot if replacing every occurence of `recurring.table` with `filtered_dijkstra`. Additionally, two code blocks are required.
-
-❶st, as multiple occurences of the same key can appear in the union table, we need to specify which one should be selected. This is what the CTE `filtered_dijkstra` does. To decide which values to select and which to discard, we can use the nature of Dijkstra's algorithm:
-1. A new entry for a given node is only being generated if a smaller distance to this node has been found. Thus, we should select `min(dist)` and `argmin(f, dist)`, `argmin(prev, dist)`, respectively.
-2. If a node has been marked as `visited`, it will never be selected again. Thus, if one instance of the node has its `visited`-value set to `true`, we should select `true` overall - which can simply be implemented by `bool_or(visited)`.
-
-❷ndly, after all other values have been selected, we need to carry to rest of the table in order to not lose any information. For this, we simply select the entire `filtered_dijkstra`-table. The `WHERE`-clause implements the break condition.
-
-#figure(
-  caption: [Recursive step of Dijkstra's algorithm for classic, based on the dict-based version.],
-  
-  ```sql
-  -- ❶ Group equal nodes
-  WITH filtered_dijkstra (
-      node_id,
-      dist,
-      f,
-      prev,
-      visited
-  ) AS (
-      SELECT 
-          node_id,
-          min(dist),
-          argmin(f, dist),
-          argmin(prev, dist),
-          bool_or(visited)
-      FROM astar
-      GROUP BY node_id
-  ),
-
-  -- <dict-based recursive step>
-
-  UNION 
-
-  -- ❷ Carry table
-  SELECT *
-  FROM filtered_dijkstra
-  WHERE (SELECT id FROM min_node) != goal_node()
-  ```
-) <dijkstra_classic>
-
-
-TODO: Maybe move the full query to the appendix or something. Or just say which lines to change.
+) <astar_recursive>
 
 #let marking_color = red + 0.8pt
 
@@ -334,15 +284,14 @@ TODO: Maybe move the full query to the appendix or something. Or just say which 
       } 
 )
 
-
 #figure(
   caption: [],
   table(
     columns: 4,
-    table.header([*Iteration*], table.vline(stroke: 1pt), [*visit node with smallest f-value*], [*update `visited` for smallest*],[*update or insert neighbors of smallest*]),
+    table.header([*Iteration*], table.vline(stroke: 1pt), [*❶: visit node with smallest f-value*], [*❷: update `visited` for `smallest`*],[*❸: update or insert neighbors of `smallest`*]),
     table.hline(stroke: 1pt),
     stroke: none,
-    align: (x, y) => if x == 0 or y == 0 {horizon} else {top},
+    align: (x, y) => if y == 0 {horizon} else {top},
 
     [1], 
     dijk(
@@ -428,7 +377,98 @@ TODO: Maybe move the full query to the appendix or something. Or just say which 
       table.cell([5], fill:white),table.cell([4], fill:orange),table.cell([4], fill:orange),table.cell([4], fill:orange),table.cell([false], fill:white),
     ),
   )
+) <astar_example>
+
+
+== Recursive Step: classic
+
+The classic version of A\* can be viewed as an extension of the using-key version. We follow the same approach, however, because we can only access values which have been calculated in the previous iteration, we have to carry all values manually. This vastly increases the size of the union table.
+
+@astar_classic shows the recursive step of the classic query. The using-key variant can be inserted at the marked spot by replacing every occurence of `recurring.table` within @astar_recursive with `filtered_astar`. Additionally, two more code blocks are required.
+
+❶st, as multiple occurences of the same key can appear in the union table, we need to specify which one should be selected. This is what the CTE `filtered_dijkstra` does. To decide which values to select and which to discard, we can use the nature of Dijkstra's algorithm:
+1. A new entry for a given node is only being generated if a smaller distance to this node has been found. Thus, we should select `min(dist)` and `argmin(f, dist)`, `argmin(prev, dist)`, respectively.
+2. If a node has been marked as `visited`, it will never be selected again. Thus, if one instance of the node has its `visited`-value set to `true`, we should select `true` overall - which can simply be implemented by `bool_or(visited)`.
+
+❷ndly, after all other values have been selected, we need to carry to rest of the table in order to not lose any information. For this, we simply select the entire `filtered_astar`-table. The `WHERE`-clause implements the break condition.
+
+#figure(
+  caption: [Recursive step of A\* for classic, based on the using-key variant.],
+  
+  ```sql
+  -- ❶ Group equal nodes
+  WITH filtered_astar (
+      node_id,
+      dist,
+      f,
+      prev,
+      visited
+  ) AS (
+      SELECT 
+          node_id,
+          min(dist),
+          argmin(f, dist),
+          argmin(prev, dist),
+          bool_or(visited)
+      FROM astar
+      GROUP BY node_id
+  ),
+
+  <using-key recursive step>
+
+  UNION 
+
+  -- ❷ Carry table
+  SELECT *
+  FROM filtered_astar
+  WHERE (SELECT id FROM min_node) != goal_node()
+  ```
+) <astar_classic>
+
+In @astar_example, the state of the recurring table after each iteration is shown in the last column. To grasp the blabla, see blabla
+
+#figure(
+  caption: [],
+  table(
+    columns: 4,
+    stroke: none,
+
+    table.header([*Iteration*], [*Union table*], table.vline(stroke: 1pt), [*Iteration*], [*Union table*]),
+    table.hline(stroke: 1pt),
+
+    [0],
+    dijk(
+      table.hline(),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
+    ),
+
+    [1],
+    dijk(
+      table.hline(),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
+      [0], [0], [0], [None], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([false], fill: white),
+      [2], [4], [4], [0], [false],
+    ),
+
+    [2],
+    dijk(
+      table.hline(),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
+      [0], [0], [0], [None], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([false], fill: white),
+      [2], [4], [4], [0], [false],
+      [0], [0], [0], [None], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
+      [2], [4], [4], [0], [false],
+      table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([false], fill:white)
+    ),
+  )
 )
+
+
+
+
 
 
 == Heuristic function for air distance
