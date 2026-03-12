@@ -116,13 +116,13 @@ For both variants, we first define two macros for the ids of start- and goal-nod
 
 
 #figure(
-  caption: [Layout of Dijkstra's algorithm for both CTE types in comparison.],
+  caption: [Layout of A\* for both CTE types in comparison.],
   grid(
     columns: 2,
     column-gutter: 20pt,
     [
       ```SQL
-      WITH RECURSIVE dijkstra (
+      WITH RECURSIVE astar (
         node_id,
         dist,
         f,
@@ -140,7 +140,7 @@ For both variants, we first define two macros for the ids of start- and goal-nod
     ],
     [
       ```SQL
-      WITH RECURSIVE dijkstra (
+      WITH RECURSIVE astar (
         node_id,
         dist,
         f,
@@ -157,9 +157,9 @@ For both variants, we first define two macros for the ids of start- and goal-nod
       ```
     ]
   )
-) <dijkstra_init>
+) <astar_init>
 
-The general layout of the queries is shown in @dijkstra_init. Both variants use the same column names. Every row in `dijkstra` represents a node in the graph, which consists of 
+The general layout of the queries is shown in @astar_init. Both variants use the same column names. Every row in `astar` represents a node in the graph, which consists of 
 - `node_id` as a unique identifier for the node, taken from the graph, 
 - `dist`, the shortest currently known distance from the start node to this node, 
 - `f`, which adds the heuristic value for this node to `dist` as explained in @astar_basics,
@@ -253,7 +253,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
         false                                   
     FROM
         recurring.astar AS sml JOIN                                              
-        graph         AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN
+        graph           AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN
         recurring.astar AS old ON nbs.node_to = old.node_id                      
     WHERE 
         sml.node_id = (SELECT id FROM min_node) AND                             
@@ -297,13 +297,13 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
     dijk(
       marked: 1,
       table.hline(),
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([`NULL`], fill: white),table.cell([false], fill: white),
     ),
     dijk(
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([true], fill: orange),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([`NULL`], fill: white),table.cell([true], fill: orange),
     ),
     dijk(
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([true], fill: white),
+      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([`NULL`], fill: white),table.cell([true], fill: white),
       table.cell([1], fill: lime), table.cell([1], fill: lime),table.cell([1], fill: lime),table.cell([0], fill: lime),table.cell([false], fill: lime),
       table.cell([2], fill: lime), table.cell([4], fill: lime),table.cell([4], fill: lime),table.cell([0], fill: lime),table.cell([false], fill: lime),
     ),
@@ -311,17 +311,17 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
     [2],
     dijk(
       marked: 2,
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([false], fill: white),
       [2], [4], [4], [0], [false],
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: orange),
       [2], [4], [4], [0], [false],
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], [4], [4], [0], [false],
       table.cell([3], fill:lime),table.cell([2], fill:lime),table.cell([2], fill:lime),table.cell([1], fill:lime),table.cell([false], fill:lime),
@@ -330,19 +330,19 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
     [3],
     dijk(
       marked: 4,
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], [4], [4], [0], [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([false], fill:white)
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], [4], [4], [0], [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:orange),
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], table.cell([3], fill:orange), table.cell([3], fill:orange), table.cell([3], fill:orange), [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
@@ -353,7 +353,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
     [4],
     dijk(
       marked: 5,
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
@@ -361,7 +361,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
       table.cell([5], fill:white),table.cell([5], fill:white),table.cell([5], fill:white),table.cell([3], fill:white),table.cell([false], fill:white),
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
@@ -369,7 +369,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
       table.cell([5], fill:white),table.cell([5], fill:white),table.cell([5], fill:white),table.cell([3], fill:white),table.cell([false], fill:white),
     ),
     dijk(
-      [0], [0], [0], [None], [true],
+      [0], [0], [0], [`NULL`], [true],
       table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
       [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], [false],
       table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
@@ -425,47 +425,19 @@ The classic version of A\* can be viewed as an extension of the using-key versio
   ```
 ) <astar_classic>
 
-In @astar_example, the state of the recurring table after each iteration is shown in the last column. To grasp the blabla, see blabla
+In @astar_example, the state of the recurring table after each iteration is shown in the last column. We can see it growing 
 
 #figure(
-  caption: [],
+  caption: [TODO: falsche Werte, weil ich die 2 nicht besucht habe!!],
   table(
-    columns: 4,
-    stroke: none,
+    rows: 3,
+    columns: 7,
 
-    table.header([*Iteration*], [*Union table*], table.vline(stroke: 1pt), [*Iteration*], [*Union table*]),
-    table.hline(stroke: 1pt),
-
-    [0],
-    dijk(
-      table.hline(),
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
-    ),
-
-    [1],
-    dijk(
-      table.hline(),
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
-      [0], [0], [0], [None], [true],
-      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([false], fill: white),
-      [2], [4], [4], [0], [false],
-    ),
-
-    [2],
-    dijk(
-      table.hline(),
-      table.cell([0], fill: white),table.cell([0], fill: white),table.cell([0], fill: white),table.cell([None], fill: white),table.cell([false], fill: white),
-      [0], [0], [0], [None], [true],
-      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([false], fill: white),
-      [2], [4], [4], [0], [false],
-      [0], [0], [0], [None], [true],
-      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
-      [2], [4], [4], [0], [false],
-      table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([false], fill:white)
-    ),
+    [Iteration], ..range(0, 6).map(str),
+    [Elements in union table], [1], [5], [10], [26], [34], [43],
+    [Elements in recurring table], [1], [3], [4], [6], [6], [7]
   )
 )
-
 
 
 

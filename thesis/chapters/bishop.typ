@@ -2,9 +2,9 @@
 
 = Drunken Bishop
 
-SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint.
+SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint @ssh.
 
-A fingerprint is a string of hexadecimal numbers. In practice, remembering and comparing such a string proves to be impractical. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from an fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation (that kind of looks like a chicken). The algorithm that draws the image from the fingerprint string is called the "drunken bishop algorithm".
+A fingerprint is a string of hexadecimal numbers, which proves to be impractical to remember and compare. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from a fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation. The algorithm that draws the image from the fingerprint string is called the "drunken bishop algorithm".
 
 #figure(
   caption: "Example ssh-fingerprint as string of hexadecimal numbers (left) and as an image (right)",
@@ -39,11 +39,11 @@ A fingerprint is a string of hexadecimal numbers. In practice, remembering and c
 #let width = "width"
 #let height = "height"
 
-The rules of converting an array of hexadecimal numbers to an ASCII-image are quite simple. The basic idea is to place a bishop, the chess piece, on a two dimensional field and track its movement, which is defined by the fingerprint.
+The rules of converting an array of hexadecimal numbers to an ASCII-image are straightforward. The basic idea is to place a bishop, the chess piece, on a two dimensional field and track its movement, which is defined by the fingerprint.
 
 We start on an empty grid of dimensions $width times height$, where $width = 17$ and $height = 9$ for the standard implementation. We place the bishop in the middle of the board. 
 
-In chess, the bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four (or less, if it is at a corner) directions. Which of those directions the bishop takes in each step is being defined by the fingerprint.
+In chess, bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four (or less, if it is at a corner) directions. The fingerprint defines Which of these directions the bishop takes in each step.
 
 @bishop_conversion shows how the fingerprint is translated and read. First, we convert the fingerprint from hexadecimal to binary representation. The resulting bytes are then read from left to right, and within each byte, the bit-pairs are read from right to left.
 For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. The bishop cannot move beyond the edges of the board. When given a direction that would lead beyond an edge, the bishop must move parallel to the edge. Becaues of this, the bishop is able to visit every square of the board, in contrast to the bishops in chess.
@@ -77,7 +77,7 @@ For one bit-pair, the bishop takes the direction matching the value in @bishop_d
 ) <bishop_directions>
 
 
-The bishop leaves a footprint on every square they visit. When visiting the same square multiple times, the footprint gets "deeper" for each visit. This creates a unique trail for the path the bishop has taken. To represent the "depth" of the footprints, we work through the symbols shown in @footprints. Additionally, we mark the start- and end-positions of the bishop with the letters S and E, respectively.
+The bishop leaves a footprint on every square they visit. When visiting the same square multiple times, the footprint gets "deeper" for each visit. This creates a unique trail for the path the bishop takes. To represent the "depth" of the footprints, we work through the symbols shown in @footprints. Additionally, we mark the start- and end-positions of the bishop with the letters S and E, respectively.
 
 #figure(
   caption: [ASCII symbols to represent the bishop's trail],
@@ -90,10 +90,13 @@ The bishop leaves a footprint on every square they visit. When visiting the same
   )
 ) <footprints>
 
-== Query start
+== Query layout
+
+For simplicity, we assume the conversion of the fingerprint from a string of hexadecimal numbers to an array of binary numbers, from here on called the bitlist has already taken place. 
+We define macros to hold the bitlist and the image dimensions, see @bishop_macros. 
 
 #figure(
-  caption: [],
+  caption: [Macros for drunken bishop. The bitlist is represented as an array of tuples. TODO: in sql, I think they are called "list" and "struct".],
   [
     ```sql
     CREATE OR REPLACE MACRO width() AS 17;
@@ -103,6 +106,9 @@ The bishop leaves a footprint on every square they visit. When visiting the same
     ```
   ]
 ) <bishop_macros>
+
+
+@bishop_layout shows the layout for the two CTE variants. In both variants, the table `bishop` has columns for the coordinates of the board, `x` and `y`. Both also store the `bitlist`, which 
 
 #figure(
   caption: [Base case of drunken bishop for classic (left) and using-key (right)],
@@ -118,12 +124,7 @@ The bishop leaves a footprint on every square they visit. When visiting the same
           bitlist,    
           is_end      
       ) AS (
-          SELECT 
-              (width()/2) :: INTEGER,
-              (height()/2) :: INTEGER,
-              
-              bitlist(),
-              false
+          <base case>
               
           UNION ALL
 
@@ -142,12 +143,7 @@ The bishop leaves a footprint on every square they visit. When visiting the same
           bitlist,    
           is_end      
       ) USING KEY (x, y) AS (
-          SELECT 
-              (width()/2) :: INTEGER,
-              (height()/2) :: INTEGER,
-              1,
-              bitlist(),
-              false
+          <base case>
               
           UNION
 
@@ -157,7 +153,37 @@ The bishop leaves a footprint on every square they visit. When visiting the same
       ```
     ]
   )
-) <bisho_base_case>
+) <bishop_layout>
+
+== Base case
+
+#figure(
+  caption: [Base case of drunken bishop for classic (left) and using-key (right)],
+  grid(
+    columns: 2,
+    gutter: 15pt,
+    [
+      ```sql
+      SELECT 
+        (width()/2) :: INTEGER,
+        (height()/2) :: INTEGER,
+        
+        bitlist(),
+        false
+      ```
+    ],
+    [
+      ```sql
+      SELECT
+        (width()/2) :: INTEGER,
+        (height()/2) :: INTEGER,
+        1,
+        bitlist(),
+        false
+      ```
+    ]
+  )
+) <bishop_base_case>
 
 == Outer queries
 
@@ -235,3 +261,5 @@ TODO: Explain further.
     ```
   ]
 )
+
+#bibliography("../references.bib")
