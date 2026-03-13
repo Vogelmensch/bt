@@ -94,6 +94,14 @@ def perform_query(args):
         many_lists = map(to_bit_reversed, fp_list)
         
         bitlist = list(chain.from_iterable(many_lists))
+
+        # Query to make bitlist to table
+        bitlist_query = "CREATE TABLE bits (idx INTEGER, y INTEGER, x INTEGER);\nINSERT INTO bits VALUES "
+        for idx, bit_pair in enumerate(bitlist):
+            bs = str(bit_pair)
+            bitlist_query += f'({idx},{bs[0]},{bs[1]}),'
+        bitlist_query = bitlist_query[:-1] + ';\n'
+
     except:
         argparse.ArgumentParser.exit(1, 'Invalid Input')
 
@@ -109,6 +117,7 @@ def perform_query(args):
             query = f.read()
 
         query = query.format(height=HEIGHT, width=WIDTH, bitlist=str(bitlist))
+        query = bitlist_query + query
 
         if args.time:
             cmd = '.timer on'
@@ -133,7 +142,7 @@ def perform_query(args):
             # get time measurement
             timestr = out[-2][0]
             # cut all time measurements out
-            out = out[4:-2]
+            out = out[6:-2]
         else:
             # cut stuff out
             out = out[1:-1]

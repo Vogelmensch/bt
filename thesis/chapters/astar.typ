@@ -1,6 +1,15 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 #import "definitions.typ": orange
 
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  languages: (
+    sql: (name: "SQL", icon: "🦆", )
+  )
+)
+
 #set heading(numbering: "1.1")
 #set table.vline(stroke: .5pt)
 #set table.hline(stroke: .5pt)

@@ -58,11 +58,16 @@ class Plot:
 
         query = self.default_query if not errorbars else self.errorbar_query
 
+
+        outer_script_idx = 2 # for coloring
         for script_idx, script in enumerate(scripts):
             d = duckdb.sql(query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
 
             colors = {'classic.sql': 'tab:blue', 'using-key.sql': 'tab:orange'}
-            color = colors.get(script, None)
+            color = colors.get(script, f'C{outer_script_idx}')
+            # for coloring
+            if script not in colors: 
+                outer_script_idx += 1
 
             if errorbars:
                 plt.errorbar(d['x'], d['y'], yerr=d['dy'], fmt='o', label=script, color=color)

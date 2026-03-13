@@ -6,7 +6,7 @@ WITH RECURSIVE pow2(i, n, x) USING KEY (i) AS (
         1 :: BIGINT
     FROM generate_series(1, 10) AS series(i)
 
-    UNION 
+    UNION ALL
 
     SELECT i, n+1, x*i
     FROM pow2

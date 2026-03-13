@@ -1,4 +1,14 @@
 #import "definitions.typ": redbox
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  languages: (
+    sql: (name: "SQL", icon: "🦆", )
+  )
+)
+
+#set heading(numbering: "1.1")
 
 = Drunken Bishop
 
@@ -15,7 +25,8 @@ A fingerprint is a string of hexadecimal numbers, which proves to be impractical
     [
       `7f:21:fa:08:d6:a6:47:28:a5:d0:ef:71:66:59:32:d9`
     ],
-    [
+
+    no-codly[
       ```
       +-----------------+
       |                 |
@@ -90,25 +101,51 @@ The bishop leaves a footprint on every square they visit. When visiting the same
   )
 ) <footprints>
 
-== Query layout
+== Query layout <bishop_chapter_layout>
 
-For simplicity, we assume the conversion of the fingerprint from a string of hexadecimal numbers to an array of binary numbers, from here on called the bitlist has already taken place. 
-We define macros to hold the bitlist and the image dimensions, see @bishop_macros. 
+We implemented two different approaches to represent the bitlist in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of the bitlist to get the bishop's direction for this step. The tail of this list then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
+For the second approach, we represent the bitlist using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
+
+It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. [LINK TO MEASURING] looks into this in depth.
 
 #figure(
-  caption: [Macros for drunken bishop. The bitlist is represented as an array of tuples. TODO: in sql, I think they are called "list" and "struct".],
+  caption: [Representations for bitlist using a SQL list (left) and a table (right)],
+  grid(
+    columns: 2,
+    gutter: 15pt,
+    ```sql
+    CREATE MACRO bitlist() AS [(1,0), (1, 1), ...];
+    ```,
+
+    ```sql
+    CREATE TABLE bits (
+      idx INTEGER,
+      y INTEGER,
+      x INTEGER
+    );
+
+    INSERT INTO bits VALUES 
+      (1, 0),
+      (1, 1),
+      ...;
+    ```
+  )
+) <bitlist_representations>
+
+
+
+#figure(
+  caption: [Macros for dimensions for drunken bishop],
   [
     ```sql
-    CREATE OR REPLACE MACRO width() AS 17;
-    CREATE OR REPLACE MACRO height() AS 9;
-
-    CREATE OR REPLACE MACRO bitlist() AS [(1,0), ...];
+    CREATE MACRO width() AS 17;
+    CREATE MACRO height() AS 9;
     ```
   ]
 ) <bishop_macros>
 
 
-@bishop_layout shows the layout for the two CTE variants. In both variants, the table `bishop` has columns for the coordinates of the board, `x` and `y`. Both also store the `bitlist`, which 
+We represent the image dimensions with macros as shown in @bishop_macros. The layout for the two CTE variants is shown in @bishop_layout. Both CTEs use columns `x` and `y` to represent the board, and the boolean-valued `is_end` to mark the bishop's final position. Additionally, classic hands down the entire shrinking `bitlist` in every iteration, while using-key stores the iteration's index `idx` to access the appropriate bits for each iteration, as well as the id of the current symbol, `sym_id` (the "depth" of the footprint).
 
 #figure(
   caption: [Base case of drunken bishop for classic (left) and using-key (right)],
@@ -118,6 +155,7 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
     [
       ```sql
       WITH RECURSIVE bishop (
+
           x,          
           y, 
 
@@ -137,17 +175,18 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
     [
       ```sql
       WITH RECURSIVE bishop (
+          idx,
           x,          
           y, 
           sym_id,     
-          bitlist,    
+
           is_end      
       ) USING KEY (x, y) AS (
           <base case>
               
           UNION
 
-          <recursive step>
+          (<recursive step>)
       )
       <outer query>
       ```
@@ -157,6 +196,8 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
 
 == Base case
 
+@bishop_base_case shows the base cases. In both variants, the bishop starts in the center of the board, defining the initial values for `x` and `y`. Also, the start position may not be the end position, defining `false` to be the initial value for `is_end`. Additionally, for classic, we start with the entire `bitlist()`. For using-key, we start with the `idx` of the first element in `bits`, which is `0`, as well as a value of `1` for `sym_id`, as the bishop has now stepped exactly once on the center field.
+
 #figure(
   caption: [Base case of drunken bishop for classic (left) and using-key (right)],
   grid(
@@ -165,6 +206,7 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
     [
       ```sql
       SELECT 
+
         (width()/2) :: INTEGER,
         (height()/2) :: INTEGER,
         
@@ -174,11 +216,12 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
     ],
     [
       ```sql
-      SELECT
+      SELECT 
+        0,
         (width()/2) :: INTEGER,
         (height()/2) :: INTEGER,
         1,
-        bitlist(),
+
         false
       ```
     ]
@@ -187,7 +230,9 @@ We define macros to hold the bitlist and the image dimensions, see @bishop_macro
 
 == Outer queries
 
-Before we look at the recursive step, let us look at the outer queries to get a feeling for the key difference between the queries. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise (@bishop_outer_queries).
+Before we look at the recursive step, let us examine the outer queries at @bishop_outer_queries to get a feeling for the key difference between the CTE variants. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise.
+
+The overall goal of the queries is to count the number of times the bishop has stood on each field on the board. In using-key, we store this number in the column `sym_id` of the recurring table and increase it with every step. We can thus simply select the final values for all fields in the outer query. In classic, we do not store any such counter during the iteration. Instead, we simply let the bishop walk and, as is the nature of classic recursive CTEs, store every one of its steps in the union table. Only at the end we count the number of times the bishop has been on each field, using a simple `count(*)` on the union table. 
 
 #figure(
   caption: [Outer query of drunken bishop for classic (left) and using-key (right)],
@@ -210,9 +255,14 @@ Before we look at the recursive step, let us look at the outer queries to get a 
   )
 ) <bishop_outer_queries>
 
-TODO: Explain further.
-
 == Recursive step: classic
+
+In contrast to the other algorithms examined in this thesis, the classic variant of the drunken bishop is contained within the using-key variant; we thus start with the former.
+
+TODO: This is wrong because of the different approaches for bitlist. maybe rearrange chapters.
+
+The recursive step, shown in @bishop_rec_classic, implements the movement rules from @bishop_directions using `CASE` expressions to update `x` and `y`. The `greatest` and `least` functions within the `CASE` expressions assure that the bishop does not move beyond the boards borders. The `bitlist` is being traversed by selecting its tail for the next iteration (@bishop_rec_classic:12), which is why we always select its first element to get the current bits. A field is the final field if and only if `length(bitlist) = 1`. We iterate until the bitlist is empty (@bishop_rec_classic:15).
+
 
 #figure(
   caption: [Recursive step of drunken bishop for classic],
@@ -235,31 +285,48 @@ TODO: Explain further.
     WHERE length(bitlist) > 0
     ```
   ]
-)
+) <bishop_rec_classic>
 
 
 == Recursive step: using-key
+
+The recursive step of the using-key variant is shown in @bishop_rec_using_key. It is itself a CTE named `new` that calculates most of its values in the inner query, similarly to classic. However, in order to increase `sym_id` in-place, we need to access the recurring table at the correct coordinates (@bishop_rec_using_key:25) and either increase the respective value by one, or set the value to `1` if the current field has not been visited before (@bishop_rec_using_key:21). See TODO for an explanatoin of the `coalesce` function.
+
+The inner query differs from classic because of the different bitlist representation. As explained in @bishop_chapter_layout, using-key uses the `bits` table for efficiency reasons. We thus access the current bits by `JOIN`ing the table at the current `idx`, @bishop_rec_using_key:15, and simply accessing it in the `CASE` expressions. The `CASE` expressions themselves are then equivalent to the ones in classic. Furthermore, we increase `bishop.idx` by one to access the next bit-pair in the next iteration, and mark a field as final if and only if the maximal `idx` has been reached (@bishop_rec_using_key:14).
 
 #figure(
   caption: [Recursive step of drunken bishop for using-key],
   [
     ```sql
-    WITH new(x, y, bitlist, is_end) AS (
-        <classic recursive step>
+    WITH new(idx, x, y, is_end) AS (
+        SELECT 
+            bishop.idx + 1,
+            CASE 
+                WHEN bits.x = 0
+                THEN greatest(0, bishop.x-1)
+                ELSE least(width()-1, bishop.x+1)
+            END,
+            CASE 
+                WHEN bits.y = 0
+                THEN greatest(0, bishop.y-1)
+                ELSE least(height()-1, bishop.y+1)
+            END,
+            bishop.idx = (SELECT max(idx) FROM bits)
+        FROM bishop JOIN bits ON bishop.idx = bits.idx
     )
     SELECT 
+        new.idx,
         new.x,
         new.y,
         coalesce(field_to.sym_id + 1, 1),
-        new.bitlist,
         new.is_end
     FROM 
         new 
-        LEFT OUTER JOIN recurring.bishop AS field_to
-                        ON field_to.x = new.x AND field_to.y = new.y
+        LEFT OUTER JOIN recurring.bishop AS field_to ON field_to.x = new.x and 
+                                                        field_to.y = new.y
 
     ```
   ]
-)
+) <bishop_rec_using_key>
 
 #bibliography("../references.bib")
