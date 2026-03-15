@@ -4,7 +4,7 @@
 #show: codly-init.with()
 #codly(
   languages: (
-    sql: (name: "SQL", icon: "🦆", )
+    sql: (name: "SQL", icon: emoji.duck)
   )
 )
 
@@ -257,9 +257,7 @@ The overall goal of the queries is to count the number of times the bishop has s
 
 == Recursive step: classic
 
-In contrast to the other algorithms examined in this thesis, the classic variant of the drunken bishop is contained within the using-key variant; we thus start with the former.
-
-TODO: This is wrong because of the different approaches for bitlist. maybe rearrange chapters.
+With the exception of the different approaches to handling the bitlist, the classic variant of drunken bishop is contained within the using-key variant. We thus start with the former.
 
 The recursive step, shown in @bishop_rec_classic, implements the movement rules from @bishop_directions using `CASE` expressions to update `x` and `y`. The `greatest` and `least` functions within the `CASE` expressions assure that the bishop does not move beyond the boards borders. The `bitlist` is being traversed by selecting its tail for the next iteration (@bishop_rec_classic:12), which is why we always select its first element to get the current bits. A field is the final field if and only if `length(bitlist) = 1`. We iterate until the bitlist is empty (@bishop_rec_classic:15).
 

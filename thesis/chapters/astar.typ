@@ -231,8 +231,16 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 #figure(
   caption: [Recursive step of A\* for using-key],
   [
+    #codly(
+      annotations: (
+        (
+          start: 1,
+          end: 5,
+          content: [Find `node_id` of the node with minimal f-value]
+        ),
+      )
+    )
     ```sql
-    -- ❶ Find node_id of the node with minimal f-value
     WITH min_node(id) AS (
         SELECT argmin(node_id, f)
         FROM recurring.astar

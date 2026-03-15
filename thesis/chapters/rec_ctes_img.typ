@@ -71,7 +71,7 @@
 #let arrowtext(content) = text(content, size: 9pt)
 
 #let spacing = (0pt, 0pt)
-#let align = (x, y) => if y == 0 {center + horizon} else {left}
+#let align = (x, y) => if y == 0 {center + bottom} else {left}
 #let codegutter = 40pt
 
 = WITH RECURSIVE
@@ -114,7 +114,7 @@
 
 The base case runs once at query start.
 
-#table(
+#let classic_base = table(
   rows: 2,
   columns: (50%, 50%),
   align: align,
@@ -153,7 +153,7 @@ The base case runs once at query start.
 
 The recursive step is repeated until the intermediate table is empty after step 3.
 
-#table(
+#let classic_step = table(
   rows: 2,
   columns: (50%, 50%),
   align: align,
@@ -281,7 +281,7 @@ TODO
 
 The base case runs once at query start.
 
-#table(
+#let using_key-base = table(
   rows: 2,
   columns: (50%, 50%),
   align: align,
@@ -318,7 +318,7 @@ The base case runs once at query start.
 
 == Recursive step
 
-#table(
+#let using_key-step = table(
   rows: 2,
   columns: (50%, 50%),
   align: align,
