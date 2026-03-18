@@ -1,0 +1,1 @@
+Iteration has been a reality in SQL since the introduction of recursive common table expressions (CTEs) in SQL:1999. 

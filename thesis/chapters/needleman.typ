@@ -1,5 +1,15 @@
 #import "definitions.typ": orange
 
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  languages: (
+    sql: (name: "SQL", icon: "🦆", )
+  )
+)
+#codly-enable()
+
 #set math.equation(numbering: "(1)")
 
 #let t(len, left, up, diag, color) = table.cell(
@@ -17,7 +27,7 @@
 
 #let e = t("", false, false, false, white)
 
-= Needleman-Wunsch
+= Needleman-Wunsch <needleman-wunsch>
 
 Say you are given two distinct strings of DNA originating from two different species, and you want to find out in which way those two species are related to each other. Maybe they share a common ancestor, or one species originated from the other. Maybe they are far apart on the evolutionary tree, despite sharing similar features. To answer this and similar questions, we want to find out how one DNA string can be transformed into the other, using as few operations as possible. In bioinformatics, this problem is known as the _sequence alignment problem_. In 1969, Saul B. Needleman and Christian D. Wunsch proposed a dynamic programming algorithm to solve this problem, which is now known as the _Needleman-Wunsch algorithm_ @needleman.
 
@@ -43,6 +53,7 @@ A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic m
 There are infinitely many ways to combine those three operations to turn one given DNA sequence into another. We are interested in the combination that needs the minimal amount of operations. 
 To compare two given sequences, we write them one above the other. Oviously, we cannot change or remove letters from one of the sequences. However, we can insert a special symbol called the "indel", denoted with the sign "`-`". The indel marks the insertion or deletion of a character. @aligning_dna continues the previous example and aligns each sequence pair in this way.
 
+#codly-disable()
 #figure(
     caption: [Aligning the sequences from @changing_dna. The left alignment shows the substitution of `A` to `C`. The middle alignment shows the deletion of `T`, while the right alignment shows the insertion of `G`.],
     grid(
@@ -157,6 +168,7 @@ where, because of @base_case_function, we can assume that either $a != epsilon$ 
 TODO: explain @needleman_recurrence_relation.
 
 == Query Layout
+#codly-enable()
 
 Equivalent to the layout of LCS, we create macros `s1()` and `s2()` to hold the strings, and create the `letters` table to hold all combinations of characters from those strings. See TODO: Link to LCS. Additionally, we define the scoring system using macros, see @scoring_macros.
 
@@ -294,7 +306,7 @@ Again, we examine using-key first and address classic later, because using-key w
                 ELSE diag.score + mismatch_score()
             END
         FROM 
-            letters             AS ltrs                                 JOIN
+            letters AS ltrs                                 JOIN
             recurring.needleman AS diag ON diag.xidx = ltrs.xidx-1 and 
                                            diag.yidx = ltrs.yidx-1      JOIN
             recurring.needleman AS lft  ON lft.xidx = ltrs.xidx-1 and 
@@ -449,5 +461,3 @@ Again, we examine using-key first and address classic later, because using-key w
     WHERE (SELECT count(*) FROM needleman) < (SELECT count(*) FROM letters)
     ```
 ) <needleman_recursive_classic>
-
-#bibliography("../references.bib")

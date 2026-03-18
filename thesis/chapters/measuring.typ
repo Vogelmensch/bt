@@ -1,4 +1,4 @@
-= Measuring
+= Measuring <measuring>
 
 For all algorithms presented in TODO, we measured execution time and memory consumption of both variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
 
@@ -140,7 +140,7 @@ It is noticeable that measured times separate into two distinct branches. While 
 
 === Setup
 
-We wrote a random string generator to provide the input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both flavors and measured execution time and memory usage. We repeated the measurements ten times to yield the final results. 
+We wrote a random string generator to provide the input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both CTE variants and measured execution time and memory usage. We repeated the measurements ten times.
 
 To limit the total runtime of the experiment, we defined a timeout of $5 "minutes"$ for each measurement. This limit has been reached for classic, twice for $l = 180$ and once for $l = 190$.
 
@@ -148,11 +148,11 @@ To limit the total runtime of the experiment, we defined a timeout of $5 "minute
 === Results
 
 #figure(
-  caption: [Mean and standard deviation of LCS measurements for time (left) and memory consumption (right)],
+  caption: [Execution time (left) and memory consumption (right) of LCS. In contrast to the other plots, we layed using-key above classic here for clarity.],
   grid(
     columns: 2,
-    image("images/lcs_10_to_200.svg"),
-    image("images/lcs_memory_10_to_200.svg")
+    image("images/lcs_10_to_200_time_no_err.svg"),
+    image("images/lcs_10_to_200_memory_no_err.svg")
   )
 ) <lcs_results>
 
@@ -202,23 +202,35 @@ For the respective query, both execution time and memory usage appear to follow 
 
 === Setup
 
-We performed two measurements. First, we randomly generated arrays of hexadecimal numbers according to [CHAPTER THAT EXPLAINS THE ALGORITHM], with array length $l in {20, 40, 60, ..., 500}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
+We randomly generated arrays of hexadecimal numbers according to [CHAPTER THAT EXPLAINS THE ALGORITHM], with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
 
+Additionally to the two queries explain in [TODO], we measured each variant using the bitlist representation of the other to demonstrate the significance of the bitlist representation. We set a timeout of $10$ real seconds.
 
 === Results
 
-@bishop_scale3 shows the results for the first measurements. We see that classic massively outperforms using-key in both metrics. 
+@bishop_scale3 shows the results as mean and standard deviation. All measurements nicely follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
+@bishop_slopes shows the slopes of linear fits for the other three queries.
+We can see how classic outperforms using-key. Also, while the influence of the fingerprint representation on memory usage of classic seems minor, the impact on runtime is rather apparent. 
 
 #figure(
   caption: [Execution time (left) and memory usage (right) of drunken bishop.],
   grid(
     columns: 2,
-    image("images/bishop_0306_time.svg"),
-    image("images/bishop_0306_memory.svg")
+    image("images/bishop_0315_all_time.svg"),
+    image("images/bishop_0315_all_memory.svg")
   )
 ) <bishop_scale3>
 
-
-#bibliography("../references.bib")
-
+#figure(
+  caption: [Slope of linear fit for time and memory measurement.],
+  table(
+    columns: 4,
+    stroke: none,
+    table.header([*Query*], [*Bitlist representation*], [*$Delta t [s/(1000)]$*], [*$Delta m ["MB"/(1000)]$*]),
+    table.hline(stroke: 0.5pt),
+    [classic], [list], [$0.68$], [$9.78$],
+    [classic], [table], [$2.06$],[$8.85$],
+    [using-key],[table],[$3.34$],[$15.45$],
+  )
+) <bishop_slopes>
 

@@ -9,11 +9,12 @@
     sql: (name: "SQL", icon: emoji.duck)
   )
 )
+#codly-enable()
 
 #set math.equation(numbering: "(1)")
 #set heading(numbering: "1.1")
 
-= Longest Common Subsequence
+= Longest Common Subsequence <lcs>
 
 A subsequence $s_"sub"$ of a string $s$ is a string that can be derived from $s$ by deleting some or no letters without changing the order of the remaining letters @survey_of_lcs. A subsequence common to two strings $s_1$ and $s_2$ is a subsequence that both strings have in common. For example, if 
 $ s_1 = "\"Never gonna give you up\"," $
@@ -227,11 +228,9 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
             diag.len + 1,
             false, false, true
         FROM 
-                            letters       AS ltrs 
-            JOIN            recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                                     ltrs.yidx = diag.yidx+1 
-            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and
-                                                     ltrs.yidx = this.yidx
+            letters AS ltrs 
+            JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and ltrs.yidx = diag.yidx+1 
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx
         WHERE 
             this.len IS NULL and    
             ltrs.xsym = ltrs.ysym   
@@ -245,13 +244,10 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
             greatest(l.len, u.len),
             l.len >= u.len, u.len >= l.len, false
         FROM 
-                            letters       AS ltrs 
-                       JOIN recurring.lcs AS l    ON ltrs.xidx = l.xidx+1 and 
-                                                     ltrs.yidx = l.yidx 
-                       JOIN recurring.lcs AS u    ON ltrs.xidx = u.xidx and 
-                                                     ltrs.yidx = u.yidx+1
-            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and 
-                                                     ltrs.yidx = this.yidx    
+            letters AS ltrs 
+             JOIN recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and ltrs.yidx = l.yidx 
+            JOIN recurring.lcs AS u ON ltrs.xidx = u.xidx and ltrs.yidx = u.yidx+1
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and ltrs.yidx = this.yidx    
         WHERE 
             this.len IS NULL and    
             ltrs.xsym != ltrs.ysym 
@@ -406,9 +402,3 @@ To access those carried values, we simply replace all occurences of `recurring.l
         ```
     ]
 ) <lcs_recursive_classic>
-
-
-
-
-
-#bibliography("../references.bib")

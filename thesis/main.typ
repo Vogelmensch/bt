@@ -1,6 +1,7 @@
 #import "simple.typ": *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
+
 #show: doc => template(
   affiliation: "Eberhard Karls Universität Tübingen",
   institute: [
@@ -10,13 +11,13 @@
 
     Lehrstuhl für Datenbanksysteme
   ],
-  title: [Ode to Lorem Ipsum],
-  authors: ("Lorem Ipsum",),
-  examiners: ("Prof. Dr. Lorem Ipsum", "Prof. Dr. Dolor Sit"),
-  supervisors: ("Amet Consectetur", "Adipiscing Elit"),
+  title: [Performance of USING KEY in DuckDB],
+  authors: ("David Knöpp",),
+  examiners: ("Prof. Dr. Torsten Grust",),
+  supervisors: ("Björn Bamberg",),
   type: "Bachelor of Science Informatik",
-  start-date: "01.05.2018",
-  end-date: "19.06.2024",
+  start-date: "01.12.2025",
+  end-date: "01.04.2026",
   doc,)
 
 #show: frontmatter
@@ -45,18 +46,43 @@ anderen Studiengang als Prüfungsleistung vorgelegt.
 
 #pagebreak()
 
+#show: mainmatter
+
+#show: backmatter
+
 = Abstract
 
-This is an abstract.
+#include "chapters/abstract.typ"
+
 
 #page()[
   #outline(indent: auto, depth: 4)
 ]
 
-#show: mainmatter
+#set heading(numbering: "1.1")
 
-#show: backmatter
+#include "chapters/introduction.typ"
+#pagebreak(to: "even")
 
+#include "chapters/basics.typ"
+#pagebreak(to: "even")
+
+#include "chapters/astar.typ"
+#pagebreak(to: "even")
+
+#include "chapters/lcs.typ"
+#pagebreak(to: "even")
+
+#include "chapters/needleman.typ"
+#pagebreak(to: "even")
+
+#include "chapters/bishop.typ"
+#pagebreak(to: "even")
+
+#include "chapters/measuring.typ"
+#pagebreak(to: "even")
+
+#include "chapters/conclusion.typ"
 #pagebreak(to: "even")
 
 #bibliography("references.bib")

@@ -16,9 +16,7 @@
 #let rowgut = 10pt
 #let gap = 15pt
 
-= How to loop in SQL
-
-
+= How to loop in SQL <basics>
 
 == CTEs: Binding intermediate results
 
@@ -56,6 +54,8 @@ SQLs way of doing this is called the *Common Table Expression* (CTE). The genera
 
 
 == `WITH RECURSIVE`: Referencing CTEs recursively <with_recursive>
+
+BIG TODO: WRITE ABOUT FIXPOINT SEMANTICS
 
 In order for SQL to become turing complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs, SQL:1999 introduced _recursive CTEs_, which expand the general CTE by allowing self-reference within the inner query. 
 
@@ -151,6 +151,8 @@ Following the example introduced in @cte_recursive, we visualize the process of 
 
 #codly-enable()
 
+TODO: FIXPOINTS
+
 Have a look at the previous example again. While this query confidently calculates $2^10$ for us, it also calculates and stores all intermediate results in the union table. In fact, the outer query in @cte_recursive returns all intermediate results. In order to return the $10"th"$ power of $2$ only, we need to explicitly select it in the outer query,
 
 ```sql
@@ -170,6 +172,8 @@ To work around the limitations of this short-term memory, query authors tend to 
 
 
 == `USING KEY`: Keeping a dictionary we can reference
+
+TODO: FIXPOINTS
 
 To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive with as *classic*.
 
@@ -278,5 +282,3 @@ And then ...
   graphs.using_key-step
 )
 
-
-#bibliography("../references.bib")
