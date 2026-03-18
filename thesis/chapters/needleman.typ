@@ -50,8 +50,8 @@ A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic m
     )
 ) <changing_dna>
 
-There are infinitely many ways to combine those three operations to turn one given DNA sequence into another. We are interested in the combination that needs the minimal amount of operations. 
-To compare two given sequences, we write them one above the other. Oviously, we cannot change or remove letters from one of the sequences. However, we can insert a special symbol called the "indel", denoted with the sign "`-`". The indel marks the insertion or deletion of a character. @aligning_dna continues the previous example and aligns each sequence pair in this way.
+There are infinitely many ways to combine these three operations in order to turn one given DNA sequence into the other. We are interested in the combination that needs the minimal amount of operations. In order to find this combination, we need a way of displaying and rating the changes made between two sequences. 
+We compare two given sequences by writing them one above the other. Equal letters are written directly on top of each other; they mark unchanged characters. To mark characters that were changed - i.e. inserted or deleted -  we insert a special symbol called the "indel", denoted with the sign "`-`". @aligning_dna continues the previous example and aligns each sequence pair in this way.
 
 #codly-disable()
 #figure(
@@ -86,11 +86,12 @@ $
   )
 $ <scoring_function>
 
+The scores for all letter-pairs in an alignment are then added to yield the total value of the alignment. 
 
-To illustrate this with another example, let us consider the sequences `s1 = GAGA` and `s2 = AATG`. @alignment_example shows four different way to align `s1` and `s2`, and it shows the application of the scoring function for each of them. The highest score is being reached by the rightmost example, which also turns out to be the overall best alignment, i.e., the one resulting in the highest score.
+To illustrate this with another example, let us consider the sequences `s1 = GAGA` and `s2 = AATG`. @alignment_example shows four different way to align `s1` and `s2`, and it shows the application of the scoring function for each of them. The highest value is reached by the rightmost example, which also turns out to be the overall best alignment, i.e., the one resulting in the highest value.
 
 #figure(
-    caption: [Four different ways of aligning the sequences `GAGA` and `AATG`, and their respective scores. For each pair of letters, `+` denotes a score of $+1$ and `-` denotes a score of $-1$.],
+    caption: [Four different ways of aligning the sequences `GAGA` and `AATG`, and their respective values. For each pair of letters, `+` denotes a score of $+1$ and `-` denotes a score of $-1$.],
     grid(
         columns: 4,
         gutter:20pt,
@@ -137,40 +138,38 @@ Similar to LCS, our approach will be to iteratively fill the dynamic programming
     ),
 ) <needleman_table_empty>
 
-We now define functions ... TODO
-
+We want to find a recurrence relation that we can use to fill the table. 
 Let $Sigma$ be an alphabet and $Sigma^*$ the set of all words over $Sigma$. Let $a, b in Sigma$ and $s_1, s_2 in Sigma*$, and $+$ the concatenation operator.
 
 #let score = "score"
+#let value = "value"
 
 The base case is defined by 
 $
-  score(s_1+a, s_2+b) = 0, "if" a = b = epsilon.
+  value(s_1+a, s_2+b) &= 0, "if" a = b = epsilon\
+  <=> value(epsilon, epsilon) &= 0
 $ <base_case_function>
 
-In @needleman_table_empty, we fill this value into the cell at the top-leftmost corner. The table is then being filled iteratively using  @scoring_function by the recurrence relation 
+Keep in mind that we are examining the last letter of the respective string. Thus, if $a = epsilon$, it follows that $s_1 = epsilon$, because if $s_1 != epsilon$, a last letter $a != epsilon$ would also exist.
 
-TODO: relating to the scoring function does not work. the two functions share the same name but are fundamentally different. maybe define another scoring functions using the strings from @needleman_recurrence_relation.
+In @needleman_table_empty, we fill this value into the cell at the top-leftmost corner. The table is then filled iteratively using 
 
 $
-  score(s_1 + a, s_2 + b) = max cases(
-    score(s_1 + a, &s_2 &) &+ "indel_score",
-    score(s_1, &s_2 + b &) &+ "indel_score",
-    score(s_1, &s_2 &) &+ cases(
-        "match_score" &"if" a = b,
-        "mismatch_score" &"if" a != b
-    )
+  value(s_1 + a, s_2 + b) = max cases(
+    value(s_1 + a, &s_2 &) &+ score("-", b),
+    value(s_1, &s_2 + b &) &+ score(a, "-"),
+    value(s_1, &s_2 &) &+ score(a, b)
   ),
 $ <needleman_recurrence_relation>
 
 where, because of @base_case_function, we can assume that either $a != epsilon$ or $b != epsilon$. 
 
-TODO: explain @needleman_recurrence_relation.
+@needleman_recurrence_relation simply applies all three cases of @scoring_function, and then chooses the case(s) with the highest overall value by applying itself recursively to remaining strings. The relation is guaranteed to terminate because the strings always get smaller.
 
 == Query Layout
 #codly-enable()
 
-Equivalent to the layout of LCS, we create macros `s1()` and `s2()` to hold the strings, and create the `letters` table to hold all combinations of characters from those strings. See TODO: Link to LCS. Additionally, we define the scoring system using macros, see @scoring_macros.
+Equivalent to the layout of LCS in @letters_definition, we create macros `s1()` and `s2()` to hold the input strings, and create the `letters` table to hold all combinations of characters from those strings. Additionally, we define the scoring system using macros, see @scoring_macros.
 
 #figure(
     caption: [Definition of exemplary scoring function using macros],
@@ -185,7 +184,7 @@ Equivalent to the layout of LCS, we create macros `s1()` and `s2()` to hold the 
 
 Also equivalent to LCS is the approach of filling the dynamic programming table not with partial solutions, but with integer-valued scores and boolean-valued directions instead. After the table has been filled, we will backtrack the entries to construct the actual solutions.
 
-TODO: Explain columns
+We thus use the following columns for our CTes. `xidx` and `yidx` identify each row as a table cell with a distinct position. 
 
 #figure(
     caption: [Layout of Needleman-Wunsch for classic (left) and using-key (right)],
@@ -196,7 +195,7 @@ TODO: Explain columns
         ```sql
         WITH RECURSIVE needleman (
             xidx, yidx,
-            score,
+            val,
             from_lft, from_up, from_diag
         ) AS (
             (<base case>)
@@ -211,7 +210,7 @@ TODO: Explain columns
         ```sql
         WITH RECURSIVE needleman (
             xidx, yidx,
-            score,
+            val,
             from_lft, from_up, from_diag
         ) USING KEY (xidx, yidx) AS (
             (<base case>)
