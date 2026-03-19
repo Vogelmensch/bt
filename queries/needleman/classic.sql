@@ -3,8 +3,8 @@
 -- The scoring system is being defined at the top of this query as macros
 -- ❶ Create a table `letters` that holds the cross product of all letters in the two substrings
 -- ❷ Initial Case: Aligning any letter with an empty sequence shifts the sequence, i.e. includes an indel
--- ❸ Calculate the score for each of the three possible alignments for the next combination of letters
--- ❹ Highlight the path(s) corresponding to the highest score
+-- ❸ Calculate the val for each of the three possible alignments for the next combination of letters
+-- ❹ Highlight the path(s) corresponding to the highest val
 -- ❺ Carry the working table
 -- ❻ Build the resulting strings in backtracking process, using the highlighted paths
 -- Working Table: Holds solutions; manual carry necessary
@@ -31,7 +31,7 @@ CREATE OR REPLACE TABLE letters(xsym, xidx, ysym, yidx) AS (
 
 WITH RECURSIVE needleman (
     xidx, yidx,
-    score,
+    val,
     from_lft, from_up, from_diag
 ) AS (
     -- ❷ Initial Case: Aligning any letter with an empty sequence shifts the sequence, i.e. includes an indel
@@ -66,18 +66,18 @@ WITH RECURSIVE needleman (
 
     -- ❸ Calculate the score for each of the three possible alignments for the next combination of letters
     (
-        WITH scores_intermediate (
+        WITH vals_intermediate (
             xidx, yidx, 
             lft, up, diag
         ) AS (
             SELECT 
                 ltrs.xidx, ltrs.yidx,
-                lft.score + indel_score(),
-                up.score + indel_score(),
+                lft.val + indel_score(),
+                up.val + indel_score(),
                 CASE 
                     WHEN ltrs.xsym = ltrs.ysym         
-                    THEN diag.score + match_score()
-                    ELSE diag.score + mismatch_score()
+                    THEN diag.val + match_score()
+                    ELSE diag.val + mismatch_score()
                 END
             FROM 
                 letters AS ltrs
@@ -86,23 +86,23 @@ WITH RECURSIVE needleman (
                 JOIN needleman AS up ON up.xidx = ltrs.xidx AND up.yidx = ltrs.yidx-1
                 LEFT OUTER JOIN needleman AS this ON this.xidx = ltrs.xidx AND this.yidx = ltrs.yidx
             WHERE 
-                this.score IS NULL 
+                this.val IS NULL 
         ),
-        scores (
+        vals (
             xidx, yidx, 
             lft, up, diag, max
         ) AS (
             SELECT 
                 xidx, yidx,
                 lft, up, diag, greatest(lft, up, diag)
-            FROM scores_intermediate
+            FROM vals_intermediate
         )
-        -- ❹ Highlight the path(s) corresponding to the highest score
+        -- ❹ Highlight the path(s) corresponding to the highest val
         SELECT 
             xidx, yidx,
             max,
             lft = max, up = max, diag = max
-        FROM scores
+        FROM vals
 
         UNION
 
@@ -167,7 +167,7 @@ backtrack(
         WHERE
             nw.from_diag
 
-        -- notice that all paths can be taken simultaneously if scores are equal
+        -- notice that all paths can be taken simultaneously if vals are equal
     )
 )
 SELECT list(string1) AS list1, list(string2) AS list2

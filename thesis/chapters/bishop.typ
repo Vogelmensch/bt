@@ -1,6 +1,7 @@
 #import "definitions.typ": redbox
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
+#import "chessboard.typ": board1, board2, board3
 #show: codly-init.with()
 #codly(
   languages: (
@@ -14,7 +15,7 @@
 
 SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint @ssh.
 
-A fingerprint is a string of hexadecimal numbers, which proves to be impractical to remember and compare. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from a fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation. The algorithm that draws the image from the fingerprint string is called the "drunken bishop algorithm".
+A fingerprint is a string of hexadecimal numbers, which proves to be impractical to remember and compare. Thus, OpenSSH 5.1 introduced a method to draw an ASCII-based image from a fingerprint string, images being easier to remember and compare by humans. @fingerprint_example shows an example for a fingerprint string and its ASCII-representation. The algorithm that draws the image from the fingerprint string is known as the _drunken bishop algorithm_.
 
 #figure(
   caption: "Example ssh-fingerprint as string of hexadecimal numbers (left) and as an image (right)",
@@ -50,17 +51,17 @@ A fingerprint is a string of hexadecimal numbers, which proves to be impractical
 #let width = "width"
 #let height = "height"
 
-The rules of converting an array of hexadecimal numbers to an ASCII-image are straightforward. The basic idea is to place a bishop, the chess piece, on a two dimensional field and track its movement, which is defined by the fingerprint.
+The rules of converting a string of hexadecimal numbers to an ASCII-image are straightforward. The basic idea is to place a bishop, the chess piece, on a two dimensional board and track its movement, which is defined by the fingerprint.
 
-We start on an empty grid of dimensions $width times height$, where $width = 17$ and $height = 9$ for the standard implementation. We place the bishop in the middle of the board. 
+At the start, our board is an empty grid of dimensions $width times height$, where $width = 17$ and $height = 9$ for the standard implementation. We place the bishop in the middle of this grid.
 
-In chess, bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four (or less, if it is at a corner) directions. The fingerprint defines Which of these directions the bishop takes in each step.
+In chess, bishops can only move diagonally. The same applies to our bishop. However, at each step, our bishop can only make exactly one step in one of the four directions, in contrast to the chess piece that can take arbitrarily many steps. For our bishop, the fingerprint defines which of the four directions to take. The bishop cannot move beyond the edges of the board. When given a direction that would lead beyond an edge, the bishop must move parallel to the edge. Becaues of this, the bishop is able to visit every square of the board, in contrast to the chess piece. @chessboards illustrates the bishop's movement possibilities.
 
 @bishop_conversion shows how the fingerprint is translated and read. First, we convert the fingerprint from hexadecimal to binary representation. The resulting bytes are then read from left to right, and within each byte, the bit-pairs are read from right to left.
-For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. The bishop cannot move beyond the edges of the board. When given a direction that would lead beyond an edge, the bishop must move parallel to the edge. Becaues of this, the bishop is able to visit every square of the board, in contrast to the bishops in chess.
+For one bit-pair, the bishop takes the direction matching the value in @bishop_directions. 
 
 #figure(
-  caption: [Order of bit-processing],
+  caption: [Order of bit-processing. The first and second row show the fingerprint in hexadecimal- and bit-representation respectively; the third row shows the processing order of the bit-pairs.],
   table(
     columns: 12,
     rows: 3,
@@ -88,28 +89,36 @@ For one bit-pair, the bishop takes the direction matching the value in @bishop_d
 ) <bishop_directions>
 
 
-The bishop leaves a footprint on every square they visit. When visiting the same square multiple times, the footprint gets "deeper" for each visit. This creates a unique trail for the path the bishop takes. To represent the "depth" of the footprints, we work through the symbols shown in @footprints. Additionally, we mark the start- and end-positions of the bishop with the letters S and E, respectively.
+The bishop leaves a footprint on every square it visits. When visiting the same square multiple times, the footprint gets "deeper" for each visit. This creates a unique trail for the path the bishop takes. To represent the "depth" of the footprints, we work through the symbols shown in @footprints. Additionally, we mark the start- and end-positions of the bishop with the letters S and E, respectively. @chessboards shows the resulting path after reading `7f:21` as input.
 
 #figure(
-  caption: [ASCII symbols to represent the bishop's trail],
+  caption: [ASCII symbols to represent the bishop's trail. We count the number of visits for each field of the board and visualize it with the respective symbol.],
   table(
     columns: 16,
     rows: 2,
     stroke: 0.5pt,
-    [Step], ..range(15).map(str),
+    [Number of visits], ..range(15).map(str),
     [Symbol], [], [.], [o], [+], [=], [\*], [B], [O], [X], [@], [%], [&], [\#], [/], [^]
   )
 ) <footprints>
 
+#figure(
+  caption: [Small example boards. Marked on the left and middle board are the positions the bishop can go to on the next move. Notice how the bishop may be restrictred to move parallel to the border on the middle board. The right board shows the footprint after reading the fingerprint `7f:21`.],
+  grid(
+    columns: 3,
+    board1, board2, board3
+  )
+) <chessboards>
+
 == Query layout <bishop_chapter_layout>
 
-We implemented two different approaches to represent the bitlist in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of the bitlist to get the bishop's direction for this step. The tail of this list then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
+We implemented two different approaches to represent the bit-pairs in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of this so-called _bitlist_ to get the bishop's direction for this step. The tail of the bitlist then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
 For the second approach, we represent the bitlist using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
 
-It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. [LINK TO MEASURING] looks into this in depth.
+It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. @measuring_bishop looks into this in depth.
 
 #figure(
-  caption: [Representations for bitlist using a SQL list (left) and a table (right)],
+  caption: [Representations for bit-pairs using a list (left) and a table (right).],
   grid(
     columns: 2,
     gutter: 15pt,
@@ -135,7 +144,7 @@ It turns out that classic performs reasonable well under both strategies, the ap
 
 
 #figure(
-  caption: [Macros for dimensions for drunken bishop],
+  caption: [Macros for dimensions for drunken bishop.],
   [
     ```sql
     CREATE MACRO width() AS 17;
@@ -148,7 +157,7 @@ It turns out that classic performs reasonable well under both strategies, the ap
 We represent the image dimensions with macros as shown in @bishop_macros. The layout for the two CTE variants is shown in @bishop_layout. Both CTEs use columns `x` and `y` to represent the board, and the boolean-valued `is_end` to mark the bishop's final position. Additionally, classic hands down the entire shrinking `bitlist` in every iteration, while using-key stores the iteration's index `idx` to access the appropriate bits for each iteration, as well as the id of the current symbol, `sym_id` (the "depth" of the footprint).
 
 #figure(
-  caption: [Base case of drunken bishop for classic (left) and using-key (right)],
+  caption: [Layout of drunken bishop for classic (left) and using-key (right).],
   grid(
     columns: 2,
     gutter: 15pt,
@@ -199,7 +208,7 @@ We represent the image dimensions with macros as shown in @bishop_macros. The la
 @bishop_base_case shows the base cases. In both variants, the bishop starts in the center of the board, defining the initial values for `x` and `y`. Also, the start position may not be the end position, defining `false` to be the initial value for `is_end`. Additionally, for classic, we start with the entire `bitlist()`. For using-key, we start with the `idx` of the first element in `bits`, which is `0`, as well as a value of `1` for `sym_id`, as the bishop has now stepped exactly once on the center field.
 
 #figure(
-  caption: [Base case of drunken bishop for classic (left) and using-key (right)],
+  caption: [Base case of drunken bishop for classic (left) and using-key (right).],
   grid(
     columns: 2,
     gutter: 15pt,
@@ -230,12 +239,12 @@ We represent the image dimensions with macros as shown in @bishop_macros. The la
 
 == Outer queries
 
-Before we look at the recursive step, let us examine the outer queries at @bishop_outer_queries to get a feeling for the key difference between the CTE variants. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise.
+Before we look at the recursive step, let us examine the outer queries in @bishop_outer_queries to get a feeling for the key difference between the CTE variants. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise.
 
 The overall goal of the queries is to count the number of times the bishop has stood on each field on the board. In using-key, we store this number in the column `sym_id` of the recurring table and increase it with every step. We can thus simply select the final values for all fields in the outer query. In classic, we do not store any such counter during the iteration. Instead, we simply let the bishop walk and, as is the nature of classic recursive CTEs, store every one of its steps in the union table. Only at the end we count the number of times the bishop has been on each field, using a simple `count(*)` on the union table. 
 
 #figure(
-  caption: [Outer query of drunken bishop for classic (left) and using-key (right)],
+  caption: [Outer query of drunken bishop for classic (left) and using-key (right).],
   grid(
     columns: 2,
     gutter: 15pt,
@@ -259,7 +268,7 @@ The overall goal of the queries is to count the number of times the bishop has s
 
 With the exception of the different approaches to handling the bitlist, the classic variant of drunken bishop is contained within the using-key variant. We thus start with the former.
 
-The recursive step, shown in @bishop_rec_classic, implements the movement rules from @bishop_directions using `CASE` expressions to update `x` and `y`. The `greatest` and `least` functions within the `CASE` expressions assure that the bishop does not move beyond the boards borders. The `bitlist` is being traversed by selecting its tail for the next iteration (@bishop_rec_classic:12), which is why we always select its first element to get the current bits. A field is the final field if and only if `length(bitlist) = 1`. We iterate until the bitlist is empty (@bishop_rec_classic:15).
+The recursive step, shown in @bishop_rec_classic, implements the movement rules from @bishop_directions using `CASE` expressions to update `x` and `y`. The `greatest` and `least` functions within the `CASE` expressions assure that the bishop does not move beyond the boards borders. The `bitlist` is being traversed by selecting its tail for the next iteration (@bishop_rec_classic:12), which is why we always select its first element to get the current bits in @bishop_rec_classic:3 and @bishop_rec_classic:8. A field is the final field if and only if `length(bitlist) = 1`. We iterate until the bitlist is empty (@bishop_rec_classic:15).
 
 
 #figure(
@@ -288,7 +297,7 @@ The recursive step, shown in @bishop_rec_classic, implements the movement rules 
 
 == Recursive step: using-key
 
-The recursive step of the using-key variant is shown in @bishop_rec_using_key. It is itself a CTE named `new` that calculates most of its values in the inner query, similarly to classic. However, in order to increase `sym_id` in-place, we need to access the recurring table at the correct coordinates (@bishop_rec_using_key:25) and either increase the respective value by one, or set the value to `1` if the current field has not been visited before (@bishop_rec_using_key:21). See TODO for an explanatoin of the `coalesce` function.
+The recursive step of the using-key variant is shown in @bishop_rec_using_key. It is itself a CTE named `new` that calculates most of its values in the inner query, similarly to classic. However, in order to increase `sym_id` in-place, we need to access the recurring table at the correct coordinates (@bishop_rec_using_key:25) and either increase the respective value by one, or set the value to `1` if the current field has not been visited before (@bishop_rec_using_key:21). See @rec_step_using_key_chapter for an explanation of the `coalesce` function.
 
 The inner query differs from classic because of the different bitlist representation. As explained in @bishop_chapter_layout, using-key uses the `bits` table for efficiency reasons. We thus access the current bits by `JOIN`ing the table at the current `idx`, @bishop_rec_using_key:15, and simply accessing it in the `CASE` expressions. The `CASE` expressions themselves are then equivalent to the ones in classic. Furthermore, we increase `bishop.idx` by one to access the next bit-pair in the next iteration, and mark a field as final if and only if the maximal `idx` has been reached (@bishop_rec_using_key:14).
 

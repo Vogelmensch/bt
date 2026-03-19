@@ -184,10 +184,10 @@ Equivalent to the layout of LCS in @letters_definition, we create macros `s1()` 
 
 Also equivalent to LCS is the approach of filling the dynamic programming table not with partial solutions, but with integer-valued scores and boolean-valued directions instead. After the table has been filled, we will backtrack the entries to construct the actual solutions.
 
-We thus use the following columns for our CTes. `xidx` and `yidx` identify each row as a table cell with a distinct position. 
+See @needleman_layout for the layout of the queries. `xidx` and `yidx` identify each row as a table cell with a distinct position. `val` is the value calculated for this cell, and `from_lft`, `from_up` and `from_diag` mark the respective direction for backtracking. To access the values for every cell when needed, we define `(xidx, yidx)` as key in using-key.
 
 #figure(
-    caption: [Layout of Needleman-Wunsch for classic (left) and using-key (right)],
+    caption: [Layout of Needleman-Wunsch for classic (left) and using-key (right).],
     grid(
         columns: 2,
         gutter: 25pt,

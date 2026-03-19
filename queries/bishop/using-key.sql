@@ -29,7 +29,7 @@ WITH RECURSIVE bishop (
         1,
         false
         
-    UNION ALL
+    UNION 
 
     (
     -- ❷ Calculate the next coordinates from the first element in bitlist. Pop this element from bitlist.

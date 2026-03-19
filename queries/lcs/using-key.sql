@@ -37,7 +37,7 @@ WITH RECURSIVE lcs (
     FROM letters
     WHERE xidx = 0 or yidx = 0
     
-    UNION ALL
+    UNION 
 
     -- ❸ Iterate through every possible combination of letters in the two input strings; distinguish between two cases
     (

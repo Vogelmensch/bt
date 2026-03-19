@@ -30,7 +30,7 @@ WITH RECURSIVE astar (
         NULL :: UINT128, 
         false
 
-    UNION ALL
+    UNION 
 
     (
     -- ❸ Select the node with minimal f-value; choose one at random if multiple exist

@@ -1,10 +1,16 @@
 = Measuring <measuring>
 
-For all algorithms presented in TODO, we measured execution time and memory consumption of both variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
+For all algorithms presented in this thesis, we measured execution time and memory consumption of both CTE variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
 
-To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by `;`. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time, respectively. We always present the sum of user time and system time in our results.
+To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by semicolons. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time, respectively. We always present the sum of user time and system time in our results,
 
-To measure memory consumption, we used the GNU Project's `time` command as shown in @gnu_time_command. The option `-f %M` returns the "Maximum resident set size of the process during its lifetime" @gnu_time. 
+$
+  "Execution time" = "user time" + "system time"
+$
+
+To measure memory consumption, we used the GNU Project's `time` command as shown in @gnu_time_command. The option `-f %M` returns the "Maximum resident set size (RSS) of the process during its lifetime" @gnu_time, which is the amount of memory held in RAM @rss.
+
+All measurements were taken on the same machine, the specifications for which are shown in @specs.
 
 #figure(
   caption: [Measuring memory consumption using GNU's `time`. For `[OPTIONS]`, we entered appropriate CLI-options, depending on the query we evaluated.],
@@ -15,11 +21,8 @@ To measure memory consumption, we used the GNU Project's `time` command as shown
   ]
 ) <gnu_time_command>
 
-
-All measurements were taken on the same machine, the specifications for which are shown in @specs.
-
 #figure(
-  caption: [Machine specifications],
+  caption: [Specifications of the machine the measurements were taken on.],
   table(
     columns: 2,
     stroke: none,
@@ -38,9 +41,9 @@ All measurements were taken on the same machine, the specifications for which ar
 
 === Setup
 
-We chose the graphs of the USA from the "9th DIMACS Implementation Challenge"@dimacs as basis for the first benchmark. In those graphs, the nodes correspond to intersections, while the edges correspond to roads between them. The edge weights come in two flavors: Distance in meters and average travel time in seconds, where the latter takes the type of road into account. A separate table contains coordinates for each node. 
+We chose two graphs of US cities from the "9th DIMACS Implementation Challenge"@dimacs as basis for the first benchmark. In those graphs, the nodes correspond to intersections, while the edges correspond to roads between them. The edge weights come in two flavors: Distance in meters and average travel time in seconds, where the latter takes the type of road into account. A separate table contains coordinates for each node. 
 
-A graph representing a physical map is an obvious choice for testing A\*, because we can use the physical distance between a node and the goal node as the heuristic function. Naturally, we chose the distance graph for our measurements. 
+A graph representing a physical map is an obvious choice for testing A\* because we can use the physical distance between a node and the goal node as the heuristic function. Naturally, we chose the distance graph for our measurements. 
 
 First, we took the graph of New York City.
 As the start node, we chose `node_id = 189104`, which lies within central park. From there, we selected all nodes within a $3 "km"$ radius as goal nodes, $1526$ in number.  We ran A\* on these pairings, measuring execution time and memory consumption. @central_park_facts shows an overview over this subgraph to get a rough picture of the region. 
@@ -198,7 +201,7 @@ For the respective query, both execution time and memory usage appear to follow 
   )
 ) <needleman_results>
 
-== Drunken Bishop
+== Drunken Bishop <measuring_bishop>
 
 === Setup
 
