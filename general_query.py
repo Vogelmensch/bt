@@ -4,6 +4,7 @@ import os
 from signal import SIGTERM
 import json
 from measure.measure import Measurer, Timer
+from sys import exit
 
 # Code that every query-evaluating python-file needs!
 class GeneralQuery:
@@ -27,7 +28,24 @@ class GeneralQuery:
         if args.file != 'DONT STORE' and not args.time and not args.memory:
             print('CAUTION: You provided a file with --file but no measurement with --time or --memory.')
 
+    def check_duckdb_version():
+        cproc = sp.run(['duckdb', '--version'], capture_output=True, text=True)
+        out, err = cproc.stdout, cproc.stderr
+
+        if err:
+            print('Checking duckdb version returned error:')
+            print(err)
+            exit(1)
+        
+        if 'v1.4.4' not in out:
+            print(f'DuckDB v1.4.4 required. Found {out}')
+            print('exiting...')
+            exit(1)
+
+
     def run_subprocess(cmd: str, query: str, args: argparse.Namespace, result_format='-json') -> sp.CompletedProcess:
+        GeneralQuery.check_duckdb_version()
+
         # some queries don't need those, so we need to check for their existence
         try:
             db = args.db
