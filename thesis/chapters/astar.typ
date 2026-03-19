@@ -449,31 +449,3 @@ In @astar_example, the state of the recurring table after each iteration is show
     [Items in union table], [1], [5], [10], [18], [26], [34], [43],
   )
 ) <astar_table_size_comparison>
-
-
-== Heuristic function for air distance <heuristic>
-
-TODO: maybe move this chapter to measuring.
-
-We explained A\* in its entirety, but until now, our example did not include a heuristic function. We want to make up for that now by showing the heuristic function we used in our measurements.
-
-...
-
-#figure(
-  caption: [Heuristic function we used on map graphs for our measurements.],
-  [
-    ```sql
-    CREATE MACRO h(x) AS (
-        SELECT st_distance_spheroid(
-            st_point(c.lat, c.long),
-            st_point(goal.lat, goal.long)
-        ) :: INTEGER
-        FROM 
-            coords AS c JOIN
-            coords AS goal ON goal.node_id = goal_node()
-        WHERE 
-            c.node_id = x
-    );
-    ```
-  ]
-)

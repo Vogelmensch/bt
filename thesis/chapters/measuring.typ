@@ -1,3 +1,13 @@
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  languages: (
+    sql: (name: "SQL", icon: "🦆", )
+  )
+)
+#codly-enable()
+
 = Measuring <measuring>
 
 For all algorithms presented in this thesis, we measured execution time and memory consumption of both CTE variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
@@ -96,13 +106,41 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
   )
 ) <vegas_facts>
 
+=== Heuristic function for air distance <heuristic>
+
+@map_heuristic shows the macro we used to create heuristic values for the graphs. As mentioned above, the physical distance to the goal node is an intuitive choice for a heuristic that also meets both desired properties of heuristc functions explained in @astar_basics. Because of the earth's curvature, we need to use spherical geometry, which the `spatial` extension provides @spatial. The function `st_point(lat, long)` creates "geometry points" from coordinates `lat` and `long`. `st_distance_spheroid` then calculates the distance between those points using "an ellipsoidal model of the earths surface". We cast the resulting `DOUBLE` to `INTEGER` for performance reasons. 
+
+#figure(
+  caption: [Heuristic function we used on map graphs for our measurements.],
+  [
+    ```sql
+    CREATE MACRO h(x) AS (
+        SELECT st_distance_spheroid(
+            st_point(c.lat, c.long),
+            st_point(goal.lat, goal.long)
+        ) :: INTEGER
+        FROM 
+            coords AS c JOIN
+            coords AS goal ON goal.node_id = goal_node()
+        WHERE 
+            c.node_id = x
+    );
+    ```
+  ]
+) <map_heuristic>
+
 === Results
 
-@astar_nyc shows the results for time and memory measurements on the graph of New York City. We can clearly see that the execution time follows a linear distribution for both queries, with the values for using-key increasing more slowly. TODO shows the coefficients for linear fits. The difference would then be TODO.
+We plot the number of expanded nodes on the x-axis.
 
-It is noticeable that measured times separate into two distinct branches. While we do not have a definitive explanation for this behaviour, we suspect the nature of the graph to be the reason for it. TODO: further
+@astar_nyc shows the results for time and memory measurements on the graph of New York City. We can clearly see that the execution time follows a linear distribution for both queries, with the values for using-key increasing more slowly.
+It is noticeable that measured times separate into two distinct branches. While we do not have a definitive explanation for this behaviour, we suspect the nature of the graph to be the reason for it. The graph is dominated by two large empty regions, one of which being central park, the other being the East River. Nodes lying beyond those regions may take longer to be reached because A\* first has to go "around" the regions.
 
-@astar_vegas shows the results for the graph of Las Vegas. 
+As for memory usage, using-key is linear with a slight incline, while classic neatly follows a quadratic distribution.
+
+@astar_vegas shows the results for the graph of Las Vegas. Again, execution time is linear for both queries, with using-key being slightly faster for all goals. The phenomenon of distinct branches for each query does not occur here. 
+
+Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_fit shows the coefficients for the fits on the memory meausrements.
 
 #figure(
   caption: [Execution time (left) and memory usage (right) of A\* on the graph of New York City],
@@ -143,12 +181,14 @@ It is noticeable that measured times separate into two distinct branches. While 
 
 === Setup
 
-We wrote a random string generator to provide the input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both CTE variants and measured execution time and memory usage. We repeated the measurements ten times.
+We wrote a random string generator to provide input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both CTE variants and measured execution time and memory usage. We repeated the measurement ten times.
 
-To limit the total runtime of the experiment, we defined a timeout of $5 "minutes"$ for each measurement. This limit has been reached for classic, twice for $l = 180$ and once for $l = 190$.
+To limit the total runtime of the experiment, we defined a timeout of $5 "minutes"$ (real time) for each measurement. This limit has been reached for classic, twice for $l = 180$ and once for $l = 190$.
 
 
 === Results
+
+@lcs_results shows the results. For both time and memory, using-key flies well under the radar when compared to classic. TODO: mean and stddev maybe
 
 #figure(
   caption: [Execution time (left) and memory consumption (right) of LCS. In contrast to the other plots, we layed using-key above classic here for clarity.],
@@ -161,13 +201,11 @@ To limit the total runtime of the experiment, we defined a timeout of $5 "minute
 
 == Needleman-Wunsch
 
-Brief intro and expectations.
-
 === Setup
 
 For each measurement, we generated a random string consisting of the characters A, C, G and T, to mimic a DNA sequence. This string was directly used as the first argument. To get the second argument, we copied the first argument character-wise; however, with a probability of $30%$, a copying error would occur, selecting one random character from the available set. Because the same character could be selected with a probability of $25%$, the overall expected difference between the arguments is $75% dot 30% = 22.5%$.
 
-The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm explained in TODO and measured the execution times. We used a timeout of 60 seconds.
+The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm. We used a timeout of 60 seconds.
 
 === Results
 
@@ -205,9 +243,9 @@ For the respective query, both execution time and memory usage appear to follow 
 
 === Setup
 
-We randomly generated arrays of hexadecimal numbers according to [CHAPTER THAT EXPLAINS THE ALGORITHM], with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
+We randomly generated arrays of hexadecimal numbers with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
 
-Additionally to the two queries explain in [TODO], we measured each variant using the bitlist representation of the other to demonstrate the significance of the bitlist representation. We set a timeout of $10$ real seconds.
+Additionally to the two queries explain in [TODO], we measured each variant using the bitlist representation of the other to demonstrate the significance of the bitlist representation. We set a timeout of $10$ seconds.
 
 === Results
 
