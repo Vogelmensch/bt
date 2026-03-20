@@ -188,7 +188,22 @@ To limit the total runtime of the experiment, we defined a timeout of $5 "minute
 
 === Results
 
-@lcs_results shows the results. For both time and memory, using-key flies well under the radar when compared to classic. TODO: mean and stddev maybe
+@lcs_results shows the results. For both time and memory, using-key flies well under the radar when compared to classic. Also, the data for classic is much more widely scattered. To quantify this, @lcs_stats shows mean $mu$ and standard deviation $sigma$ for all measurements.
+
+Those results show using-key's performance to be significantly better and more predictable.
+
+#figure(
+  caption: [Mean $mu$ and standard deviation $sigma$ of LCS measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
+  table(
+    columns: 5,
+    rows: 2,
+    stroke: none,
+    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
+    table.hline(stroke: .5pt),
+    [classic.sql], [$78.6$], [$261.5$], [$1.6$], [$3.3$],
+    [using-key.sql], [$4.8$], [$6.7$], [$0.4$], [$0.4$]
+  )
+) <lcs_stats>
 
 #figure(
   caption: [Execution time (left) and memory consumption (right) of LCS. In contrast to the other plots, we layed using-key above classic here for clarity.],
@@ -205,14 +220,16 @@ To limit the total runtime of the experiment, we defined a timeout of $5 "minute
 
 For each measurement, we generated a random string consisting of the characters A, C, G and T, to mimic a DNA sequence. This string was directly used as the first argument. To get the second argument, we copied the first argument character-wise; however, with a probability of $30%$, a copying error would occur, selecting one random character from the available set. Because the same character could be selected with a probability of $25%$, the overall expected difference between the arguments is $75% dot 30% = 22.5%$.
 
-The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm. We used a timeout of 60 seconds.
+The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm, using a timeout of 60 seconds (real).
 
 === Results
 
-@needleman_timeouts lists the timeouts we encountered. We did not represent them in the plots in @needleman_results.
+@needleman_timeouts lists the timeouts we encountered. We did not represent them in the result plots in @needleman_results.
 
-For the respective query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. 
+For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit.
+@needleman_stats shows mean $mu$ and standard deviation $sigma$ for the measurements.
 
+Again, using-key's performance proves to be better and more predictable.
 
 #figure(
   caption: [Number of timeouts for the measurement of Needleman-Wunsch. A query timed out after time $t > 60 s$.],
@@ -231,6 +248,19 @@ For the respective query, both execution time and memory usage appear to follow 
 ) <needleman_timeouts>
 
 #figure(
+  caption: [Mean $mu$ and standard deviation $sigma$ of Needleman-Wunsch measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
+  table(
+    columns: 5,
+    rows: 2,
+    stroke: none,
+    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
+    table.hline(stroke: .5pt),
+    [classic.sql], [$45.2$], [$79.8$], [$0.7$], [$0.9$],
+    [using-key.sql], [$7.0$], [$10.4$], [$0.4$], [$0.5$]
+  )
+) <needleman_stats>
+
+#figure(
   caption: [Measured time (left) and memory consumption (right) for Needleman-Wunsch.],
   grid(
     columns: 2,
@@ -239,19 +269,23 @@ For the respective query, both execution time and memory usage appear to follow 
   )
 ) <needleman_results>
 
+TODO: maybe fit lower limits
+
 == Drunken Bishop <measuring_bishop>
 
 === Setup
 
 We randomly generated arrays of hexadecimal numbers with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
 
-Additionally to the two queries explain in [TODO], we measured each variant using the bitlist representation of the other to demonstrate the significance of the bitlist representation. We set a timeout of $10$ seconds.
+Additionally to the two queries specifically explained in @bishop_classic_chapter and @bishop_using-key_chapter, we measured each variant using the bit-pair representation of the respective other to demonstrate the significance of the representation. We set a timeout of $10$ seconds (real).
 
 === Results
 
-@bishop_scale3 shows the results as mean and standard deviation. All measurements nicely follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
+@bishop_scale3 shows the results as mean and standard deviation. With some uncertainty, all measurements follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
 @bishop_slopes shows the slopes of linear fits for the other three queries.
-We can see how classic outperforms using-key. Also, while the influence of the fingerprint representation on memory usage of classic seems minor, the impact on runtime is rather apparent. 
+We can see how classic outperforms using-key. Also, while the influence of the bit-pair representation on memory usage of classic seems minor, the impact on runtime is rather apparent.
+
+
 
 #figure(
   caption: [Execution time (left) and memory usage (right) of drunken bishop.],
@@ -263,11 +297,11 @@ We can see how classic outperforms using-key. Also, while the influence of the f
 ) <bishop_scale3>
 
 #figure(
-  caption: [Slope of linear fit for time and memory measurement.],
+  caption: [Slope of linear fit for time  and memory measurements, with $["time"]=s/1000$ and $["memory"] = "MB"/1000$.],
   table(
     columns: 4,
     stroke: none,
-    table.header([*Query*], [*Bitlist representation*], [*$Delta t [s/(1000)]$*], [*$Delta m ["MB"/(1000)]$*]),
+    table.header([*Query*], [*Bit-pair representation*], [*$Delta"time"$*], [*$Delta"memory"$*]),
     table.hline(stroke: 0.5pt),
     [classic], [list], [$0.68$], [$9.78$],
     [classic], [table], [$2.06$],[$8.85$],

@@ -11,7 +11,7 @@
 
     Lehrstuhl für Datenbanksysteme
   ],
-  title: [Performance of USING KEY in DuckDB],
+  title: [Implementation and Performance of recursive query variants in DuckDB],
   authors: ("David Knöpp",),
   examiners: ("Prof. Dr. Torsten Grust",),
   supervisors: ("Björn Bamberg",),

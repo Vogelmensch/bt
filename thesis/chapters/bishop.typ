@@ -113,7 +113,7 @@ The bishop leaves a footprint on every square it visits. When visiting the same 
 == Query layout <bishop_chapter_layout>
 
 We implemented two different approaches to represent the bit-pairs in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of this so-called _bitlist_ to get the bishop's direction for this step. The tail of the bitlist then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
-For the second approach, we represent the bitlist using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
+For the second approach, we represent the bit-pairs using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
 
 It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. @measuring_bishop looks into this in depth.
 
@@ -264,7 +264,7 @@ The overall goal of the queries is to count the number of times the bishop has s
   )
 ) <bishop_outer_queries>
 
-== Recursive step: classic
+== Recursive step: classic <bishop_classic_chapter>
 
 With the exception of the different approaches to handling the bitlist, the classic variant of drunken bishop is contained within the using-key variant. We thus start with the former.
 
@@ -295,7 +295,7 @@ The recursive step, shown in @bishop_rec_classic, implements the movement rules 
 ) <bishop_rec_classic>
 
 
-== Recursive step: using-key
+== Recursive step: using-key <bishop_using-key_chapter>
 
 The recursive step of the using-key variant is shown in @bishop_rec_using_key. It is itself a CTE named `new` that calculates most of its values in the inner query, similarly to classic. However, in order to increase `sym_id` in-place, we need to access the recurring table at the correct coordinates (@bishop_rec_using_key:25) and either increase the respective value by one, or set the value to `1` if the current field has not been visited before (@bishop_rec_using_key:21). See @rec_step_using_key_chapter for an explanation of the `coalesce` function.
 
