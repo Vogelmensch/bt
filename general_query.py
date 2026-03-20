@@ -28,6 +28,8 @@ class GeneralQuery:
         if args.file != 'DONT STORE' and not args.time and not args.memory:
             print('CAUTION: You provided a file with --file but no measurement with --time or --memory.')
 
+        GeneralQuery.check_duckdb_version()
+
     def check_duckdb_version():
         cproc = sp.run(['duckdb', '--version'], capture_output=True, text=True)
         out, err = cproc.stdout, cproc.stderr
@@ -39,13 +41,15 @@ class GeneralQuery:
         
         if 'v1.4.4' not in out:
             print(f'DuckDB v1.4.4 required. Found {out}')
-            print('exiting...')
-            exit(1)
+            print('The program might not work correctly with this version.')
+            answer = input('Continue anyway? y/[n]')
+            if answer != 'y':
+                print('exiting...')
+                exit(1)
+
 
 
     def run_subprocess(cmd: str, query: str, args: argparse.Namespace, result_format='-json') -> sp.CompletedProcess:
-        GeneralQuery.check_duckdb_version()
-
         # some queries don't need those, so we need to check for their existence
         try:
             db = args.db
