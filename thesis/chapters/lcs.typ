@@ -14,7 +14,7 @@
 #set math.equation(numbering: "(1)")
 #set heading(numbering: "1.1")
 
-= Longest Common Subsequence <lcs>
+== Longest Common Subsequence <lcs>
 
 A subsequence $s_"sub"$ of a string $s$ is a string that can be derived from $s$ by deleting some or no letters without changing the order of the remaining letters @survey_of_lcs. A subsequence common to two strings $s_1$ and $s_2$ is a subsequence that both strings have in common. For example, if 
 $ s_1 = "\"Never gonna give you up\"," $
@@ -26,7 +26,7 @@ Our goal is to find the _longest_ common subsequence (LCS) of two strings. In ou
 Note that the longest common subsequence is not equal to the longest common _substring_. The difference is that adjacent letters within a substring must always also be adjacent in the original string. Thus, every substring of a string $s$ is also a subsequence of $s$, but not the other way around.
 
 
-== Filling the dynamic programming table
+=== Filling the dynamic programming table
 
 We solve LCS by implementing the "traditional technique" first proposed by Wagner and Fischer @string_to_string @survey_of_lcs. This approach breaks the problem down by finding the longest common subsequence for all combinations of prefixes of the input strings. The goal of this chapter is to find a recurrence relation from which we can derive the queries. To do this,
 we observe two properties of the longest common subsequence, both of which depend on the last character of the respective input string.
@@ -75,7 +75,7 @@ We visualize the solution process by iteratively filling out @lcs_table_empty. A
 )<lcs_table_empty>
 
 
-== Query layout
+=== Query layout
 
 First, we define macros `s1()` and `s2()` to hold our two input strings. We then define the table `letters` which holds all combinations of letters from the two input strings. Every row of `letters` thus defines the coordinates for one cell of @lcs_table_empty. See @letters_definition for the code and an excerpt.
 
@@ -167,7 +167,7 @@ With using-key, we gain the ability to access previously calculated values in th
 
 
 
-== Base case
+=== Base case
 
 @lcs_base_case shows the base case, which corresponds to the first case in @lcs_rec_relation. For the empty letters at the beginning of the strings, `len = 0`. When backtracking later, this will be an endpoint: `from_left = from_up = from_diag = false`. 
 
@@ -202,7 +202,7 @@ With using-key, we gain the ability to access previously calculated values in th
 )<lcs_base_case>
 
 
-== Recursive step: using-key
+=== Recursive step: using-key
 
 Similar to A\*, the recursive step of classic contains the recursive step of using-key, which is why we start with the latter.
 
@@ -229,9 +229,9 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
             diag.len + 1,
             false, false, true
         FROM 
-            letters AS ltrs 
-            JOIN recurring.lcs AS diag ON ltrs.xidx = diag.xidx+1 and 
-                                          ltrs.yidx = diag.yidx+1 
+            letters                       AS ltrs 
+            JOIN recurring.lcs            AS diag ON ltrs.xidx = diag.xidx+1 and 
+                                                     ltrs.yidx = diag.yidx+1 
             LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and 
                                                      ltrs.yidx = this.yidx
         WHERE 
@@ -247,11 +247,11 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
             greatest(l.len, u.len),
             l.len >= u.len, u.len >= l.len, false
         FROM 
-            letters AS ltrs 
-            JOIN recurring.lcs AS l ON ltrs.xidx = l.xidx+1 and 
-                                       ltrs.yidx = l.yidx 
-            JOIN recurring.lcs AS u ON ltrs.xidx = u.xidx and 
-                                       ltrs.yidx = u.yidx+1
+            letters                       AS ltrs 
+            JOIN recurring.lcs            AS l    ON ltrs.xidx = l.xidx+1 and 
+                                                     ltrs.yidx = l.yidx 
+            JOIN recurring.lcs            AS u    ON ltrs.xidx = u.xidx and 
+                                                     ltrs.yidx = u.yidx+1
             LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and 
                                                      ltrs.yidx = this.yidx    
         WHERE 
@@ -389,7 +389,7 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
     )
 )<lcs_example>
 
-== Recursive step: classic
+=== Recursive step: classic
 
 As mentioned above, classic lcs contains the using-key variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step. To guarantee termination, in the `WHERE` clause, we check whether the number of elements in the working table exceeds the number of elements in `letters`, which is the natural limit.
 

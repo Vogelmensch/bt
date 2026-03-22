@@ -2,7 +2,7 @@
 
 == A breath of fresh air on recursive SQL
 
-Common table expressions (CTEs) enable the query author to bind the results of an intermediate query to a table name. The feature was introduced in the SQL:1999 standard to allow for more readable queries. The same standard allowed CTEs to reference themselves recursively, enabling the use of iteration within SQL. While the introduction of recursive CTEs made SQL turing-complete, their underlying functionality has remained unchanged since 1999. 
+Common table expressions (CTEs) enable the query author to bind the results of an intermediate query to a table name. The feature was introduced in the SQL:1999 standard to allow for more readable queries. The same standard allowed CTEs to reference themselves recursively, enabling the use of iteration within SQL. Recursive CTEs make SQL turing-complete, but their underlying functionality has remained unchanged since their introduction. 
 
 Over time, CTEs in the way they were introduced in 1999 - we call them *classic* CTEs throughout this thesis - turned out to be lacking important features that are taken for granted in most imperative programming languages. Specifically, classic CTEs are missing the abilities to
 

@@ -11,7 +11,7 @@
 
     Lehrstuhl für Datenbanksysteme
   ],
-  title: [Implementation and Performance of recursive query variants in DuckDB],
+  title: [Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics],
   authors: ("David Knöpp",),
   examiners: ("Prof. Dr. Torsten Grust",),
   supervisors: ("Björn Bamberg",),
@@ -67,16 +67,7 @@ anderen Studiengang als Prüfungsleistung vorgelegt.
 #include "chapters/basics.typ"
 #pagebreak(to: "even")
 
-#include "chapters/astar.typ"
-#pagebreak(to: "even")
-
-#include "chapters/lcs.typ"
-#pagebreak(to: "even")
-
-#include "chapters/needleman.typ"
-#pagebreak(to: "even")
-
-#include "chapters/bishop.typ"
+#include "chapters/algorithms.typ"
 #pagebreak(to: "even")
 
 #include "chapters/measuring.typ"

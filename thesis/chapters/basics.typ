@@ -22,10 +22,10 @@
 
 As queries get more complex, the good query author wants to keep their code well organized. Using too many subqueries often result in hard-to-read code. What if SQL had a way to define intermediate queries beforehand and bind their result tables to names, similar to variables in imperative programming languages? 
 
-SQLs way of doing this is called the *Common Table Expression* (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is being evaluated before the outer query, and its result is being stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table.
+SQLs way of doing this is called the *Common Table Expression* (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is evaluated before the outer query, and its result is stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table. In the example, we implicitly create the table `one_plus_one` with one column named `x`. The inner query, `SELECT 1+1`, defines the instance of `one_plus_one` to be a single row with value `2` and, derived from the value, the data type of `x` to be `INTEGER`. In the outer query, we can now reference `one_plus_one` and by selecting its column `x` to yield the CTEs final result, `4`.
 
 #figure(
-  caption: [General outline of CTEs (left) and example (right)],
+  caption: [General outline of CTEs (left) and example (right).],
   gap: gap,
   grid(
     columns: 2,
@@ -53,13 +53,15 @@ SQLs way of doing this is called the *Common Table Expression* (CTE). The genera
 ) <cte_general>
 
 
-== `WITH RECURSIVE`: Referencing CTEs recursively <with_recursive>
+== WITH RECURSIVE: CTEs referencing themselves <with_recursive>
 
-BIG TODO: WRITE ABOUT FIXPOINT SEMANTICS
+In order for SQL to become turing complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs themselves, SQL:1999 introduced _recursive CTEs_, which expand the general CTE concept by allowing self-reference within the inner query. 
 
-In order for SQL to become turing complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs, SQL:1999 introduced _recursive CTEs_, which expand the general CTE by allowing self-reference within the inner query. 
+See @cte_recursive for the general layout and an example. A recursive CTE is defined by the keyword `WITH RECURSIVE`, followed by the table name and the list of columns, just as in @cte_general. In contrast to @cte_general however, the inner query is divided into two parts: the base case and the recursive step, both of which are themselves queries, combined by a `UNION ALL` (or just `UNION`) clause. We explain the functionality of recursive CTEs in detail below; in a nutshell, the base case is evaluated once at the beginning, and the recursive step is evaluated repeatedly. The recursive step can access results from the immediately preceding iteration by selecting from `cte_name` recursively. This iteration stops as soon as a fixpoint has been reached, i.e., as soon as the recursive step does not produce any rows. Every row produced during the iteration can then be accessed in the outer query.
 
-See @cte_recursive for the general layout and an example. As we are dealing with a recursive query now, we need to provide an initial case and a recursive step. The latter needs a break condition in order to avoid infinite recursion; in this example, the break condition is `WHERE n < 10`.
+In the example in @cte_recursive, we define a recursive query to calculate the first ten powers of two, 
+$ x = 2^n, n in {1, ..., 10}. $ <pow2_math> 
+We name the recursive CTE `pow2` and the columns `n` and `x`, according to @pow2_math. In the base case, we `SELECT 1, 2`, corresponding to $2^1 = 2$. Then, in the recursive step, we take the results of the previous iteration by selecting from `pow2`, to increase `n` by $1$ and multiply `x` by $2$. This is repeated until the fixpoint, defined by `WHERE n < 10`, is reached: as soon as `n >= 10`, no more rows are produced, ending the iteration. The outer query then returns the results of all iterations, i.e. the first ten powers of two.
 
 #figure(
   caption: [The general outline of recursive CTEs (left) and applying a recursive CTE to calculate the first ten powers of two (right).],
@@ -102,23 +104,18 @@ See @cte_recursive for the general layout and an example. As we are dealing with
 Internally, DuckDB uses three tables to perform the recursive computation.
 - Except for the base case, each iteration can access the *working table*.
 - Each iteration stores its result by overwriting the *intermediate table*.
-- At the end of each iteration, the values in the intermediate table get copied to the *working table*. Thus, in the next iteration, we can use the results of the previous iteration.
 - The results of all iterations are accumulated in the *union table*.
 
-@classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. ... TODO
+At the end of each iteration, the values in the intermediate table get copied to the working table. Thus, in the next iteration, we can use the results of the previous iteration.
+
+@classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. The comments on the right-hand side briefly explain the respective line and reference to @visualize_rec_cte by number, where we visualize each step by following the example introduced before.
 
 #figure(
-  caption: [Internal evaluation of recursive CTEs as pseudocode.],
-  [
-    #codly(
-      annotation-format: (i) => [#i.],
-      annotations: (
-        (start: 1, end: 1, content: [bla]),
-        (start: 2, end: 2, content: [blub]),
-        (start: 5, end: 5, content: [bleep]),
-        (start: 6, end: 9, content: [blerp])
-      )
-    )
+  caption: [Internal evaluation of recursive CTEs as pseudocode (left) and comments (right) to explain and reference the associated line.],
+  grid(
+    columns: 2,
+    gutter: 5pt,
+    [
     ```
     union ← base_case()
     working ← union
@@ -131,23 +128,40 @@ Internally, DuckDB uses three tables to perform the recursive computation.
       working ← intermediate
     RETURN union
     ```
-  ]
+    ],
+    [
+      #codly(number-format: none)
+      ```
+      Base case defines first values for union.  (1)
+      Copy union to working.                     (2)
+
+
+      Evaluate recursive step, write to interm.  (3)
+      Terminate if fixpoint has been reached.    (4)
+
+      Append intermediate to union.              (4)
+      Overwrite working with intermediate.       (4)
+
+
+      ```
+    ]
+  )
 ) <classic_pseudocode>
 
-Following the example introduced in @cte_recursive, we visualize the process of iterative computation using recursive CTEs. ... shows the tables the recursive query uses as input and output: it has access to the working table and stores its results by writing to the intermediate table and appending the union table. ... shows how the working table gets overwritten in between iterations by the values stored in the intermediate table. This way, the query can always access the results from the previous iteration.
+@visualize_rec_cte visualizes the role of each table. In `(1)` and `(2)`, we see how the first iteration is being prepared by evaluating the base case and writing its results to the union table, which then overwrites the working table. When evaluating the recursive step `(3)`, the working table and intermediate table act as input and output, respectively. In between iterations `(4)`, the working table is overwritten by the intermediate table in preparation for the next iteration. Notice how the union table is never being read from, but only appended, during iteration.
 
 #codly-disable()
 #figure(
-  caption: [Base case of the recursive CTE from @cte_recursive visualized],
-  graphs.classic_base
-)
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @cte_recursive visualized. ],
+  grid(
+    rows: 2,
+    gutter: 5pt,
+    graphs.classic_base,
+    graphs.classic_step
+  )
+) <visualize_rec_cte>
 
-#figure(
-  caption: [Recursive step of the recursive CTE from @cte_recursive visualized],
-  graphs.classic_step
-)
-
-== The problem with recursive CTEs <problems>
+== Recursive CTEs come with problems <problems>
 
 #codly-enable()
 
@@ -171,7 +185,7 @@ Another question that arises is which values our CTE should have access to. We s
 To work around the limitations of this short-term memory, query authors tend to store and pass on intermediate results manually [source]. This contributes to the issues of overcomplex queries and inefficient computation.
 
 
-== `USING KEY`: Keeping a dictionary we can reference
+== USING KEY: Keeping a dictionary we can reference
 
 TODO: FIXPOINTS
 
@@ -272,13 +286,11 @@ Here is a visualization
 #codly-disable()
 #figure(
   caption: [base],
-  graphs.using_key-base
-)
-
-And then ...
-
-#figure(
-  caption: [],
-  graphs.using_key-step
+  grid(
+    rows: 2,
+    gutter: 5pt,
+    graphs.using_key-base,
+    graphs.using_key-step
+  )
 )
 

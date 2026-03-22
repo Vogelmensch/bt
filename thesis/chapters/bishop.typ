@@ -11,7 +11,7 @@
 
 #set heading(numbering: "1.1")
 
-= Drunken Bishop <drunken-bishop>
+== Drunken Bishop <drunken-bishop>
 
 SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint @ssh.
 
@@ -46,7 +46,7 @@ A fingerprint is a string of hexadecimal numbers, which proves to be impractical
 ) <fingerprint_example>
 
 
-== Creating an image from a fingerprint
+=== Creating an image from a fingerprint
 
 #let width = "width"
 #let height = "height"
@@ -110,7 +110,7 @@ The bishop leaves a footprint on every square it visits. When visiting the same 
   )
 ) <chessboards>
 
-== Query layout <bishop_chapter_layout>
+=== Query layout <bishop_chapter_layout>
 
 We implemented two different approaches to represent the bit-pairs in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of this so-called _bitlist_ to get the bishop's direction for this step. The tail of the bitlist then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
 For the second approach, we represent the bit-pairs using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
@@ -203,7 +203,7 @@ We represent the image dimensions with macros as shown in @bishop_macros. The la
   )
 ) <bishop_layout>
 
-== Base case
+=== Base case
 
 @bishop_base_case shows the base cases. In both variants, the bishop starts in the center of the board, defining the initial values for `x` and `y`. Also, the start position may not be the end position, defining `false` to be the initial value for `is_end`. Additionally, for classic, we start with the entire `bitlist()`. For using-key, we start with the `idx` of the first element in `bits`, which is `0`, as well as a value of `1` for `sym_id`, as the bishop has now stepped exactly once on the center field.
 
@@ -237,7 +237,7 @@ We represent the image dimensions with macros as shown in @bishop_macros. The la
   )
 ) <bishop_base_case>
 
-== Outer queries
+=== Outer queries
 
 Before we look at the recursive step, let us examine the outer queries in @bishop_outer_queries to get a feeling for the key difference between the CTE variants. In contrast to the other algorithms, the outer queries for drunken bishops are quite concise.
 
@@ -264,7 +264,7 @@ The overall goal of the queries is to count the number of times the bishop has s
   )
 ) <bishop_outer_queries>
 
-== Recursive step: classic <bishop_classic_chapter>
+=== Recursive step: classic <bishop_classic_chapter>
 
 With the exception of the different approaches to handling the bitlist, the classic variant of drunken bishop is contained within the using-key variant. We thus start with the former.
 
@@ -295,7 +295,7 @@ The recursive step, shown in @bishop_rec_classic, implements the movement rules 
 ) <bishop_rec_classic>
 
 
-== Recursive step: using-key <bishop_using-key_chapter>
+=== Recursive step: using-key <bishop_using-key_chapter>
 
 The recursive step of the using-key variant is shown in @bishop_rec_using_key. It is itself a CTE named `new` that calculates most of its values in the inner query, similarly to classic. However, in order to increase `sym_id` in-place, we need to access the recurring table at the correct coordinates (@bishop_rec_using_key:25) and either increase the respective value by one, or set the value to `1` if the current field has not been visited before (@bishop_rec_using_key:21). See @rec_step_using_key_chapter for an explanation of the `coalesce` function.
 

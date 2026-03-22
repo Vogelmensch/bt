@@ -47,11 +47,11 @@
       edge(C, G, $10$)
 })
 
-= The A\* search algorithm <astar>
+== The A\* search algorithm <astar>
 
 The A\* search algorithm solves the shortest path problem for weighted graphs. It can be seen as an expansion of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* expands Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
 
-== Dijkstra's algorithm and a heuristic function <astar_basics>
+=== Dijkstra's algorithm and a heuristic function <astar_basics>
 
 Dijkstra's algorithm solves the shortest path problem for a graph with non-negative edge weights. Given a starting node, the algorithm returns the shortest path and its distance for every node in the graph. Of course, one can also limit the algorithm to halt once a given goal node has been found. This is the approach we want to follow.
 
@@ -112,7 +112,7 @@ For our train journey, when considering to visit a station located in the opposi
 
 For us, because including a heuristic function would make following our running example unnecessarily confusing, we decided not to include one for it; we set all values $h = 0$, as shown in @graph_example. The explanation below still covers the full A\* search algorithm though. For our measurements in @measuring, we used a heuristic function which we explain in @heuristic.
 
-== Query Layout <astar_layout>
+=== Query Layout <astar_layout>
 
 For both variants, we first define two macros for the ids of start- and goal-node respectively, shown in @dijkstra_macros. 
 
@@ -180,7 +180,7 @@ The general layouts of the queries are shown in @astar_init. Both variants use t
 During runtime, the values `dist`, `f` and `prev` and constantly being updated as A\* keeps finding shorter paths through the graph. Only when a node is `visited` we know its values to be optimal. Thus, for the using-key version of the query, we use `node_id` as key, in order to access and update values for previously selected nodes.
 
 
-== Base Case
+=== Base Case
 
 @astar_base_case shows the base case. The only known node is `start_node()`, with a distance from `start_node()` of `dist = 0`, the f-value is the heuristic function's value for this node, `f = h(start_node())`, no previous node could lead to itself, `prev = NULL`, and the visited flag set to `visited = false`.
 
@@ -196,7 +196,7 @@ During runtime, the values `dist`, `f` and `prev` and constantly being updated a
   ```
 ) <astar_base_case>
 
-== Recursive Step: using-key <rec_step_using_key_chapter>
+=== Recursive Step: using-key <rec_step_using_key_chapter>
 
 We will see in @rec_step_classic_chapter that the classic variant of A\* can be written as an extension of using-key, which is why we start with the latter. @astar_recursive shows the recursive step of the query. It is itself a CTE that can be separated into three logical parts. Notice that, in every part, we select from the recurring table.
 To follow along, @astar_example illustrates each step for our running example in the first four iterations. 
@@ -260,9 +260,9 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
         sml.node_id,                            
         false                                   
     FROM
-        recurring.astar AS sml JOIN                                              
-        graph           AS nbs ON sml.node_id = nbs.node_from LEFT OUTER JOIN
-        recurring.astar AS old ON nbs.node_to = old.node_id                      
+        recurring.astar                 AS sml
+        JOIN graph                      AS nbs ON sml.node_id = nbs.node_from 
+        LEFT OUTER JOIN recurring.astar AS old ON nbs.node_to = old.node_id
     WHERE 
         sml.node_id = (SELECT id FROM min_node) AND                             
         sml.node_id != goal_node() AND 
@@ -388,7 +388,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 ) <astar_example>
 
 
-== Recursive Step: classic <rec_step_classic_chapter>
+=== Recursive Step: classic <rec_step_classic_chapter>
 
 The classic variant of A\* can be viewed as an extension of the using-key variant. We follow the same approach; however, because we can only access values which have been calculated in the previous iteration, we have to carry all values manually. This vastly increases the size of the union table.
 
@@ -449,3 +449,4 @@ In @astar_example, the state of the recurring table after each iteration is show
     [Items in union table], [1], [5], [10], [18], [26], [34], [43],
   )
 ) <astar_table_size_comparison>
+
