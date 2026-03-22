@@ -1,6 +1,7 @@
 #import "simple.typ": *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
+#set raw(syntaxes: "custom_sql.sublime-syntax")
 
 #show: doc => template(
   affiliation: "Eberhard Karls Universität Tübingen",

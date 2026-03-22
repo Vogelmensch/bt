@@ -29,6 +29,14 @@ class Plot:
             WHERE script=\'{script}\' 
             GROUP BY {x_value}
         '''
+        self.needleman_plot_query = '''
+            SELECT 
+                {x_value} AS x,
+                min({y_value}) AS y
+            FROM \'{file}\'
+            WHERE script=\'{script}\'
+            GROUP BY {x_value}
+        '''
         self.map_query = '''
             SELECT 
                 f.long AS from_long, f.lat AS from_lat,
@@ -52,12 +60,11 @@ class Plot:
     def store(self, name, dpi="figure"):
         plt.savefig(name, dpi=dpi)
 
-    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, histogram=None, logy=False, ms=5):
+    def default(self, algorithm, x_value, y_value, file, scripts, xlabel=None, ylabel=None, errorbars=False, histogram=None, logy=False, ms=5, fit_min=False):
         if not args.x_value:
             x_value = self.default_x_values[algorithm]
 
         query = self.default_query if not errorbars else self.errorbar_query
-
 
         outer_script_idx = 2 # for coloring
         for script_idx, script in enumerate(scripts):
@@ -84,6 +91,10 @@ class Plot:
                 except IndexError:
                     print(f'Fitting failed for {script}: No degree was provided.\n')
                     continue
+
+                # special fit for needleman only considering lower values
+                if fit_min:
+                    d = duckdb.sql(self.needleman_plot_query.format(x_value=x_value, y_value=y_value, file=file, script=script)).fetchnumpy()
 
                 fit = np.polyfit(d['x'], d['y'], deg) # returns coefficients of polynomial
                 p = np.poly1d(fit) # can be applied to x-values
@@ -175,6 +186,7 @@ if __name__ == '__main__':
     parser.add_argument('--err', '--errorbars', action='store_true', help='plot with errorbars')
     parser.add_argument('--logy', action='store_true')
     parser.add_argument('--fit', type=int, nargs='*', help='fit data to polynomial of given degree; provide multiple values for multiple measurements within one plot (0 -> no fit)')
+    parser.add_argument('--fit_min', action='store_true', help='fit smallest values only')
 
     parser.add_argument('-s', '--store', '--save', '--write', type=str, nargs='?', const='NOT PROVIDED', default='DONT STORE', help='store into file STORE')
     parser.add_argument('--dpi', type=float, help='set resolution of stored image in dpi')
@@ -198,7 +210,7 @@ if __name__ == '__main__':
             raise Exception('Wrong number of arguments for --roadmap.')
         plot.roadmap(args.roadmap[0], int(args.roadmap[1]), int(args.roadmap[2]), args.roadmap[3:-1])
     else:
-        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.hist, args.logy, args.marker_size)
+        plot.default(args.query, args.x_value, args.y_value, args.file, args.script, args.xlabel, args.ylabel, args.err, args.hist, args.logy, args.marker_size, args.fit_min)
 
     if args.title:
         plt.title(args.title)

@@ -1,0 +1,79 @@
+%YAML 1.2
+---
+name: Custom SQL
+file_extensions:
+  - sql
+scope: source.csql
+
+contexts:
+  main:
+    # 1. Alles in < > als einheitlichen Platzhalter highlighten.
+    # Wir nutzen "variable.parameter", da dies in den meisten Typst-Themes 
+    # eine sehr prägnante Farbe bekommt (oft orange oder rot).
+    - match: '<[^>]+>'
+      scope: comment.other.sql
+
+    # 2. USING KEY vollständig als Keyword highlighten.
+    # (?i) macht die Suche unabhängig von Groß-/Kleinschreibung.
+    # \b setzt Wortgrenzen, \s+ erlaubt beliebige Leerzeichen zwischen den Wörtern.
+    - match: '(?i)\bUSING\s+KEY\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bWITH\s+RECURSIVE\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bUNION\s+ALL\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bUNION\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bAS\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bCREATE MACRO\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bCREATE TABLE\b'
+      scope: keyword.other.sql
+    - match: '(?i)\SELECT\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bFROM\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bWHERE\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bWITH\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bON\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bJOIN\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bLEFT OUTER JOIN\b'
+      scope: keyword.other.sql
+    - match: '--.*\n'
+      scope: comment.other.sql
+    - match: '(?i)\bGROUP BY\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bAND\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bOR\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bCASE\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bWHEN\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bTHEN\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bELSE\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bEND\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bINTEGER\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bFLOAT\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bINSERT INTO\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bVALUES\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bIS\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bNULL\b'
+      scope: keyword.other.sql
+    - match: '(?i)\bNOT\b'
+      scope: keyword.other.sql
+

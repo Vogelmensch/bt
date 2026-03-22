@@ -1,6 +1,6 @@
 = Algorithms
 
-We wrote some algorithms ...
+To test ...
 
 #include("astar.typ")
 #pagebreak()

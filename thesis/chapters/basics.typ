@@ -3,7 +3,7 @@
 #show: codly-init.with()
 #codly(
   languages: (
-    sql: (name: "SQL", icon: emoji.duck)
+    sql: (name: "SQL", icon: emoji.duck, )
   )
 )
 
@@ -162,27 +162,9 @@ At the end of each iteration, the values in the intermediate table get copied to
 ) <visualize_rec_cte>
 
 == Recursive CTEs come with problems <problems>
-
 #codly-enable()
 
-TODO: FIXPOINTS
 
-Have a look at the previous example again. While this query confidently calculates $2^10$ for us, it also calculates and stores all intermediate results in the union table. In fact, the outer query in @cte_recursive returns all intermediate results. In order to return the $10"th"$ power of $2$ only, we need to explicitly select it in the outer query,
-
-```sql
-SELECT argmax(n, x), max(x)
-FROM pow2;
-```
-
-While the additional work for the query author is manageable in this example, it grows while queries get more complex, as we will see in later chapters. 
-
-
-
-But it is not just the query author who has to put in unnecessary work. Even if we select only those values that have been calculated in the last iteration, until this point, all intermediate values have been stored in the union table. Again, with increasing complexity and amount of data, all this unnecessarily stored data can easily overwhelm our system @passing2017sql.
-
-Another question that arises is which values our CTE should have access to. We saw in @with_recursive that the CTE has access to the working table, which holds the results from the previous iteration. But what if we want to access results that have been calculated in an earlier iteration? While those values have been stored in the union table, we cannot access them during runtime; performance would suffer significantly due to duplicate computations @recursive_relations.
-
-To work around the limitations of this short-term memory, query authors tend to store and pass on intermediate results manually [source]. This contributes to the issues of overcomplex queries and inefficient computation.
 
 
 == USING KEY: Keeping a dictionary we can reference

@@ -15,14 +15,14 @@
     row-gutter: 10pt,
     table(
       columns: 2,
-      stroke: (y: none),
-      table.hline(),
+      stroke: (x: .5pt, y: none),
+      table.hline(stroke: .5pt),
       table.header(
         [*n*], [*x*]
       ),
-      table.hline(),
+      table.hline(stroke: .5pt),
       ..content,
-      table.hline()
+      table.hline(stroke: .5pt)
     ),
     text(
       table_name,
@@ -118,6 +118,7 @@ The base case runs once at query start.
   rows: 2,
   columns: (50%, 50%),
   align: align,
+  stroke: .5pt,
 
   diagram(
     debug: 0,
@@ -157,6 +158,7 @@ The recursive step is repeated until the intermediate table is empty after step 
   rows: 2,
   columns: (50%, 50%),
   align: align,
+  stroke: .5pt,
 
   diagram(
     debug: 0,

@@ -161,12 +161,14 @@ Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_f
 
 ) <astar_vegas>
 
+TODO: checke nochmal nach Vorzeichen!
+
 #figure(
   caption: [Coefficients of polynomial fits for memory measurements of A\*],
   table(
     columns: 6,
     stroke: none,
-    table.header([*Graph*], [*Algorithm*], [*Unit*], table.vline(stroke: .5pt), [*$x^2$*], [*$x$*], [*$1$*]),
+    table.header([*Graph*], [*Script*], [*Unit*], table.vline(stroke: .5pt), [*$x^2$*], [*$x$*], [*$1$*]),
     table.hline(stroke: .5pt),
     [NYC], [classic], [MB], [$1.78 dot 10^(-5)$], [$0.028$], [$266.8$],
     [NYC], [using-key], [MB], [-], [$0.003$], [$262$],
@@ -226,10 +228,10 @@ The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten 
 
 @needleman_timeouts lists the timeouts we encountered. We did not represent them in the result plots in @needleman_results.
 
-For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit.
+For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit. We applied fits on the minimal values for each string length to model the shape of this lower limit. @needleman_fit shows the coefficients for these fits.
 @needleman_stats shows mean $mu$ and standard deviation $sigma$ for the measurements.
 
-Again, using-key's performance proves to be better and more predictable.
+Again, using-key's performance proves to be better and more predictable. ...
 
 #figure(
   caption: [Number of timeouts for the measurement of Needleman-Wunsch. A query timed out after time $t > 60 s$.],
@@ -248,19 +250,6 @@ Again, using-key's performance proves to be better and more predictable.
 ) <needleman_timeouts>
 
 #figure(
-  caption: [Mean $mu$ and standard deviation $sigma$ of Needleman-Wunsch measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
-  table(
-    columns: 5,
-    rows: 2,
-    stroke: none,
-    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
-    table.hline(stroke: .5pt),
-    [classic.sql], [$45.2$], [$79.8$], [$0.7$], [$0.9$],
-    [using-key.sql], [$7.0$], [$10.4$], [$0.4$], [$0.5$]
-  )
-) <needleman_stats>
-
-#figure(
   caption: [Measured time (left) and memory consumption (right) for Needleman-Wunsch.],
   grid(
     columns: 2,
@@ -269,7 +258,35 @@ Again, using-key's performance proves to be better and more predictable.
   )
 ) <needleman_results>
 
-TODO: maybe fit lower limits
+#figure(
+  caption: [Mean $mu$ and standard deviation $sigma$ of Needleman-Wunsch measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
+  table(
+    columns: 5,
+    rows: 2,
+    stroke: none,
+    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
+    table.hline(stroke: .5pt),
+    [classic], [$45.2$], [$79.8$], [$0.7$], [$0.9$],
+    [using-key], [$7.0$], [$10.4$], [$0.4$], [$0.5$]
+  )
+) <needleman_stats>
+
+#figure(
+  caption: [Coefficients of fits for minimal values of Needleman-Wunsch measurements.],
+  table(
+    columns: 6,
+    stroke: none,
+    table.header([*Measure*], [*Script*], table.vline(stroke: .5pt), [*$x^3$*], [*$x^2$*], [*$x$*], [*$1$*]),
+    table.hline(stroke: .5pt),
+    [time [s]], [classic], $1.5 dot 10^(-5)$, $-3.6 dot 10^(-3)$, $0.3$, $-5.5$,
+    [time [s]], [using-key], [-], [-], $5.7 dot 10^(-2)$, $-3.4$,
+
+    [memory [GB]], [classic], $2.8 dot 10^(-8)$, $-1.0 dot 10^(-6)$, $1.5 dot 10^(-3)$, $0.2$,
+    [memory [GB]], [using-key], [-], [-], $9.6 dot 10^(-4)$, $0.2$
+  )
+) <needleman_fit>
+
+
 
 == Drunken Bishop <measuring_bishop>
 
