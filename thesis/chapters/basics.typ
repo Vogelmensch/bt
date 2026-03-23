@@ -107,8 +107,7 @@ Internally, DuckDB uses three tables to perform the recursive computation.
 At the end of each iteration, the values in the intermediate table get copied to the working table. Thus, in the next iteration, we can use the results of the previous iteration.
 
 @classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. The comments on the right-hand side briefly explain the respective line and reference to @visualize_rec_cte by number, where we visualize each step by following the example introduced before.
-
-TODO: Erkläre pseudocode
+In `(1)` we see how the first iteration is being prepared by evaluating the base case and writing its results to the union table, which then gets copied to the working table in `(2)`. When evaluating the recursive step `(3)`, the working table acts as input, while the intermediate table act as output. After the results of the recursive step have been calculated `(4)`, we first check whether the fixpoint has been reached, i.e. whether the recursive step returned no results and the intermediate table is empty. If this is the case, the iteration ends. Otherwise `(5)`, the union table is appended by the intermediate table. Then, the working table is overwritten by the intermediate table in preparation for the next iteration. Notice how the union table is never being read from, but only appended, during iteration.
 
 #figure(
   caption: [Internal evaluation of recursive CTEs as pseudocode (left) and comments (right) to explain and reference the associated line.],
@@ -139,16 +138,14 @@ TODO: Erkläre pseudocode
       Evaluate recursive step, write to interm.  (3)
       Terminate if fixpoint has been reached     (4)
 
-      Append intermediate to union               (4)
-      Overwrite working with intermediate        (4)
+      Append intermediate to union               (5)
+      Overwrite working with intermediate        
 
 
       ```
     ]
   )
 ) <classic_pseudocode>
-
-@visualize_rec_cte visualizes the role of each table. In `(1)` and `(2)`, we see how the first iteration is being prepared by evaluating the base case and writing its results to the union table, which then overwrites the working table. When evaluating the recursive step `(3)`, the working table and intermediate table act as input and output, respectively. In between iterations `(4)`, the working table is overwritten by the intermediate table in preparation for the next iteration. Notice how the union table is never being read from, but only appended, during iteration.
 
 #codly-disable()
 #figure(
@@ -166,7 +163,7 @@ TODO: Erkläre pseudocode
 
 Let us take some notes on recursive CTEs as presented in the previous chapter. 
 
-First, the results of each iteration are always appended to the union table `(4)`. This allows us to access the entire iteration history in the outer query. It turns out, however, that queries often select only few desired result rows and discard the others. Meanwhile, collecting all intermediate results causes the union table to potentially grow very large, so that storage limitations become an issue.
+First, the results of each iteration are always appended to the union table `(5)`. This allows us to access the entire iteration history in the outer query. It turns out, however, that queries often select only few desired result rows and discard the others. Meanwhile, collecting all intermediate results causes the union table to potentially grow very large, so that storage limitations become an issue.
 
 Secondly, the recursive step `(3)` only ever queries the working table, never the union table. This is an important feature, as continuous access to the union table would drastically impact performance due to its potentially rapid growth @recursive_relations. However, by denying access to the union table, we can only ever access the results of the immediately preceding iteration. To work around this limitation, we are forced to manually carry result rows through the iteration process. Both readability of the code and performance suffer greatly from this behaviour.
 
@@ -234,12 +231,12 @@ $ <upsert>
 
 where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ denotes left antijoin. In words, if `i` contains two or more rows with equal key values, `upsert` raises a key error; the payload values for those key values would be ambiguous. Else, we update all rows in `u` whose key values are included in `i`. If a key value in `i` is not yet included in `u`, we simply include the respective row.
 
-@using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate image in @visualize_using-key.
+@using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate figure in @visualize_using-key.
+We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply `upsert(recurring, intermediate)` to update rows with existing keys and inserting rows with novel keys as explained above. 
 
-TODO: Erkläre pseudocode
 
 #figure(
-  caption: [Internal evaluation of using-key as pseudocode.],
+  caption: [Internal evaluation of using-key as pseudocode (left) and comments (right) to explain and reference the associated line.],
   grid(
     gutter: 5pt,
     columns: 2,
@@ -267,8 +264,8 @@ TODO: Erkläre pseudocode
       Evaluate recursive step by reading from working and reccuring, write to interm.    (3)
       Terminate if fixpoint has been reached     (4)
 
-      Update or insert rows from intermediate to recurring                                  (4)
-      Overwrite working with intermediate        (4)
+      Update or insert rows from intermediate to recurring                                  (5)
+      Overwrite working with intermediate
 
 
       ```
@@ -276,11 +273,9 @@ TODO: Erkläre pseudocode
   )
 ) <using-key_pseudocode>
 
-And then, everything went well ...
-
 #codly-disable()
 #figure(
-  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached. (TODO: stimmt das? ja oder?)],
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached.],
   grid(
     rows: 2,
     gutter: 5pt,

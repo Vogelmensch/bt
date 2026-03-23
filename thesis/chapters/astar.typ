@@ -47,7 +47,7 @@
       edge(C, G, $10$)
 })
 
-== The A\* search algorithm <astar>
+== A\* search algorithm <astar>
 
 The A\* search algorithm solves the shortest path problem for weighted graphs. It can be seen as an expansion of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* expands Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
 
@@ -201,11 +201,11 @@ During runtime, the values `dist`, `f` and `prev` and constantly being updated a
 We will see in @rec_step_classic_chapter that the classic variant of A\* can be written as an extension of using-key, which is why we start with the latter. @astar_recursive shows the recursive step of the query. It is itself a CTE that can be separated into three logical parts. Notice that, in every part, we select from the recurring table.
 To follow along, @astar_example illustrates each step for our running example in the first four iterations. 
 
-❶st, we select one node with minimal f-value from the recurring table and bind its id to `min_node(id)`. Because every node can be `visited` only once in the entire process, it must not have been `visited` before, as stated in the `WHERE` clause.
+`(1)` We select one node with minimal f-value from the recurring table and bind its id to `min_node(id)`. Because every node can be `visited` only once in the entire process, it must not have been `visited` before, as stated in the `WHERE` clause.
 
-❷nd step: We now mark `min_node` as `visited` for future iterations. If `min_node` turns out to be the `goal_node()`, we end the iteration, as defined by the condtion `node_id != goal_node()` in this and the next step.
+`(2)` We now mark `min_node` as `visited` for future iterations. If `min_node` turns out to be the `goal_node()`, we end the iteration, as defined by the condtion `node_id != goal_node()` in this and the next step.
 
-❸rd step: The goal of this step is to take all neighbors of `min_node` and update their values for `dist`, `f` and `prev`, if it turns out that the path over `min_node` is shorter than the respective shortest path found so far. We will explain this step in the following paragraphs.
+`(3)` The goal of this step is to take all neighbors of `min_node` and update their values for `dist`, `f` and `prev`, if it turns out that the path over `min_node` is shorter than the respective shortest path found so far. We will explain this step in the following paragraphs.
 
 First, notice that @astar_recursive:30, @astar_recursive:34 and @astar_recursive:35 are identical to ❷, the only difference being that we bind `min_node` to the name `sml` (standing for "smallest") here. @astar_recursive:31 binds the `graph` to the name `nbs` ("neighbors"), on the condition `sml.node_id = nbs.node_from`. With this, we can select the `node_id`s of all neighbors of `min_node` by selecting `nbs.node_to`. We immediately use this in @astar_recursive:32, where we bind the recurring table to the name `old`, on the conidtion `nbs.node_to = old.node_id`. With this, we have access to the values of `min_nodes`' neighbors, by selecting from `old`. Notice the `LEFT OUTER JOIN` we used to join `old`, which returns `NULL`-values for neighbors which are not part of the recurring table yet.
 
@@ -229,16 +229,17 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 
 #figure(
   caption: [Recursive step of A\* for using-key],
+  placement: auto,
   [
     ```sql
-    -- ❶ Find node_id of the node with minimal f-value
+    -- (1) Find node_id of the node with minimal f-value
     WITH min_node(id) AS (
         SELECT argmin(node_id, f)
         FROM recurring.astar
         WHERE NOT visited
     )
 
-    -- ❷ Set visited = true for the minimal node
+    -- (2) Set visited = true for the minimal node
     SELECT 
         node_id, 
         dist, 
@@ -252,7 +253,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 
     UNION
 
-    -- ❸ Update or insert neighbors of the minimal node
+    -- (3) Update or insert neighbors of the minimal node
     SELECT
         nbs.node_to,                            
         sml.dist + nbs.weight,                  
@@ -294,6 +295,7 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 
 #figure(
   caption: [Running example of A\* for using-key. Rows outlined in red mark currently visited nodes; orange values are being updated, while green values are being inserted.],
+  placement: bottom,
   table(
     columns: 4,
     table.header([*Iteration*], table.vline(stroke: 1pt), [*❶: visit node with smallest f-value*], [*❷: update `visited` for `smallest`*],[*❸: update or insert neighbors of `smallest`*]),
@@ -401,7 +403,24 @@ The classic variant of A\* can be viewed as an extension of the using-key varian
 ❷ndly, after all other values have been selected, we need to carry to rest of the table in order to not lose any information. For this, we simply select the entire `filtered_astar`-table. The `WHERE`-clause implements the break condition.
 
 #figure(
+  caption: [Comparison of table sizes for our example graph.],
+  placement: auto,
+  table(
+    rows: 3,
+    columns: 8,
+    stroke: none,
+
+    [Iteration], table.vline(), ..range(0, 7).map(str),
+    table.hline(),
+    [Items in recurring table], [1], [3], [4], [6], [7], [7], [7],
+    table.hline(),
+    [Items in union table], [1], [5], [10], [18], [26], [34], [43],
+  )
+) <astar_table_size_comparison>
+
+#figure(
   caption: [Recursive step of A\* for classic, based on the using-key variant.],
+  placement: auto,
   
   ```sql
   -- ❶ Group equal nodes
@@ -435,18 +454,5 @@ The classic variant of A\* can be viewed as an extension of the using-key varian
 
 In @astar_example, the state of the recurring table after each iteration is shown in the last column. We can see it growing slowly. Showing all iterations for both CTE variants in this way would be too much. Instead in @astar_table_size_comparison, we list the size of the union- and recurring table at each iteration for comparison. Notice how the union table grows much faster.
 
-#figure(
-  caption: [Comparison of table sizes for our example graph.],
-  table(
-    rows: 3,
-    columns: 8,
-    stroke: none,
 
-    [Iteration], table.vline(), ..range(0, 7).map(str),
-    table.hline(),
-    [Items in recurring table], [1], [3], [4], [6], [7], [7], [7],
-    table.hline(),
-    [Items in union table], [1], [5], [10], [18], [26], [34], [43],
-  )
-) <astar_table_size_comparison>
 

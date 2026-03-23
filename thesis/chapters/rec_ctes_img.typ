@@ -196,7 +196,9 @@ The recursive step is repeated until the intermediate table is empty after step 
   [`(3)` The recursive step is being evaluated, reading values from the working table (here: `pow2`), and writing results to the intermediate table. 
   ],
   [],
-  [`(4)` If the intermediate table is empty, terminate. Else, all values within it are written to the working table and appended to the union table. ]
+  [`(4)` If the intermediate table is empty, terminate. 
+  
+  `(5)` Else, all values within it are written to the working table and appended to the union table. ]
 )
 
 #table(
@@ -364,10 +366,12 @@ The base case runs once at query start.
     edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("upserts")),
     edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
   ),
-  [`(3)` The recursive step is evaluated, reading values from the working table (here: `pow2`) and the recurring table (here: `recurring.pow2`), and writing results to the intermediate table. In this example, the recurring table is not read.
+  [`(3)` The recursive step is evaluated, reading values from the working table (here: `pow2`) and the recurring table (here: `recurring.pow2`), and writing results to the intermediate table. The recurring table is not read from in this example.
   ],
   [],
-  [`(4)` If the intermediate table is empty, terminate. Else, all values within it are written to the working table and upserted to the union table. ]
+  [`(4)` If the intermediate table is empty, terminate. 
+  
+  `(5)` Else, all values within it are written to the working table and upserted to the union table. ]
 )
 
 #table(
