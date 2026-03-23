@@ -11,7 +11,7 @@ contexts:
     # Wir nutzen "variable.parameter", da dies in den meisten Typst-Themes 
     # eine sehr prägnante Farbe bekommt (oft orange oder rot).
     - match: '<[^>]+>'
-      scope: comment.other.sql
+      scope: entity.other.sql
 
     # 2. USING KEY vollständig als Keyword highlighten.
     # (?i) macht die Suche unabhängig von Groß-/Kleinschreibung.

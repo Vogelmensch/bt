@@ -30,8 +30,7 @@ SQLs way of doing this is called the *Common Table Expression* (CTE). The genera
   grid(
     columns: 2,
     rows: 2,
-    column-gutter: colgut,
-    row-gutter: rowgut,
+    gutter: 5pt,
     [
       ```sql
       WITH cte_name(col1, col2, ..., coln) AS (
@@ -69,8 +68,7 @@ We name the recursive CTE `pow2` and the columns `n` and `x`, according to @pow2
   grid(
     columns: 2,
     rows: 1,
-    column-gutter: 30pt,
-    row-gutter: rowgut,
+    column-gutter: 5pt,
     [
       ```sql
       WITH RECURSIVE cte_name(col1, col2, ...) AS (
@@ -110,6 +108,8 @@ At the end of each iteration, the values in the intermediate table get copied to
 
 @classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. The comments on the right-hand side briefly explain the respective line and reference to @visualize_rec_cte by number, where we visualize each step by following the example introduced before.
 
+TODO: Erkläre pseudocode
+
 #figure(
   caption: [Internal evaluation of recursive CTEs as pseudocode (left) and comments (right) to explain and reference the associated line.],
   grid(
@@ -132,15 +132,15 @@ At the end of each iteration, the values in the intermediate table get copied to
     [
       #codly(number-format: none)
       ```
-      Base case defines first values for union.  (1)
-      Copy union to working.                     (2)
+      Base case defines first values for union   (1)
+      Copy union to working                      (2)
 
 
       Evaluate recursive step, write to interm.  (3)
-      Terminate if fixpoint has been reached.    (4)
+      Terminate if fixpoint has been reached     (4)
 
-      Append intermediate to union.              (4)
-      Overwrite working with intermediate.       (4)
+      Append intermediate to union               (4)
+      Overwrite working with intermediate        (4)
 
 
       ```
@@ -152,7 +152,7 @@ At the end of each iteration, the values in the intermediate table get copied to
 
 #codly-disable()
 #figure(
-  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @cte_recursive visualized. ],
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @cte_recursive visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached.],
   grid(
     rows: 2,
     gutter: 5pt,
@@ -164,20 +164,23 @@ At the end of each iteration, the values in the intermediate table get copied to
 == Recursive CTEs come with problems <problems>
 #codly-enable()
 
+Let us take some notes on recursive CTEs as presented in the previous chapter. 
 
+First, the results of each iteration are always appended to the union table `(4)`. This allows us to access the entire iteration history in the outer query. It turns out, however, that queries often select only few desired result rows and discard the others. Meanwhile, collecting all intermediate results causes the union table to potentially grow very large, so that storage limitations become an issue.
 
+Secondly, the recursive step `(3)` only ever queries the working table, never the union table. This is an important feature, as continuous access to the union table would drastically impact performance due to its potentially rapid growth @recursive_relations. However, by denying access to the union table, we can only ever access the results of the immediately preceding iteration. To work around this limitation, we are forced to manually carry result rows through the iteration process. Both readability of the code and performance suffer greatly from this behaviour.
 
-== USING KEY: Keeping a dictionary we can reference
+Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, the `recursive_step` needs to be monotonic. Under these circumstances, certain operations are prohibited, limiting the useable syntax.
 
-TODO: FIXPOINTS
+== USING KEY: Keeping a dictionary we can reference <using-key_chapter>
 
 To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive with as *classic*.
 
-@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. A key is a list of columns. The schema can then be viewed as divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of simply appending the new row to the union table, the old row is being overwritten in the recurring table.
+@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. We explain the functionality of using-key in detail below; in a nutshell, by defining list of columns to be the key of the query, the schema gets divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of simply appending the new row to the union table, the old row is being overwritten in the recurring table.
 
-The example on the right of @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we already used in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` consists of this one row only.
+The example in @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we already used in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` consists of this one row only.
 
-
+#codly(number-format: numbering.with("1"))
 
 #figure(
   caption: [The general outline of using-key (left) and applying using-key to calculate the first ten powers of two (right).],
@@ -185,12 +188,10 @@ The example on the right of @using-key demonstrates this with the `pow2` query. 
   grid(
     columns: 2,
     rows: 1,
-    column-gutter: 30pt,
-    row-gutter: rowgut,
+    gutter: 5pt,
     [
       ```sql
-      WITH RECURSIVE 
-        cte_name(k1, ..., km, col1, ..., coln) 
+      WITH RECURSIVE cte_name(k1, ..., km, col1, ..., coln) 
       USING KEY (k1, ..., km) AS (
         <base case>
 
@@ -203,8 +204,7 @@ The example on the right of @using-key demonstrates this with the `pow2` query. 
     ],
     [
       ```sql
-      WITH RECURSIVE 
-        pow2(c, n, x) 
+      WITH RECURSIVE pow2(c, n, x) 
       USING KEY (c) AS (
           SELECT 0, 1, 2
 
@@ -221,7 +221,9 @@ The example on the right of @using-key demonstrates this with the `pow2` query. 
   )
 ) <using-key>
 
-The essential internal evaluation strategy behind using-key is shown in @using-key_pseudocode. The most important element within it is the `upsert` operation,
+Internally, the union table is replaced by the so-called *recurring table*. While the union table is expanded in every iteration by appending the iteration's solution, the recurring table acts like a keyed dictionary: let $i = (k_1, ..., k_m, "col"_1, ..., "col"_n)$ be a row produced in an arbitrary iteration. If the recurring table $u$ does not yet contain a row with the exact key values $(k_1, ..., k_m)$, then $i$ is simply appended to $u$ as usual. However, if $u$ _does_ contain a row $r$ with the exact key values $(k_1, ..., k_m)$, then $r$ is replaced by $i$ in $u$.
+
+Hirn and Grust formulate this behaviour with the $"upsert"$ operation,
 
 $
   "upsert"(u, i) equiv cases(
@@ -232,20 +234,16 @@ $ <upsert>
 
 where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ denotes left antijoin. In words, if `i` contains two or more rows with equal key values, `upsert` raises a key error; the payload values for those key values would be ambiguous. Else, we update all rows in `u` whose key values are included in `i`. If a key value in `i` is not yet included in `u`, we simply include the respective row.
 
-@using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style. ... TODO
+@using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate image in @visualize_using-key.
+
+TODO: Erkläre pseudocode
 
 #figure(
   caption: [Internal evaluation of using-key as pseudocode.],
-  [
-    #codly(
-      annotation-format: (i) => [#i.],
-      annotations: (
-        (start: 1, end: 1, content: [bla]),
-        (start: 2, end: 2, content: [blub]),
-        (start: 5, end: 5, content: [bleep]),
-        (start: 6, end: 9, content: [blerp])
-      )
-    )
+  grid(
+    gutter: 5pt,
+    columns: 2,
+    [
     ```
     recurring ← upsert(∅, base_case())
     working ← recurring
@@ -258,21 +256,36 @@ where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ de
       working ← intermediate
     RETURN recurring
     ```
+    ],
+    [
+      #codly(number-format: none, )
+      ```
+      Base case defines first values for recurr. (1)
+      Copy recurring to working                  (2)
+
+
+      Evaluate recursive step by reading from working and reccuring, write to interm.    (3)
+      Terminate if fixpoint has been reached     (4)
+
+      Update or insert rows from intermediate to recurring                                  (4)
+      Overwrite working with intermediate        (4)
+
+
+      ```
     ]
+  )
 ) <using-key_pseudocode>
 
 And then, everything went well ...
 
-Here is a visualization
-
 #codly-disable()
 #figure(
-  caption: [base],
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached. (TODO: stimmt das? ja oder?)],
   grid(
     rows: 2,
     gutter: 5pt,
     graphs.using_key-base,
     graphs.using_key-step
   )
-)
+) <visualize_using-key>
 

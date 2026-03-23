@@ -6,6 +6,8 @@
   s
 )
 
+#let circlearrow = text([↻], size: 30pt)
+
 #let cte_table(pos, table_name, ..content) = node(
   pos,
   shape: rect,
@@ -40,14 +42,14 @@
     row-gutter: 10pt,
     table(
       columns: 3,
-      stroke: (y: none),
-      table.hline(),
+      stroke: (x: .5pt, y: none),
+      table.hline(stroke: .5pt),
       table.header(
         [*i*], [*n*], [*x*]
       ),
-      table.hline(),
+      table.hline(stroke: .5pt),
       ..content,
-      table.hline()
+      table.hline(stroke: .5pt)
     ),
     text(
       table_name,
@@ -71,7 +73,7 @@
 #let arrowtext(content) = text(content, size: 9pt)
 
 #let spacing = (0pt, 0pt)
-#let align = (x, y) => if y == 0 {center + bottom} else {left}
+#let align = (x, y) => if y == 0 and x == 1 {center + horizon} else if y == 0 {center + bottom} else {left}
 #let codegutter = 40pt
 
 = WITH RECURSIVE
@@ -156,7 +158,7 @@ The recursive step is repeated until the intermediate table is empty after step 
 
 #let classic_step = table(
   rows: 2,
-  columns: (50%, 50%),
+  columns: (50%, 0%, 50%),
   align: align,
   stroke: .5pt,
 
@@ -178,6 +180,8 @@ The recursive step is repeated until the intermediate table is empty after step 
     edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
   ),
 
+  circlearrow,
+
   diagram(
     debug: 0,
     spacing: (0pt, 25pt),
@@ -191,6 +195,7 @@ The recursive step is repeated until the intermediate table is empty after step 
   ),
   [`(3)` The recursive step is being evaluated, reading values from the working table (here: `pow2`), and writing results to the intermediate table. 
   ],
+  [],
   [`(4)` If the intermediate table is empty, terminate. Else, all values within it are written to the working table and appended to the union table. ]
 )
 
@@ -287,6 +292,7 @@ The base case runs once at query start.
   rows: 2,
   columns: (50%, 50%),
   align: align,
+  stroke: .5pt,
 
   diagram(
     debug: 0,
@@ -314,16 +320,17 @@ The base case runs once at query start.
     edge((1, 0), "u,l,l", (-1, 0), "->", arrowtext("overwrites"), label-side: right),
   ),
 
-  [1. The base case defines the first values inserted to the recurring table.],
-  [2. The recurring table is being copied to the working table.]
+  [`(1)` The base case defines the first values inserted to the recurring table.],
+  [`(2)` The recurring table is copied to the working table.]
 )
 
 == Recursive step
 
 #let using_key-step = table(
   rows: 2,
-  columns: (50%, 50%),
+  columns: (50%, 0%, 50%),
   align: align,
+  stroke: .5pt,
 
   diagram(
     debug: 0,
@@ -344,6 +351,8 @@ The base case runs once at query start.
     edge((1, 0), "u", (0, -1), "->", arrowtext("read  by"), label-side: right, label-pos: 60%)
   ),
 
+  circlearrow,
+
   diagram(
     debug: 0,
     spacing: (0pt, 25pt),
@@ -355,9 +364,10 @@ The base case runs once at query start.
     edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("upserts")),
     edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
   ),
-  [3. The recursive step is being evaluated, reading values from the working table (here: `pow2`) and the recurring table (here: `recurring.pow2`), and writing results to the intermediate table. In this example, the recurring table is not being read.
+  [`(3)` The recursive step is evaluated, reading values from the working table (here: `pow2`) and the recurring table (here: `recurring.pow2`), and writing results to the intermediate table. In this example, the recurring table is not read.
   ],
-  [4. If the intermediate table is empty, terminate. Else, all values within it are written to the working table and upserted to the union table. ]
+  [],
+  [`(4)` If the intermediate table is empty, terminate. Else, all values within it are written to the working table and upserted to the union table. ]
 )
 
 #table(
