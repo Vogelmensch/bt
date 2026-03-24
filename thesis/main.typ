@@ -74,7 +74,7 @@ anderen Studiengang als Prüfungsleistung vorgelegt.
 #include "chapters/measuring.typ"
 #pagebreak(to: "even")
 
-#include "chapters/conclusion.typ"
+#include "chapters/conclusions.typ"
 #pagebreak(to: "even")
 
 #bibliography("references.bib")
