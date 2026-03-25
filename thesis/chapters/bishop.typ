@@ -9,8 +9,6 @@
   )
 )
 
-#set heading(numbering: "1.1")
-
 == Drunken Bishop <drunken-bishop>
 
 SSH is a network protocol that allows users to securely access remote computers over an unsecured network. It is based on the client-server-model and uses asymmetric cryptography methods for authentication. When a user accesses a server for the first time, the server sends a unique fingerprint, which is based on its public key. To ensure that the client is communicating with the correct server, and not with, say, an attacker, the client must make sure that they receive the correct fingerprint @ssh.

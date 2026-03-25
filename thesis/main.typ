@@ -47,34 +47,23 @@ anderen Studiengang als Prüfungsleistung vorgelegt.
 
 #pagebreak()
 
-#show: mainmatter
-
-#show: backmatter
-
 = Abstract
 
 #include "chapters/abstract.typ"
-
 
 #page()[
   #outline(indent: auto, depth: 4)
 ]
 
-#set heading(numbering: "1.1")
+#show: mainmatter
 
 #include "chapters/introduction.typ"
-#pagebreak(to: "even")
-
 #include "chapters/basics.typ"
-#pagebreak(to: "even")
-
 #include "chapters/algorithms.typ"
-#pagebreak(to: "even")
-
 #include "chapters/measuring.typ"
-#pagebreak(to: "even")
-
 #include "chapters/conclusions.typ"
-#pagebreak(to: "even")
 
+
+#show: backmatter 
+#pagebreak(to: "even")
 #bibliography("references.bib")

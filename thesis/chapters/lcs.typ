@@ -12,7 +12,6 @@
 #codly-enable()
 
 #set math.equation(numbering: "(1)")
-#set heading(numbering: "1.1")
 
 == Longest Common Subsequence <lcs>
 

@@ -7,8 +7,8 @@
   )
 )
 
-#set heading(numbering: "1.1")
 #set math.equation(numbering: "(1)")
+#set figure(placement: auto)
 
 #import "rec_ctes_img.typ" as graphs
 
@@ -18,13 +18,15 @@
 
 = How to loop in SQL <basics>
 
-TODO: ...
+SQL implements iteration in recursive common table expressions (CTEs): named result sets derived from queries that can reference themselves. The semantics behind these have remained untouched since their inception in 1999. We explain these in @ctes and @with_recursive. 
 
-== CTEs: Binding intermediate results
+In _A Fix for the Fixation on Fixpoints_ @hirn2023fix, Denis Hirn and Torsten Grust point out a range of problems recursive CTEs put on query authors. We described these problems in @problems. To address these issues, Hirn and Grust proposed a new CTE variant, which we explore in @using-key_chapter. 
+
+== CTEs: Binding intermediate results <ctes>
 
 As queries get more complex, the good query author wants to keep their code well organized. Using too many subqueries often result in hard-to-read code. What if SQL had a way to define intermediate queries beforehand and bind their result tables to names, similar to variables in imperative programming languages? 
 
-SQLs way of doing this is called the *Common Table Expression* (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is evaluated before the outer query, and its result is stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table. In the example, we implicitly create the table `one_plus_one` with one column named `x`. The inner query, `SELECT 1+1`, defines the instance of `one_plus_one` to be a single row with value `2` and, derived from the value, the data type of `x` to be `INTEGER`. In the outer query, we can now reference `one_plus_one` and by selecting its column `x` to yield the CTEs final result, `4`.
+SQLs way of doing this is called the _common table expression_ (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is evaluated before the outer query, and its result is stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table. In the example, we implicitly create the table `one_plus_one` with one column named `x`. The inner query, `SELECT 1+1`, defines the instance of `one_plus_one` to be a single row with value `2` and, derived from the value, the data type of `x` to be `INTEGER`. In the outer query, we can now reference `one_plus_one` and by selecting its column `x` to yield the CTEs final result, `4`.
 
 #figure(
   caption: [General outline of CTEs (left) and example (right).],

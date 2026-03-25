@@ -11,7 +11,6 @@
 )
 #codly-enable()
 
-#set heading(numbering: "1.1")
 #set math.equation(numbering: "(1.1)")
 #set table.vline(stroke: .5pt)
 #set table.hline(stroke: .5pt)
