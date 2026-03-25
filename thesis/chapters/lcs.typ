@@ -1,4 +1,4 @@
-#import "definitions.typ": orange
+#import "definitions.typ": orange, t, e
 #let lcs = "LCS"
 
 #import "@preview/codly:1.3.0": *
@@ -41,7 +41,7 @@ Keep in mind that we are examining the last letter of the respective string. Thu
 The second property states that 
 $ lcs(s_1 + a, s_2 + b) = max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%), $ <prop2>
 where $max(s_1, s_2)$ returns the longest string of its arguments.
-In words, the second property states that, if two strings end with different letters, then the solution obviously cannot contain both letters. One of the letters, either $a$ or $b$, must be discarded; we choose to discard the one that leads to a shorter subsequence when comparing the remaining strings. As an example, the last letters of the strings $s_1 = "BEAR"$ and $s_2 = "HERE"$ are not equal, $"R" != "E"$. One of these letters must be discarded in order for the search to continue, 
+In words, the second property states that, if two strings end with different letters, then the solution cannot contain both letters. One of the letters, either $a$ or $b$, must be discarded; we choose to discard the one that leads to a shorter subsequence when comparing the remaining strings. As an example, the last letters of the strings $s_1 = "BEAR"$ and $s_2 = "HERE"$ are not equal, $"R" != "E"$. One of these letters must be discarded in order for the search to continue, 
 
 $
   lcs("BEAR", "HERE") = max lr([lcs("BEAR", "HER"), lcs("BEA", "HERE")], size: #200%).
@@ -55,7 +55,7 @@ $ lcs(s_1 + a, s_2 + b) = cases(
     max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%) &"if" a != b
 ) $ <lcs_rec_relation>
 
-@lcs_rec_relation will help us understand the queries.
+@lcs_rec_relation helps us understand the queries.
 We visualize the solution process by iteratively filling out @lcs_table_empty. As a running example, we solve the example introduced above, $lcs("BEAR", "HERE")$.
 
 #figure(
@@ -208,21 +208,21 @@ Similar to A\*, the recursive step of classic contains the recursive step of usi
 
 The recursive step corresponds to the other two cases in @lcs_rec_relation. In the query, we simply separate the cases with a `UNION`. In the code at @lcs_recursive_using_key, we marked the cases using comments. You can follow an example at @lcs_example.
 
-Case ❶: Letters are equal, corresponding to the second case of the @lcs_rec_relation. We select the `letters` we want to compare, and two times from the recurring table, `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. Notice that we are using a `LEFT OUTER JOIN` on `this`, as we want `this` to be empty.
+Case `(1)`: Letters are equal, corresponding to the second case of the @lcs_rec_relation. We select the `letters` we want to compare, and two times from the recurring table, `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. Notice that we are using a `LEFT OUTER JOIN` on `this`, as we want `this` to be empty.
 
 In order for `this` to be selectable in the current iteration, two condition, defined in the `WHERE` clause, must be fulfilled: first, `this` must not have been selected in any previous iteration, `this.len IS NULL`; secondly, the letters must be equal, `ltrs.xsym = ltrs.ysym`. 
 
 If those conditions are met, the clause `SELECT`s the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx, ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
 
-Case ❷: Letters are unequal, corresponding to the third case in @lcs_rec_relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path; in the case of equality, we select both.
+Case `(2)`: Letters are unequal, corresponding to the third case in @lcs_rec_relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path; in the case of equality, we select both.
 
-Both case ❶ and case ❷ automatically terminate as soon as no empty table element is left, i.e. when `this.len IS NULL` returns `false` for all elements.
+Both case `(1)` and case `(2)` automatically terminate as soon as no empty table element is left, i.e. when `this.len IS NULL` returns `false` for all elements.
 
 #figure(
     caption: [Recursive step of lcs for using-key],
     [
         ```sql
-        -- Case ❶: Letters are equal
+        -- Case (1): Letters are equal
         SELECT
             ltrs.xsym, ltrs.xidx,
             ltrs.ysym, ltrs.yidx,
@@ -240,7 +240,7 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
 
         UNION
 
-        -- Case ❷: Letters are unequal
+        -- Case (2): Letters are unequal
         SELECT
             ltrs.xsym, ltrs.xidx,
             ltrs.ysym, ltrs.yidx,
@@ -261,28 +261,12 @@ Both case ❶ and case ❷ automatically terminate as soon as no empty table ele
     ]
 ) <lcs_recursive_using_key>
 
-
-#let t(len, left, up, diag, color) = table.cell(
-    grid(
-        rows: 2,
-        columns: 2,
-        gutter: 3pt,
-        if diag [↖] else [#text(color)[↖]],
-        if up [↑] else [#text(color)[↑]],
-        if left [←] else [#text(color)[←]], 
-        [#len]
-    ),
-    fill: color
-)
-
-#let e = t("", false, false, false, white)
-
 #figure(
-    caption: [Dynamic programming table in various iterations. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
+    caption: [Dynamic programming table in various iterations, in standard reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         rows: 4,
-        columns: 2,
-        gutter: 20pt,
+        columns: 3,
+        gutter: 10pt,
         table(
             rows: 6,
             columns: 6,

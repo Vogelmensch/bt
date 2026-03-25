@@ -47,7 +47,7 @@ All measurements were taken on the same machine, the specifications for which ar
 ) <specs>
 
 
-== A\*
+== A\* <measure_astar>
 
 === Setup
 
@@ -179,7 +179,7 @@ TODO: checke nochmal nach Vorzeichen!
 
 
 
-== LCS
+== LCS <measure_lcs>
 
 === Setup
 
@@ -190,17 +190,16 @@ To limit the total runtime of the experiment, we defined a timeout of $5 "minute
 
 === Results
 
-@lcs_results shows the results. For both time and memory, using-key flies well under the radar when compared to classic. Also, the data for classic is much more widely scattered. To quantify this, @lcs_stats shows mean $mu$ and standard deviation $sigma$ for all measurements.
-
-Those results show using-key's performance to be significantly better and more predictable.
+@lcs_results shows the results. For both time and memory, using-key flies well under the radar when compared to classic. Also, the data for classic is much more widely scattered; no clear pattern is emerging, such that fitting the data does not seem appropriate here. To quantify the data, @lcs_stats shows mean $mu$ and standard deviation $sigma$ for all measurements.
+These results show using-key's performance to be both, better on average, and less uncertain. 
 
 #figure(
-  caption: [Mean $mu$ and standard deviation $sigma$ of LCS measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
+  caption: [Mean $mu$ and standard deviation $sigma$ of LCS measurements, rounded to one decimal.],
   table(
     columns: 5,
     rows: 2,
     stroke: none,
-    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
+    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time") [s]$*], [*$sigma("time") [s]$*], [*$mu("memory") ["GB"]$*], [*$sigma("memory") ["GB"]$*]),
     table.hline(stroke: .5pt),
     [classic.sql], [$78.6$], [$261.5$], [$1.6$], [$3.3$],
     [using-key.sql], [$4.8$], [$6.7$], [$0.4$], [$0.4$]
@@ -216,7 +215,7 @@ Those results show using-key's performance to be significantly better and more p
   )
 ) <lcs_results>
 
-== Needleman-Wunsch
+== Needleman-Wunsch <measure_needleman>
 
 === Setup
 
@@ -228,10 +227,8 @@ The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten 
 
 @needleman_timeouts lists the timeouts we encountered. We did not represent them in the result plots in @needleman_results.
 
-For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at those main curves, both values increase more rapidly for classic than those for using-key. We also observe a handful of values falling above the main curves, especially for larger string lengths, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit. We applied fits on the minimal values for each string length to model the shape of this lower limit. @needleman_fit shows the coefficients for these fits.
-@needleman_stats shows mean $mu$ and standard deviation $sigma$ for the measurements.
-
-Again, using-key's performance proves to be better and more predictable. ...
+For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at these main curves, both values increase more rapidly for classic than for using-key. We also observe a handful of values falling above the main curves, especially for longer strings, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit. We applied fits on the minimal values of each string length to model the shape of this lower limit. @needleman_fit shows the coefficients of these fits.
+@needleman_stats shows mean $mu$ and standard deviation $sigma$ of the measurements.
 
 #figure(
   caption: [Number of timeouts for the measurement of Needleman-Wunsch. A query timed out after time $t > 60 s$.],
@@ -259,12 +256,12 @@ Again, using-key's performance proves to be better and more predictable. ...
 ) <needleman_results>
 
 #figure(
-  caption: [Mean $mu$ and standard deviation $sigma$ of Needleman-Wunsch measurements, with $["time"] = s$ and $["memory"] = "GB"$, rounded to one decimal.],
+  caption: [Mean $mu$ and standard deviation $sigma$ of Needleman-Wunsch measurements, rounded to one decimal.],
   table(
     columns: 5,
     rows: 2,
     stroke: none,
-    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time")$*], [*$sigma("time")$*], [*$mu("memory")$*], [*$sigma("memory")$*]),
+    table.header([*script*], table.vline(stroke: .5pt), [*$mu("time") [s]$*], [*$sigma("time") [s]$*], [*$mu("memory") ["GB"]$*], [*$sigma("memory") ["GB"]$*]),
     table.hline(stroke: .5pt),
     [classic], [$45.2$], [$79.8$], [$0.7$], [$0.9$],
     [using-key], [$7.0$], [$10.4$], [$0.4$], [$0.5$]
@@ -288,7 +285,7 @@ Again, using-key's performance proves to be better and more predictable. ...
 
 
 
-== Drunken Bishop <measuring_bishop>
+== Drunken Bishop <measure_bishop>
 
 === Setup
 
@@ -298,7 +295,7 @@ Additionally to the two queries specifically explained in @bishop_classic_chapte
 
 === Results
 
-@bishop_scale3 shows the results as mean and standard deviation. With some uncertainty, all measurements follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
+@bishop_scale3 shows the resulting plots as mean and standard deviation for each fingerprint length. With some uncertainty, all measurements follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
 @bishop_slopes shows the slopes of linear fits for the other three queries.
 We can see how classic outperforms using-key. Also, while the influence of the bit-pair representation on memory usage of classic seems minor, the impact on runtime is rather apparent.
 
@@ -314,11 +311,11 @@ We can see how classic outperforms using-key. Also, while the influence of the b
 ) <bishop_scale3>
 
 #figure(
-  caption: [Slope of linear fit for time  and memory measurements, with $["time"]=s/1000$ and $["memory"] = "MB"/1000$.],
+  caption: [Slope of linear fit for time  and memory measurements, rounded to two decimals.],
   table(
     columns: 4,
     stroke: none,
-    table.header([*Query*], [*Bit-pair representation*], [*$Delta"time"$*], [*$Delta"memory"$*]),
+    table.header([*Query*], [*Bit-pair representation*], [*$Delta"time" [s/10^3]$*], [*$Delta"memory" ["MB"/10^3]$*]),
     table.hline(stroke: 0.5pt),
     [classic], [list], [$0.68$], [$9.78$],
     [classic], [table], [$2.06$],[$8.85$],

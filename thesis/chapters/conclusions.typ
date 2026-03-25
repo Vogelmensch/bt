@@ -1,8 +1,8 @@
 = Conclusions 
 
-We explored the core ideas that lead to the development of using-key, the new recursive CTE variant included in DuckDB since version 1.3. We explained its syntax, its background functionality and the advantages it promises, all the while comparing it to the usual Implementation of recursive CTEs used in the past 25 years.
+We explored the core ideas that lead to the development of using-key, the new recursive CTE variant included in DuckDB since version 1.3. We explained its syntax, its background functionality and the advantages it promises, all the while comparing it to the classic implementation of recursive CTEs used in the past 25 years.
 
-First and foremost, we developed four relevant algorithms using both approaches, explaining each of them in detail for both variants, and showing key differences in the resulting queries. Each algorithm has then been tested to answer the central question of where using-key shines, and where it is more of an obstacle than a solution.
+First and foremost, we developed four relevant algorithms using both approaches, explaining each of them in detail for both variants, and showing key differences in the queries. Each algorithm has then been tested to answer the central question of where using-key shines, and where it is more of an obstacle than a solution.
 
 For three of the four algorithms - A\*, LCS and Needleman-Wunsch - using-key proved to be a great benefit. The link between these algorithms is that they heavily rely on results from arbitrarily many iterations ago. One algorithm - Drunken Bishop - proved to suffer from using-key: the overhead of repeated access to the recurring table seems to outweigh the benefit of reduced storage needs. Because Drunken Bishop does only ever need to access the result of the immediately preceding iteration, a manual carry of old values, as it happens in the classic variants of the other three algorithms, is not needed.
 

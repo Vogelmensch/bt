@@ -18,6 +18,8 @@
 
 = How to loop in SQL <basics>
 
+TODO: ...
+
 == CTEs: Binding intermediate results
 
 As queries get more complex, the good query author wants to keep their code well organized. Using too many subqueries often result in hard-to-read code. What if SQL had a way to define intermediate queries beforehand and bind their result tables to names, similar to variables in imperative programming languages? 
@@ -169,7 +171,7 @@ Secondly, the recursive step `(3)` only ever queries the working table, never th
 
 Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, the `recursive_step` needs to be monotonic. Under these circumstances, certain operations are prohibited, limiting the useable syntax.
 
-== USING KEY: Keeping a dictionary we can reference <using-key_chapter>
+== USING KEY: A dictionary we can reference <using-key_chapter>
 
 To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive with as *classic*.
 

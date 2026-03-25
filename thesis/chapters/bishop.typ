@@ -115,7 +115,7 @@ The bishop leaves a footprint on every square it visits. When visiting the same 
 We implemented two different approaches to represent the bit-pairs in SQL, shown in @bitlist_representations. For the first approach, we create a list of structs, each of which holds two bits. In each iteration, we read the first element of this so-called _bitlist_ to get the bishop's direction for this step. The tail of the bitlist then gets handed to the next iteration while the head gets discarded using `array_pop_front(bitlist)`.
 For the second approach, we represent the bit-pairs using a table `bits`, each row of which represents the bishop's direction for step `idx`. In each iteration, we read the row corresponding to the current `idx` and then increase `idx` for the next iteration.
 
-It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. @measuring_bishop looks into this in depth.
+It turns out that classic performs reasonable well under both strategies, the approach using an SQL list being more performant than using a table. However, for using-key, using a table for the bitlist is crucial. For the SQL list representation, runtime increases quadratically and quickly becomes uncomparable to the other strategies. @measure_bishop looks into this in depth.
 
 #figure(
   caption: [Representations for bit-pairs using a list (left) and a table (right).],
@@ -141,20 +141,7 @@ It turns out that classic performs reasonable well under both strategies, the ap
   )
 ) <bitlist_representations>
 
-
-
-#figure(
-  caption: [Macros for dimensions for drunken bishop.],
-  [
-    ```sql
-    CREATE MACRO width() AS 17;
-    CREATE MACRO height() AS 9;
-    ```
-  ]
-) <bishop_macros>
-
-
-We represent the image dimensions with macros as shown in @bishop_macros. The layout for the two CTE variants is shown in @bishop_layout. Both CTEs use columns `x` and `y` to represent the board, and the boolean-valued `is_end` to mark the bishop's final position. Additionally, classic hands down the entire shrinking `bitlist` in every iteration, while using-key stores the iteration's index `idx` to access the appropriate bits for each iteration, as well as the id of the current symbol, `sym_id` (the "depth" of the footprint).
+We represent the image dimensions with macros `width()` and `height()`. The layout for the two CTE variants is shown in @bishop_layout. Both CTEs use columns `x` and `y` to represent the board, and the boolean-valued `is_end` to mark the bishop's final position. Additionally, classic hands down the entire shrinking `bitlist` in every iteration, while using-key stores the iteration's index `idx` to access the appropriate bits for each iteration, as well as the id of the current symbol, `sym_id` (the "depth" of the footprint).
 
 #figure(
   caption: [Layout of drunken bishop for classic (left) and using-key (right).],
