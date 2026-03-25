@@ -263,6 +263,21 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
   ]
 ) <astar_recursive>
 
+#figure(
+  caption: [Comparison of table sizes for our example graph.],
+  table(
+    rows: 3,
+    columns: 8,
+    stroke: none,
+
+    [Iteration], table.vline(), ..range(0, 7).map(str),
+    table.hline(),
+    [Items in recurring table], [1], [3], [4], [6], [7], [7], [7],
+    table.hline(),
+    [Items in union table], [1], [5], [10], [18], [26], [34], [43],
+  )
+) <astar_table_size_comparison>
+
 #let marking_color = red + 0.8pt
 
 #let dijk(marked: none, ..cont) = table(
@@ -286,10 +301,10 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
 
 #figure(
   caption: [Running example of A\* for using-key. Rows outlined in red mark currently visited nodes; orange values are being updated, while green values are being inserted.],
-  placement: bottom,
+  placement: auto,
   table(
     columns: 4,
-    table.header([*Iteration*], table.vline(stroke: 1pt), [*❶: visit node with smallest f-value*], [*❷: update `visited` for `smallest`*],[*❸: update or insert neighbors of `smallest`*]),
+    table.header([*Iteration*], table.vline(stroke: 1pt), [*`(1)`: visit node with smallest f-value*], [*`(2)`: update `visited` for `smallest`*],[*`(3)`: upsert neighbors of `smallest`*]),
     table.hline(stroke: 1pt),
     stroke: none,
     align: (x, y) => if y == 0 {horizon} else {top},
@@ -377,6 +392,34 @@ Finally, we examine the `SELECT`-clause. With the conditions mentioned above, we
       table.cell([4], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([true], fill:white),
       table.cell([5], fill:white),table.cell([4], fill:orange),table.cell([4], fill:orange),table.cell([4], fill:orange),table.cell([false], fill:white),
     ),
+
+    [5],
+    dijk(
+      marked: 3,
+      [0], [0], [0], [`NULL`], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
+      [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], [false],
+      table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
+      table.cell([4], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([true], fill:white),
+      table.cell([5], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([false], fill:white),
+    ),
+    dijk(
+      [0], [0], [0], [`NULL`], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
+      [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], table.cell([true], fill: orange),
+      table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
+      table.cell([4], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([true], fill:white),
+      table.cell([5], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([false], fill:white),
+    ),
+    dijk(
+      [0], [0], [0], [`NULL`], [true],
+      table.cell([1], fill: white), table.cell([1], fill: white),table.cell([1], fill: white),table.cell([0], fill: white),table.cell([true], fill: white),
+      [2], table.cell([3], fill:white), table.cell([3], fill:white), [3], table.cell([true], fill: white),
+      table.cell([3], fill:white),table.cell([2], fill:white),table.cell([2], fill:white),table.cell([1], fill:white),table.cell([true], fill:white),
+      table.cell([4], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([3], fill:white),table.cell([true], fill:white),
+      table.cell([5], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([4], fill:white),table.cell([false], fill:white),
+      table.cell([6], fill:lime),table.cell([13], fill:lime),table.cell([13], fill:lime),table.cell([2], fill:lime),table.cell([false], fill:lime),
+    ),
   )
 ) <astar_example>
 
@@ -393,21 +436,7 @@ The classic variant of A\* can be viewed as an extension of the using-key varian
 
 `(2)`: After all other values have been selected, we need to carry to rest of the table in order to not lose any information. For this, we simply select the entire `filtered_astar`-table. The `WHERE`-clause implements the break condition.
 
-#figure(
-  caption: [Comparison of table sizes for our example graph.],
-  placement: auto,
-  table(
-    rows: 3,
-    columns: 8,
-    stroke: none,
 
-    [Iteration], table.vline(), ..range(0, 7).map(str),
-    table.hline(),
-    [Items in recurring table], [1], [3], [4], [6], [7], [7], [7],
-    table.hline(),
-    [Items in union table], [1], [5], [10], [18], [26], [34], [43],
-  )
-) <astar_table_size_comparison>
 
 #figure(
   caption: [Recursive step of A\* for classic, based on the using-key variant.],

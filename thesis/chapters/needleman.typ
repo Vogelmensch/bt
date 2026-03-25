@@ -152,6 +152,7 @@ where, because of @base_case_function, we can assume that either $a != epsilon$ 
 @needleman_recurrence_relation simply applies all three cases of @scoring_function, and then chooses the case(s) with the highest overall value by applying itself recursively to remaining strings. The relation is guaranteed to terminate because the strings always get smaller.
 
 === Query Layout
+
 #codly-enable()
 
 Equivalent to the layout of LCS in @letters_definition, we create macros `s1()` and `s2()` to hold the input strings, and create the `letters` table to hold all combinations of characters from those strings. Additionally, we define the scoring system using macros `match_score()`, `mismatch_score()` and `indel_score()`.
@@ -201,10 +202,11 @@ See @needleman_layout for the layout of the queries. `xidx` and `yidx` identify 
 
 === Base case
 
-The base case is equivalent for both variants. It is divided into three sections, marked in @needleman_base_case using SQL comments. Case `(1)` takes care of the base case shown in @base_case_function. Cases `(2)` and `(3)` define all the cases occuring within @needleman_recurrence_relation in which either $a = epsilon$ or $b = epsilon$. Intuitively, in those cases, one word has already been written down completely, while the other has still letters left. Those letters are then all being paired with indels. See TODO for backtracking.
+The base case is equivalent for both variants. It is divided into three sections, marked in @needleman_base_case using SQL comments. Case `(1)` takes care of the base case shown in @base_case_function. Cases `(2)` and `(3)` define all the cases occuring within @needleman_recurrence_relation in which either $a = epsilon$ or $b = epsilon$. Intuitively, in those cases, one word has already been written down completely, while the other has still letters left. These letters are then all paired with indels. 
 
 #figure(
     caption: [Base case for Needleman-Wunsch],
+    placement: auto,
     ```sql
     -- (1) a = b = ε
     SELECT 
@@ -270,7 +272,7 @@ The second CTE, `vals`, selects all values from `vals_intermediate`, and the gre
 
 Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and additionally marks the path for backtracking by comparing each of `vals_intermediate`'s three values with `max`; backtracking will then take all paths (possibly more than one) for which the corresponding value is also the highest of the three.
 
-@needleman_example visualizes the query's execution iteration by iteration. The letters on the left and upper edges of each table correspond to the entries of `letters`. The cells within the table correspond to one entry of the recurring table each. In each iteration, the green cells correspond to the recurring table entries we call `this`; they are empty at the iteration's start, their values are selected during the iteration. Notice how the green cells are always exactly those empty cells that have neighbors on their upper, left and diagonal sides. The resulting values are shown as numbers in the cells, and the backtracking paths are shown as arrows.
+@needleman_example visualizes the query's execution iteration-wise. The left and upper edges of each table correspond to `letters`. The cells within the table correspond to one entry of the recurring table each. In every iteration, the green cells correspond to the recurring table entries we call `this`; they are empty when selected, their values are calculated during iteration. Notice how the green cells are always exactly those empty cells that have filled neighbors on their upper, left and diagonal sides. The resulting values are shown as numbers in the cells, and the backtracking paths are shown as arrows. We show absolute values for spacing reasons here; the recurring table for this example does not actually contain any positive values.
 
 #figure(
     caption: [Recursive step of Needleman-Wunsch for using-key],
@@ -322,7 +324,7 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
 
 
 #figure(
-    caption: [Dynamic programming table in various iterations. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
+    caption: [Dynamic programming table in various iterations, in reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent *negative* values. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         columns: 3,
         gutter: 10pt,
@@ -333,11 +335,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, lime), e, e, e,
-            [*A*], t(-2, false, true, false, white), e, e, e, e,
-            [*T*], t(-3, false, true, false, white), e, e, e, e,
-            [*G*], t(-4, false, true, false, white), e, e, e, e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, lime), e, e, e,
+            [*A*], t(2, false, true, false, white), e, e, e, e,
+            [*T*], t(3, false, true, false, white), e, e, e, e,
+            [*G*], t(4, false, true, false, white), e, e, e, e,
         ),
 
         table(
@@ -346,11 +348,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, lime), e, e,
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, lime), e, e, e,
-            [*T*], t(-3, false, true, false, white), e, e, e, e,
-            [*G*], t(-4, false, true, false, white), e, e, e, e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, lime), e, e,
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, lime), e, e, e,
+            [*T*], t(3, false, true, false, white), e, e, e, e,
+            [*G*], t(4, false, true, false, white), e, e, e, e,
         ),
 
         table(
@@ -359,11 +361,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, white), t(-1, true, false, false, lime), e,
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, lime), e, e,
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, lime), e, e, e,
-            [*G*], t(-4, false, true, false, white), e, e, e, e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, white), t(1, true, false, false, lime), e,
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, lime), e, e,
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, lime), e, e, e,
+            [*G*], t(4, false, true, false, white), e, e, e, e,
         ),
 
         table(
@@ -372,11 +374,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, white), t(-1, true, false, false, white), t(-2, true, false, true, lime),
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, white), t(-1, true, false, true, lime), e,
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, white), t(-1, false, true, false, lime), e, e,
-            [*G*], t(-4, false, true, false, white), t(-2, false, false, true, lime), e, e, e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, white), t(1, true, false, false, white), t(2, true, false, true, lime),
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, white), t(1, true, false, true, lime), e,
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, white), t(1, false, true, false, lime), e, e,
+            [*G*], t(4, false, true, false, white), t(2, false, false, true, lime), e, e, e,
         ),
 
         table(
@@ -385,11 +387,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, white), t(-1, true, false, false, white), t(-2, true, false, true, white),
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, white), t(-1, true, false, true, white), t(0, false, false, true, lime),
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, white), t(-1, false, true, false, white), t(-1, false, false, true, lime), e,
-            [*G*], t(-4, false, true, false, white), t(-2, false, false, true, white), t(-2, false, true, false, lime), e, e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, white), t(1, true, false, false, white), t(2, true, false, true, white),
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, white), t(1, true, false, true, white), t(0, false, false, true, lime),
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, white), t(1, false, true, false, white), t(1, false, false, true, lime), e,
+            [*G*], t(4, false, true, false, white), t(2, false, false, true, white), t(2, false, true, false, lime), e, e,
         ),
 
         table(
@@ -398,11 +400,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, white), t(-1, true, false, false, white), t(-2, true, false, true, white),
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, white), t(-1, true, false, true, white), t(0, false, false, true, white),
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, white), t(-1, false, true, false, white), t(-1, false, false, true, white), t(-1, false, true, false, lime),
-            [*G*], t(-4, false, true, false, white), t(-2, false, false, true, white), t(-2, false, true, false, white), t(0, false, false, true, lime), e,
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, white), t(1, true, false, false, white), t(2, true, false, true, white),
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, white), t(1, true, false, true, white), t(0, false, false, true, white),
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, white), t(1, false, true, false, white), t(1, false, false, true, white), t(1, false, true, false, lime),
+            [*G*], t(4, false, true, false, white), t(2, false, false, true, white), t(2, false, true, false, white), t(0, false, false, true, lime), e,
         ),
 
         table(
@@ -411,11 +413,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, white), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, white), t(0, false, false, true, white), t(-1, true, false, false, white), t(-2, true, false, true, white),
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, white), t(-1, true, false, true, white), t(0, false, false, true, white),
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, white), t(-1, false, true, false, white), t(-1, false, false, true, white), t(-1, false, true, false, white),
-            [*G*], t(-4, false, true, false, white), t(-2, false, false, true, white), t(-2, false, true, false, white), t(0, false, false, true, white), t(-1, true, false, false, lime),
+            [*$epsilon$*], t(0, false, false, false, white), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, white), t(0, false, false, true, white), t(1, true, false, false, white), t(2, true, false, true, white),
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, white), t(1, true, false, true, white), t(0, false, false, true, white),
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, white), t(1, false, true, false, white), t(1, false, false, true, white), t(1, false, true, false, white),
+            [*G*], t(4, false, true, false, white), t(2, false, false, true, white), t(2, false, true, false, white), t(0, false, false, true, white), t(1, true, false, false, lime),
         ),
 
         table(
@@ -424,11 +426,11 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
             stroke: 0.5pt,
             [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
             table.hline(stroke: 1pt),
-            [*$epsilon$*], t(0, false, false, false, orange), t(-1, true, false, false, white), t(-2, true, false, false, white), t(-3, true, false, false, white), t(-4, true, false, false, white),
-            [*A*], t(-1, false, true, false, white), t(-1, false, false, true, orange), t(0, false, false, true, white), t(-1, true, false, false, white), t(-2, true, false, true, white),
-            [*A*], t(-2, false, true, false, white), t(-2, false, true, true, white), t(0, false, false, true, orange), t(-1, true, false, true, white), t(0, false, false, true, white),
-            [*T*], t(-3, false, true, false, white), t(-3, false, true, true, white), t(-1, false, true, false, orange), t(-1, false, false, true, white), t(-1, false, true, false, white),
-            [*G*], t(-4, false, true, false, white), t(-2, false, false, true, white), t(-2, false, true, false, white), t(0, false, false, true, orange), t(-1, true, false, false, orange),
+            [*$epsilon$*], t(0, false, false, false, orange), t(1, true, false, false, white), t(2, true, false, false, white), t(3, true, false, false, white), t(4, true, false, false, white),
+            [*A*], t(1, false, true, false, white), t(1, false, false, true, orange), t(0, false, false, true, white), t(1, true, false, false, white), t(2, true, false, true, white),
+            [*A*], t(2, false, true, false, white), t(2, false, true, true, white), t(0, false, false, true, orange), t(1, true, false, true, white), t(0, false, false, true, white),
+            [*T*], t(3, false, true, false, white), t(3, false, true, true, white), t(1, false, true, false, orange), t(1, false, false, true, white), t(1, false, true, false, white),
+            [*G*], t(4, false, true, false, white), t(2, false, false, true, white), t(2, false, true, false, white), t(0, false, false, true, orange), t(1, true, false, false, orange),
         ),
     )
 ) <needleman_example>

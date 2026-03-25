@@ -6,7 +6,7 @@
 
 #let orange = rgb("#ffB51b")
 
-#let dim = 6pt
+#let dim = 5pt
 
 #let t(len, left, up, diag, color) = table.cell(
     grid(

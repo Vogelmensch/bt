@@ -262,7 +262,7 @@ Both case `(1)` and case `(2)` automatically terminate as soon as no empty table
 ) <lcs_recursive_using_key>
 
 #figure(
-    caption: [Dynamic programming table in various iterations, in standard reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
+    caption: [Dynamic programming table in various iterations, in reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         rows: 4,
         columns: 3,
