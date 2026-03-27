@@ -14,17 +14,18 @@
 
 == Needleman-Wunsch <needleman-wunsch>
 
-Say you are given two distinct strings of DNA originating from two different species, and you want to find out in which way those two species are related to each other. Maybe they share a common ancestor, or one species originated from the other. Maybe they are far apart on the evolutionary tree, despite sharing similar features. To answer this and similar questions, we want to find out how one DNA string can be transformed into the other, using as few operations as possible. In bioinformatics, this problem is known as the _sequence alignment problem_. In 1969, Saul B. Needleman and Christian D. Wunsch proposed a dynamic programming algorithm to solve this problem, which is now known as the _Needleman-Wunsch algorithm_ @needleman.
+Say you are given two distinct strings of DNA originating from two different species, and you want to find out in which way those two species are related to each other. Maybe they share a common ancestor, or one species originated from the other. Maybe they are far apart on the evolutionary tree, despite sharing similar features. To answer this and similar questions, we want to find out how one DNA string can be transformed into another, using as few operations as possible. In bioinformatics, this problem is known as the _sequence alignment problem_. In 1969, Saul B. Needleman and Christian D. Wunsch proposed a dynamic programming algorithm to solve this problem, which is now known as the _Needleman-Wunsch algorithm_ @needleman.
 
 
 === How DNA changes
 
-A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic molecule of which four distinct flavors exist within DNA. Here, we encode those types with the letters C, G, A and T. 
+A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic molecule of which four distinct flavors exist within DNA. Here, we encode these types with the letters C, G, A and T. 
 
 @changing_dna shows the three operations that can be used to convert one DNA sequence into another. First, a nucleotide within the sequence can change its flavor. We call this substitution. Secondly, a nucleotide can be removed. We call this deletion. Lastly, a new nucleotide can be inserted. 
 
 #figure(
-    caption: [Example DNA sequence being changed to a different one by substitution (left), deletion (middle) and insertion (right).],
+    kind: image,
+    caption: [Converting an example DNA sequence to another by substitution (left), deletion (middle) and insertion (right).],
     grid(
         columns: 3,
         rows: 3,
@@ -35,11 +36,12 @@ A DNA sequence is a sequence of nucleotides. A nucleotide is a type of organic m
     )
 ) <changing_dna>
 
-There are infinitely many ways to combine these three operations in order to turn one given DNA sequence into the other. We are interested in the combination that needs the minimal amount of operations. In order to find this combination, we need a way of displaying and rating the changes made between two sequences. 
+There are infinitely many ways to combine these three operations to turn one DNA sequence into the other. We are interested in the combination that needs the minimal amount of operations. In order to find this combination, we need a way of displaying and rating the changes made between two sequences. 
 We compare two given sequences by writing them one above the other. Equal letters are written directly on top of each other; they mark unchanged characters. To mark characters that were changed - i.e. inserted or deleted -  we insert a special symbol called the "indel", denoted with the sign "`-`". @aligning_dna continues the previous example and aligns each sequence pair in this way.
 
 #codly-disable()
 #figure(
+    kind: image,
     caption: [Aligning the sequences from @changing_dna. The left alignment shows the substitution of `A` to `C`. The middle alignment shows the deletion of `T`, while the right alignment shows the insertion of `G`.],
     grid(
         columns: 3,
@@ -61,7 +63,7 @@ We compare two given sequences by writing them one above the other. Equal letter
 ) <aligning_dna>
 
 
-To rate an alignment, we assign scores to each of its pairs of letters, based on a scoring function. There are many different scoring functions to choose from; we choose the following, very basic one: let $(a, b)$ be a pair of letters. Then:
+To rate an alignment, we assign scores to each of its letter-pairs (two letters writtin on top of each other), based on a scoring function. There are many different scoring functions to choose from; we choose the following, very basic one: let $(a, b)$ be a pair of letters. Then:
 
 $
   "score"(a, b) = cases(
@@ -76,7 +78,8 @@ The scores for all letter-pairs in an alignment are then added to yield the tota
 To illustrate this with another example, let us consider the sequences `s1 = GAGA` and `s2 = AATG`. @alignment_example shows four different way to align `s1` and `s2`, and it shows the application of the scoring function for each of them. The highest value is reached by the rightmost example, which also turns out to be the overall best alignment, i.e., the one resulting in the highest value.
 
 #figure(
-    caption: [Four different ways of aligning the sequences `GAGA` and `AATG`, and their respective values. For each pair of letters, `+` denotes a score of $+1$ and `-` denotes a score of $-1$.],
+    kind: image,
+    caption: [Four different ways of aligning the sequences `GAGA` and `AATG`, and their respective value. For each letter-pair, `+` denotes a score of $+1$ and `-` denotes a score of $-1$.],
     grid(
         columns: 4,
         gutter:20pt,
@@ -105,10 +108,11 @@ To illustrate this with another example, let us consider the sequences `s1 = GAG
 
 === Finding the best alignment
 
-Similar to LCS, our approach is to iteratively fill the dynamic programming table. At each step, we use values from previous iterations (or the base case) to calculate the best solution for all prefix-combinations of `s1` and `s2` we have sufficient information about. @needleman_table_empty shows the empty dynamic programming table we are about to fill.
+Similar to LCS, our approach is to iteratively fill a dynamic programming table. At each step, we use values from previous iterations (or the base case) to calculate the best solution for all prefix-combinations of `s1` and `s2` we have sufficient information about. @needleman_table_empty shows the empty dynamic programming table we are about to fill.
 
 #figure(
-    caption: [Empty dynamic programming table],
+    kind: image,
+    caption: [Empty dynamic programming table.],
     table(
         rows: 6,
         columns: 6,
@@ -124,7 +128,7 @@ Similar to LCS, our approach is to iteratively fill the dynamic programming tabl
 ) <needleman_table_empty>
 
 We want to find a recurrence relation that we can use to fill the table. 
-Let $Sigma$ be an alphabet and $Sigma^*$ the set of all words over $Sigma$. Let $a, b in Sigma$ and $s_1, s_2 in Sigma*$, and $+$ the concatenation operator.
+Let $Sigma$ be an alphabet and $Sigma^*$ the set of all words over $Sigma$. Let $a, b in Sigma$ and $s_1, s_2 in Sigma^*$, and $+$ the concatenation operator.
 
 #let score = "score"
 #let value = "value"
@@ -149,17 +153,17 @@ $ <needleman_recurrence_relation>
 
 where, because of @base_case_function, we can assume that either $a != epsilon$ or $b != epsilon$. 
 
-@needleman_recurrence_relation simply applies all three cases of @scoring_function, and then chooses the case(s) with the highest overall value by applying itself recursively to remaining strings. The relation is guaranteed to terminate because the strings always get smaller.
+@needleman_recurrence_relation applies all three cases of @scoring_function, and then chooses the case(s) with the highest overall value by applying itself recursively to the remaining strings. The relation is guaranteed to terminate because the strings always get smaller.
 
 === Query Layout
 
 #codly-enable()
 
-Equivalent to the layout of LCS in @letters_definition, we create macros `s1()` and `s2()` to hold the input strings, and create the `letters` table to hold all combinations of characters from those strings. Additionally, we define the scoring system using macros `match_score()`, `mismatch_score()` and `indel_score()`.
+Equivalent to the layout of LCS in @letters_definition, we create macros `s1()` and `s2()` to hold the input strings, and create the `letters` table to hold all combinations of characters from these strings. Additionally, we define the scoring system using macros `match_score()`, `mismatch_score()` and `indel_score()`.
 
 Also equivalent to LCS is the approach of filling the dynamic programming table not with partial solutions, but with integer-valued scores and boolean-valued directions instead. After the table has been filled, we backtrack the entries to construct the actual solutions.
 
-See @needleman_layout for the layout of the queries. `xidx` and `yidx` identify each row as a table cell with a distinct position. `val` is the value calculated for this cell, and `from_lft`, `from_up` and `from_diag` mark the respective direction for backtracking. To access the values for every cell when needed, we define `(xidx, yidx)` as key in using-key.
+See @needleman_layout for the query layouts. `xidx` and `yidx` identify each row as a table cell with a distinct position. `val` is the value calculated for this cell, and `from_lft`, `from_up` and `from_diag` mark the respective direction for backtracking. To access the values for every cell when needed, we define `(xidx, yidx)` as key in using-key.
 
 #figure(
     caption: [Layout of Needleman-Wunsch for classic (left) and using-key (right).],
@@ -202,16 +206,17 @@ See @needleman_layout for the layout of the queries. `xidx` and `yidx` identify 
 
 === Base case
 
-The base case is equivalent for both variants. It is divided into three sections, marked in @needleman_base_case using SQL comments. Case `(1)` takes care of the base case shown in @base_case_function. Cases `(2)` and `(3)` define all the cases occuring within @needleman_recurrence_relation in which either $a = epsilon$ or $b = epsilon$. Intuitively, in those cases, one word has already been written down completely, while the other has still letters left. These letters are then all paired with indels. 
+The base case is equivalent for both variants. It is divided into three sections, marked in @needleman_base_case using SQL comments. @needleman_table_after_base_case shows the dynamic programming table after the base case. Case `(1)` takes care of the base case shown in @base_case_function. Cases `(2)` and `(3)` define all the cases occuring within @needleman_recurrence_relation in which either $a = epsilon$ or $b = epsilon$. Intuitively, in these cases, one word has already been written down completely, while the other has still letters left. These letters are then all paired with indels. Because of this, we multiply `indel_score()` with the amount of inserted indels, which corresponds to `xidx` and `yidx`, respectively. When `xidx = 0`, backtracking can only go up, and when `yidx = 0`, backtracking can only go left. We mark the respective boolean flags.
+
 
 #figure(
-    caption: [Base case for Needleman-Wunsch],
+    caption: [Base case for Needleman-Wunsch.],
     placement: auto,
     ```sql
     -- (1) a = b = ε
     SELECT 
         xidx, yidx,
-        xidx * indel_score(),
+        0,
         false, false, false
     FROM letters
     WHERE xidx = 0 and yidx = 0
@@ -239,10 +244,9 @@ The base case is equivalent for both variants. It is divided into three sections
 ) <needleman_base_case>
 
 
-@needleman_table_after_base_case shows the dynamic programming table after the base case.
-
 #figure(
-    caption: [Dynamic programming table after base case],
+    kind: image,
+    caption: [Dynamic programming table after base case.],
     table(
         rows: 6,
         columns: 6,
@@ -263,19 +267,19 @@ The base case is equivalent for both variants. It is divided into three sections
 Again, we examine using-key first and address classic later, because using-key is contained within classic.
 @needleman_recursive_using_key shows the query. It uses two CTEs: `vals_intermediate` `(1)` calculates the three values for each direction based on @needleman_recurrence_relation; out of these three values, the CTE `vals` `(2)` additionally selects the greatest, named `max`. Finally, the outer query `(3)` selects `max` and marks the direction for backtracking by comparing each of the three values with `max`. 
 
-Let us examine the first CTE, `vals_intermediate` `(1)`, in depth. Have a look at the `FROM` clause. We select from two tables: once from `letters AS ltrs` and four times from the recurring table, `recurring.needleman`. Each `JOIN` of the recurring table corresponds to one cell in the dynamic programming table, defined by the coordinates in the respective `ON` clause, and named accordingly: `this` is an empty cell, as specified in the `WHERE` clause. `diag`, `lft` and `up` are respectively positioned diagonally, left and up to `this`. In each iteration, all cells existing in these configuration are selected. Notice that we use a `LEFT OUTER JOIN` for `this` to allow for `this.score` to be `NULL`. Also notice that `this` and `ltrs` are joined on the same coordinates; in order to select the correct values for `this`, we need to examine the corresponding coordinates.
+Let us examine the first CTE, `vals_intermediate` `(1)`, in depth. Have a look at the `FROM` clause. We select from two tables: once from `letters AS ltrs` and four times from the recurring table, `recurring.needleman`. Each `JOIN` of the recurring table corresponds to one cell in the dynamic programming table, defined by the coordinates in the respective `ON` clause, and named accordingly: `this` is an empty cell, as specified in the `WHERE` clause. `diag`, `lft` and `up` are respectively positioned diagonally, left and up to `this`. In each iteration, all cells existing in this configuration are selected. Notice that we use a `LEFT OUTER JOIN` for `this` to allow for `this.score` to be `NULL`. Also notice that `this` and `ltrs` are joined on the same coordinates; in order to select the correct values for `this`, we need to examine the corresponding coordinates.
 
-In the `SELECT` clause, we first, take the coordinates from `ltrs`.
-We then apply each case of @needleman_recurrence_relation to get all three values. The first two cases, the `indel_score` is added to the values of `lft` and `up`, respectively. In the third case, the value depends on whether `xsym` and `ysym` are equal or not, as defined in @scoring_function. We implement this with a `CASE` expression, adding the respective score to `diag.val`.
+In the `SELECT` clause, we select the coordinates from `ltrs` for the first two columns.
+We then apply each case of @needleman_recurrence_relation. In the first two cases, the `indel_score` is added to the values of `lft` and `up`, respectively. In the third case, the value depends on whether `xsym` and `ysym` are equal or not, as defined in @scoring_function. We implement this with a `CASE` expression, adding either `match_score()` or `mismatch_score()` to `diag.val`.
 
-The second CTE, `vals`, selects all values from `vals_intermediate`, and the greatest of its three values, `greatest(lft, up, diag)`, as `max`.
+The second CTE, `vals`, selects all values from `vals_intermediate`, as well as the greatest of its three values, `greatest(lft, up, diag)`, as `max`.
 
-Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and additionally marks the path for backtracking by comparing each of `vals_intermediate`'s three values with `max`; backtracking will then take all paths (possibly more than one) for which the corresponding value is also the highest of the three.
+Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and additionally marks the path for backtracking by comparing each of the three values `lft`, `up` and `diag` with `max`; backtracking will then take all paths (possibly more than one) for which the corresponding value is also the highest of the three.
 
 @needleman_example visualizes the query's execution iteration-wise. The left and upper edges of each table correspond to `letters`. The cells within the table correspond to one entry of the recurring table each. In every iteration, the green cells correspond to the recurring table entries we call `this`; they are empty when selected, their values are calculated during iteration. Notice how the green cells are always exactly those empty cells that have filled neighbors on their upper, left and diagonal sides. The resulting values are shown as numbers in the cells, and the backtracking paths are shown as arrows. We show absolute values for spacing reasons here; the recurring table for this example does not actually contain any positive values.
 
 #figure(
-    caption: [Recursive step of Needleman-Wunsch for using-key],
+    caption: [Recursive step of Needleman-Wunsch for using-key.],
     ```sql
     -- (1) Calculate values based on recurrence relation
     WITH vals_intermediate (
@@ -324,6 +328,7 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
 
 
 #figure(
+    kind: image,
     caption: [Dynamic programming table in various iterations, in reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent *negative* values. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         columns: 3,
@@ -439,10 +444,10 @@ Finally, the outer query then selects `xidx`, `yidx` and `max` from `vals`, and 
 
 As mentioned above, classic Needleman-Wunsch contains the using-key variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `needleman` and unionizing it with the results of each recursive step. To guarantee termination, in the `WHERE` clause, we check whether the number of elements in the working table exceeds the number of elements in `letters`, which is the natural limit.
 
-To access those carried values, we simply replace all occurences of `recurring.needleman` in @needleman_recursive_using_key with `needleman`. The difference between the two variants then boils down to a few additional lines shown in @needleman_recursive_classic.
+To access carried values, we replace all occurences of `recurring.needleman` in @needleman_recursive_using_key with `needleman`. The difference between the two variants then boils down to a few additional lines shown in @needleman_recursive_classic.
 
 #figure(
-    caption: [Recursive step of needleman for classic],
+    caption: [Recursive step of needleman for classic.],
     ```sql
     <using-key recursive step>
 

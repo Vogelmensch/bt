@@ -23,30 +23,6 @@
 
 #show: frontmatter
 
-= Declaration of Authorship
-
-Hiermit versichere ich, dass ich die vorliegende Thesis selbständig
-und nur mit den angegebenen Hilfsmitteln angefertigt habe und dass alle
-Stellen, die dem Wortlaut oder dem Sinne nach anderen Werken entnommen
-sind, durch Angaben von Quellen als Entlehnung kenntlich gemacht worden
-sind. Diese Thesis wurde in gleicher oder ähnlicher Form in keinem
-anderen Studiengang als Prüfungsleistung vorgelegt.
-
-#v(5em)
-
-#grid(
-  columns: (0.8fr, 0.8fr),
-  align: (center, center),
-  gutter: 1em,
-  column-gutter: 5em,
-  line(length: 100%, stroke: (paint: luma(80%), cap: "round")),
-  line(length: 100%, stroke: (paint: luma(80%), cap: "round")),
-  [Ort, Datum],
-  [Unterschrift]
-)
-
-#pagebreak()
-
 = Abstract
 
 #include "chapters/abstract.typ"

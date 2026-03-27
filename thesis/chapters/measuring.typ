@@ -12,24 +12,21 @@
 
 For all algorithms presented in this thesis, we measured execution time and memory consumption of both CTE variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
 
-To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by semicolons. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time, respectively. We always present the sum of user time and system time in our results,
+To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by semicolons. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time. We always present the sum of user time and system time in our results,
 
 $
-  "Execution time" = "user time" + "system time"
+  "Execution time" = "user time" + "system time".
 $
 
-To measure memory consumption, we used the GNU Project's `time` command as shown in @gnu_time_command. The option `-f %M` returns the "Maximum resident set size (RSS) of the process during its lifetime" @gnu_time, which is the amount of memory held in RAM @rss.
+To measure memory consumption, we used the GNU Project's `time` command,
+#no-codly(
+  ```bash
+/usr/bin/time -f %M duckdb [OPTIONS]
+```
+)
+The option `-f %M` returns the "Maximum resident set size (RSS) of the process during its lifetime" @gnu_time, which is the amount of memory held in RAM @rss.
 
 All measurements were taken on the same machine, the specifications for which are shown in @specs.
-
-#figure(
-  caption: [Measuring memory consumption using GNU's `time`. For `[OPTIONS]`, we entered appropriate CLI-options, depending on the query we evaluated.],
-  [
-    ```bash
-    /usr/bin/time -f %M duckdb [OPTIONS]
-    ```
-  ]
-) <gnu_time_command>
 
 #figure(
   caption: [Specifications of the machine the measurements were taken on.],
@@ -59,6 +56,7 @@ First, we took the graph of New York City.
 As the start node, we chose `node_id = 189104`, which lies within central park. From there, we selected all nodes within a $3 "km"$ radius as goal nodes, $1526$ in number.  We ran A\* on these pairings, measuring execution time and memory consumption. @central_park_facts shows an overview over this subgraph to get a rough picture of the region. 
 
 #figure(
+  kind: image,
   caption: [New York City graph in numbers (left) and visually represented as a map (right). The red dot represents the starting position for A\*. The black lines represent all edges that are connected to nodes within a 3 km radius of the starting position, all of which have been chosen as goal nodes. One can easily identify the white rectangular area as Central Park.],
   grid(
     columns: 2,
@@ -84,7 +82,8 @@ As the start node, we chose `node_id = 189104`, which lies within central park. 
 Then, we took the graph of California and Nevada and chose `node_id = 1791103` as the start node, which lies within Las Vegas. For each distance $d in {500, 1000, 1500, ..., 10000}$, we randomly selected five points with h-values close the the respective distance as goal nodes, resulting in 100 goal nodes. @vegas_facts shows an overview over this subgraph.
 
 #figure(
-  caption: [Las Vegas graph in numbers (left) and visually represented as a map (right) showing all edges within a 10 km radius around the start node. The red dot represents the starting position for A\*, the magenta dots represent the randomly chosen goal nodes. ],
+  kind: image,
+  caption: [Las Vegas graph in numbers (left) and visually represented as a map (right) showing all edges within a 10 km radius around the start node. The red dot represents the starting position for A\*, the magenta dots represent the randomly chosen goal nodes.],
   grid(
     columns: 2,
     rows: 2,
@@ -143,7 +142,7 @@ As for memory usage, using-key is linear with a slight incline, while classic ne
 Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_fit shows the coefficients for the fits on the memory meausrements.
 
 #figure(
-  caption: [Execution time (left) and memory usage (right) of A\* on the graph of New York City],
+  caption: [Execution time (left) and memory usage (right) of A\* on the graph of New York City.],
   grid(
     columns: 2,
     image("images/astar_3_km.svg"),
@@ -152,7 +151,7 @@ Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_f
 ) <astar_nyc>
 
 #figure(
-  caption: [Execution time (left) and memory usage (right) of A\* on the graph of Las Vegas],
+  caption: [Execution time (left) and memory usage (right) of A\* on the graph of Las Vegas.],
   grid(
     columns: 2,
     image("images/astar_vegas.svg"),
@@ -161,10 +160,8 @@ Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_f
 
 ) <astar_vegas>
 
-TODO: checke nochmal nach Vorzeichen!
-
 #figure(
-  caption: [Coefficients of polynomial fits for memory measurements of A\*],
+  caption: [Coefficients of polynomial fits for memory measurements of A\*.],
   table(
     columns: 6,
     stroke: none,
@@ -172,7 +169,7 @@ TODO: checke nochmal nach Vorzeichen!
     table.hline(stroke: .5pt),
     [NYC], [classic], [MB], [$1.78 dot 10^(-5)$], [$0.028$], [$266.8$],
     [NYC], [using-key], [MB], [-], [$0.003$], [$262$],
-    [Vegas], [classic], [GB], [$3 dot 10^(-8)$], [$3.243 dot 10^(-5)$], [$0.763$],
+    [Vegas], [classic], [GB], [$3 dot 10^(-8)$], [$-3.243 dot 10^(-5)$], [$0.763$],
     [Vegas], [using-key], [GB], [-], [$2.078 dot 10^(-6)$], [$0.682$]
   )
 ) <astar_fit>

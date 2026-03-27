@@ -18,18 +18,18 @@
 
 = How to loop in SQL <basics>
 
-SQL implements iteration in recursive common table expressions (CTEs): named result sets derived from queries that can reference themselves. The semantics behind these have remained untouched since their inception in 1999. We explain these in @ctes and @with_recursive. 
+SQL implements iteration in recursive common table expressions (CTEs): named result sets derived from queries that can reference themselves. The semantics behind these have remained unchanged since their inception in 1999. We explain these in @ctes and @with_recursive. 
 
-In _A Fix for the Fixation on Fixpoints_ @hirn2023fix, Denis Hirn and Torsten Grust point out a range of problems recursive CTEs put on query authors. We described these problems in @problems. To address these issues, Hirn and Grust proposed a new CTE variant, which we explore in @using-key_chapter. 
+In _A Fix for the Fixation on Fixpoints_ @hirn2023fix, Denis Hirn and Torsten Grust point out a range of problems of classic recursive CTEs. We described these problems in @problems. To address these issues, Hirn and Grust proposed the new CTE variant using-key, which we explore in @using-key_chapter. 
 
 == CTEs: Binding intermediate results <ctes>
 
 As queries get more complex, the good query author wants to keep their code well organized. Using too many subqueries often result in hard-to-read code. What if SQL had a way to define intermediate queries beforehand and bind their result tables to names, similar to variables in imperative programming languages? 
 
-SQLs way of doing this is called the _common table expression_ (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is evaluated before the outer query, and its result is stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table. In the example, we implicitly create the table `one_plus_one` with one column named `x`. The inner query, `SELECT 1+1`, defines the instance of `one_plus_one` to be a single row with value `2` and, derived from the value, the data type of `x` to be `INTEGER`. In the outer query, we can now reference `one_plus_one` and by selecting its column `x` to yield the CTEs final result, `4`.
+SQLs way of doing this is called the _common table expression_ (CTE). The general outline is shown in @cte_general, together with the example of calculating $(1+1) dot 2$. A CTE is defined via the `WITH` clause, followed by the cte name, followed by an arbitrarily large list of column names. The inner query is evaluated before the outer query, and its result is stored into a table named `cte_name`. This table has the columns specified in the CTE definition; their data types are derived from the inner query. The outer query can then reference this table. In the example, we implicitly create the table `one_plus_one` with one column named `x`. The inner query, `SELECT 1+1`, defines the instance of `one_plus_one` to be a single row of value `2` and, derived from the value, the data type of `x` to be `INTEGER`. In the outer query, we can now reference `one_plus_one` by selecting its column `x` to yield the CTEs final result, `4`.
 
 #figure(
-  caption: [General outline of CTEs (left) and example (right).],
+  caption: [General outline of CTEs (left) and applying a CTE to calculate $(1+1) dot 2$ (right).],
   gap: gap,
   grid(
     columns: 2,
@@ -37,7 +37,7 @@ SQLs way of doing this is called the _common table expression_ (CTE). The genera
     gutter: 5pt,
     [
       ```sql
-      WITH cte_name(col1, col2, ..., coln) AS (
+      WITH cte_name(col1, ..., coln) AS (
         <inner query>
       )
       <outer query>
@@ -58,9 +58,9 @@ SQLs way of doing this is called the _common table expression_ (CTE). The genera
 
 == WITH RECURSIVE: CTEs referencing themselves <with_recursive>
 
-In order for SQL to become turing complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs themselves, SQL:1999 introduced _recursive CTEs_, which expand the general CTE concept by allowing self-reference within the inner query. 
+In order for SQL to become turing-complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs, SQL:1999 introduced _recursive CTEs_, which expand the general CTE concept by allowing self-reference within the inner query. 
 
-See @cte_recursive for the general layout and an example. A recursive CTE is defined by the keyword `WITH RECURSIVE`, followed by the table name and the list of columns, just as in @cte_general. In contrast to @cte_general however, the inner query is divided into two parts: the base case and the recursive step, both of which are themselves queries, combined by a `UNION ALL` (or just `UNION`) clause. We explain the functionality of recursive CTEs in detail below; in a nutshell, the base case is evaluated once at the beginning, and the recursive step is evaluated repeatedly. The recursive step can access results from the immediately preceding iteration by selecting from `cte_name` recursively. This iteration stops as soon as a fixpoint has been reached, i.e., as soon as the recursive step does not produce any rows. Every row produced during the iteration can then be accessed in the outer query.
+See @cte_recursive for the general layout and an example. A recursive CTE is defined by the keyword `WITH RECURSIVE`, followed by the table name and the list of columns, just as for non-recursive CTEs. The inner query is divided into two parts: the base case and the recursive step, both of which are themselves queries, combined by a `UNION ALL` (or just `UNION`) clause. We explain the functionality of recursive CTEs in detail below; in a nutshell, the base case is evaluated once at the beginning, and the recursive step is evaluated repeatedly. The recursive step can access results from the immediately preceding iteration by selecting from `cte_name` recursively. This iteration stops as soon as a fixpoint is reached, i.e., as soon as the recursive step does not produce any rows. Every row produced during the iteration process can then be accessed in the outer query.
 
 In the example in @cte_recursive, we define a recursive query to calculate the first ten powers of two, 
 $ x = 2^n, n in {1, ..., 10}. $ <pow2_math> 
@@ -75,10 +75,11 @@ We name the recursive CTE `pow2` and the columns `n` and `x`, according to @pow2
     column-gutter: 5pt,
     [
       ```sql
-      WITH RECURSIVE cte_name(col1, col2, ...) AS (
+      WITH RECURSIVE 
+      cte_name(col1, ..., coln) AS (
         <base case>
 
-        UNION ALL 
+        UNION ALL
 
         <recursive step>
       )
@@ -108,10 +109,10 @@ Internally, DuckDB uses three tables to perform the recursive computation.
 - Each iteration stores its result by overwriting the *intermediate table*.
 - The results of all iterations are accumulated in the *union table*.
 
-At the end of each iteration, the values in the intermediate table get copied to the working table. Thus, in the next iteration, we can use the results of the previous iteration.
+At the end of each iteration, the values in the intermediate table get copied to the working table, so that we can access the results in the next iteration.
 
-@classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. The comments on the right-hand side briefly explain the respective line and reference to @visualize_rec_cte by number, where we visualize each step by following the example introduced before.
-In `(1)` we see how the first iteration is being prepared by evaluating the base case and writing its results to the union table, which then gets copied to the working table in `(2)`. When evaluating the recursive step `(3)`, the working table acts as input, while the intermediate table act as output. After the results of the recursive step have been calculated `(4)`, we first check whether the fixpoint has been reached, i.e. whether the recursive step returned no results and the intermediate table is empty. If this is the case, the iteration ends. Otherwise `(5)`, the union table is appended by the intermediate table. Then, the working table is overwritten by the intermediate table in preparation for the next iteration. Notice how the union table is never being read from, but only appended, during iteration.
+@classic_pseudocode shows the internal evaluation of recursive CTEs in an imperative style. The comments on the right-hand side briefly explain the respective line and reference to @visualize_rec_cte by number, where we visualize each step by following the example introduced in @cte_recursive.
+In `(1)` we see how the first iteration is being prepared by evaluating the base case and writing its results to the union table, which then gets copied to the working table in `(2)`. When evaluating the recursive step `(3)`, the working table provides the input, while the intermediate table acts as output. After the results of the recursive step have been calculated `(4)`, we first check whether the fixpoint has been reached, i.e. whether the recursive step returned no results and the intermediate table is empty. If this is the case, the iteration ends. Otherwise `(5)`, the contents of the intermediate table are appended to the union table. Then, the working table is overwritten by the intermediate table in preparation for the next iteration. Notice how the union table is never being read from, but only appended, during iteration.
 
 #figure(
   caption: [Internal evaluation of recursive CTEs as pseudocode (left) and comments (right) to explain and reference the associated line.],
@@ -153,7 +154,8 @@ In `(1)` we see how the first iteration is being prepared by evaluating the base
 
 #codly-disable()
 #figure(
-  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @cte_recursive visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached.],
+  kind: image,
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @cte_recursive visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint is reached.],
   grid(
     rows: 2,
     gutter: 5pt,
@@ -171,15 +173,15 @@ First, the results of each iteration are always appended to the union table `(5)
 
 Secondly, the recursive step `(3)` only ever queries the working table, never the union table. This is an important feature, as continuous access to the union table would drastically impact performance due to its potentially rapid growth @recursive_relations. However, by denying access to the union table, we can only ever access the results of the immediately preceding iteration. To work around this limitation, we are forced to manually carry result rows through the iteration process. Both readability of the code and performance suffer greatly from this behaviour.
 
-Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, the `recursive_step` needs to be monotonic. Under these circumstances, certain operations are prohibited, limiting the useable syntax.
+Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, i.e. to guarantee that the iteration stops as soon as possible, the `recursive_step` needs to be monotonic. Under these circumstances, the following operations are prohibited in the recursive step: negations, `INTERCEPT/EXCEPT`, outer joins, duplicate row elimination via `DISTINCT`, grouping and aggregation @hirn2023fix. 
 
 == USING KEY: A dictionary we can reference <using-key_chapter>
 
 To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive with as *classic*.
 
-@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. We explain the functionality of using-key in detail below; in a nutshell, by defining list of columns to be the key of the query, the schema gets divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of simply appending the new row to the union table, the old row is being overwritten in the recurring table.
+@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. We explain the functionality of using-key in detail below; in a nutshell, by defining list of columns to be the key of the query, the schema gets divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of appending the new row to the union table, the old row is overwritten in the recurring table.
 
-The example in @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we already used in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` consists of this one row only.
+The example in @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we introduced in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and thus `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` consists of this one row only.
 
 #codly(number-format: numbering.with("1"))
 
@@ -222,7 +224,7 @@ The example in @using-key demonstrates this with the `pow2` query. Additionally 
   )
 ) <using-key>
 
-Internally, the union table is replaced by the so-called *recurring table*. While the union table is expanded in every iteration by appending the iteration's solution, the recurring table acts like a keyed dictionary: let $i = (k_1, ..., k_m, "col"_1, ..., "col"_n)$ be a row produced in an arbitrary iteration. If the recurring table $u$ does not yet contain a row with the exact key values $(k_1, ..., k_m)$, then $i$ is simply appended to $u$ as usual. However, if $u$ _does_ contain a row $r$ with the exact key values $(k_1, ..., k_m)$, then $r$ is replaced by $i$ in $u$.
+Internally, the union table is replaced by the so-called *recurring table*. While the union table in classic is expanded in every iteration the iteration's solution, the recurring table acts like a keyed dictionary: let $i = (k_1, ..., k_m, "col"_1, ..., "col"_n)$ be a row produced in an arbitrary iteration. If the recurring table $u$ does not yet contain a row with the exact key values $(k_1, ..., k_m)$, then $i$ is simply appended to $u$ as usual. However, if $u$ _does_ contain a row $r$ with the exact key values $(k_1, ..., k_m)$, then $r$ is replaced by $i$ in $u$.
 
 Hirn and Grust formulate this behaviour with the $"upsert"$ operation,
 
@@ -233,10 +235,12 @@ $
   )
 $ <upsert>
 
-where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ denotes left antijoin. In words, if `i` contains two or more rows with equal key values, `upsert` raises a key error; the payload values for those key values would be ambiguous. Else, we update all rows in `u` whose key values are included in `i`. If a key value in `i` is not yet included in `u`, we simply include the respective row.
+where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ denotes left antijoin. In words, if `i` contains two or more rows with equal key values, `upsert` raises a key error; the payload values for these key values would be ambiguous. Else, we update all rows in `u` whose key values are included in `i`. If a key value in `i` is not yet included in `u`, we simply include the respective row.
 
 @using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate figure in @visualize_using-key.
-We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply `upsert(recurring, intermediate)` to update rows with existing keys and inserting rows with novel keys as explained above. 
+We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply `upsert(recurring, intermediate)` to update rows with existing keys and insert rows with novel keys as explained above. 
+
+TODO: Hier ist ne dicke Lücke. Außerdem nutzt das Beispiel unten nicht recurring.pow2. Vielleicht wäre ein weiteres Beispiel angemessen :D
 
 
 #figure(
@@ -279,6 +283,7 @@ We define the initial values of the working table by evaluating the base case an
 
 #codly-disable()
 #figure(
+  kind: image,
   caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached.],
   grid(
     rows: 2,
