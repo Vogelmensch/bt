@@ -1,12 +1,12 @@
 = Introduction
 
-The goal of this thesis is to test using-key, the new recursive CTE variant implemented in DuckDB since version 1.3, in real applications to highlight differences in syntax and test and compare its performance to classic recursive CTEs. The following sections provide an overview over the chapters of this thesis.
+The goal of this thesis is to test using-key, the new recursive CTE variant implemented in DuckDB since version 1.3 @duckdb_1.3, in real applications to highlight differences in syntax and test and compare its performance to classic recursive CTEs. The following sections provide an overview over the chapters of this thesis.
 
 == A breath of fresh air on recursive SQL
 
-In SQL, Common table expressions (CTEs) enable binding the results of an intermediate query to a table name. The feature was introduced in SQL:1999 to allow for more readable queries. The same standard allowed CTEs to reference themselves recursively, enabling the use of iteration. Recursive CTEs make SQL turing-complete, but their underlying functionality has remained unchanged since their introduction. 
+In SQL, Common table expressions (CTEs) enable binding the results of an intermediate query to a table name. The feature was introduced in SQL:1999 to allow for more readable queries. The same standard allowed CTEs to reference themselves recursively, enabling the use of iteration. Recursive CTEs make SQL turing-complete, but their underlying functionality has remained unchanged since their introduction @sql:1999. 
 
-Over time, CTEs in the way they were introduced in 1999 - we call them *classic* CTEs throughout this thesis - turned out to lack important features that are taken for granted in most imperative programming languages. Specifically, classic CTEs are missing the abilities to
+Over time, CTEs in the way they were introduced in 1999 - we call them *classic* CTEs throughout this thesis - turned out to lack important features that are taken for granted in most imperative programming languages @hirn2023fix. Specifically, classic CTEs are missing the abilities to
 
 + access previous results from any, not just the immediately preceding, iteration, 
 + udpate previous results in-place instead of appending to an ever-growing result set, and
@@ -17,7 +17,7 @@ The absence of these features resulted in queries that are inefficient and unnec
 + keeping an ever-growing result set leads to unnecessarily high memory usage, and
 + the syntactic restrictions often lead to unwieldy workarounds.
 
-In 2025, the Database Research Group at University of Tübingen suggested and implemented a new variant of recursive CTEs, which, due to its syntax, we call *using-key* throughout this thesis. 
+In 2025, the Database Research Group at University of Tübingen suggested and implemented a new variant of recursive CTEs, which, due to its syntax, we call *using-key* throughout this thesis @hirn2023fix @bamberg2025duckdb. 
 
 using-key approaches the problems listed above by replacing the union table used in classic CTEs with the so-called recurring table. In classic, the *union table* collects all rows generated in every iteration until the query reaches its fixpoint. It cannot be accessed during iteration for performance reasons and holds on to early intermediate results for the entirety of the iteration, even if they are not needed anymore. In contrast, using-key's *recurring table* works like a keyed dictionary. Every time using-key produces a row with a key that is already present in the recurring table, the row holding this key gets replaced by the new row. This simple difference allows using-key to fulfill the abilities listed above.
 

@@ -8,7 +8,7 @@
 )
 #codly-enable()
 
-= Measuring <measuring>
+= Measurements <measuring>
 
 For all algorithms presented in this thesis, we measured execution time and memory consumption of both CTE variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
 

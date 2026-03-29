@@ -50,11 +50,11 @@
 
 == A\* search <astar>
 
-The A\* search algorithm solves the shortest path problem for weighted graphs. It can be seen as an expansion of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* expands Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
+The A\* search algorithm @astar_paper solves the shortest path problem for weighted graphs. It can be seen as an extension of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* extends Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
 
 === Dijkstra's algorithm and a heuristic function <astar_basics>
 
-Dijkstra's algorithm solves the shortest path problem for a graph with non-negative edge weights. Given a starting node, the algorithm returns the shortest path and its distance for every node in the graph. Of course, one can also limit the algorithm to halt once a given goal node has been found. This is the approach we want to follow.
+Dijkstra's algorithm @dijkstra2022note solves the shortest path problem for a graph with non-negative edge weights. Given a starting node, the algorithm returns the shortest path and its distance for every node in the graph. Of course, one can also limit the algorithm to halt once a given goal node has been found. This is the approach we want to follow.
 
 We encode the graph as one table. An example is shown in @graph_example. Every row in the table represents one edge. Columns `node_from` and `node_to` encode the nodes this edge connects and `weight` encodes this edge's weight value. The column `h` encodes the heuristic values; they depend on the goal node of the concrete problem. In @graph_example, we chose `h = 0` for all rows for simplicity. This graph serves as a running example to explain Dijkstra's algorithm first before expanding it to A\*.
 

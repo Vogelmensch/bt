@@ -33,6 +33,7 @@
 
 #show: mainmatter
 
+
 #include "chapters/introduction.typ"
 #include "chapters/basics.typ"
 #include "chapters/algorithms.typ"
@@ -43,3 +44,6 @@
 #show: backmatter 
 #pagebreak(to: "even")
 #bibliography("references.bib")
+
+#pagebreak()
+#include "chapters/ai_versions.typ"
