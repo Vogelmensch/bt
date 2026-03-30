@@ -460,4 +460,11 @@ To access carried values, we replace all occurences of `recurring.needleman` in 
 
 === Backtracking
 
-TODO
+The actual query we used for backtracking is long and uninteresting for us. We still explain the idea behind it for the sake of completeness.
+
+To construct all alignments of maximum value, we start in the lower-right corner of the dynamic programming table and follow the arrows. For each cell we encounter this way, we write down two letters on top of each other: letters from the x-axis in the upper row, and letters from the y-axis on the lower row. For each cell, an arrow pointing 
+- left means writing the letter on the x-axis on the upper row and an indel on the lower row,
+- right means writing an indel on the upper row and the letter on the y-axis on the lower row,
+- diagonal means writing the letter on the x-axis on the upper row and the letter on the y-axis on the lower row.
+
+Should we encounter a cell with more than one arrow, we copy the current alignment as many times, and follow each path individually, continuing one copy each. 

@@ -22,11 +22,17 @@
   }
 
   show heading.where(level: 2): it => [
-    #text(fill: xcolor.orange)[#counter(heading).display()] #it.body
+    #block(
+      sticky: true,
+      [#text(fill: xcolor.orange)[#counter(heading).display()] #it.body]
+    )
   ]
 
   show heading.where(level: 3): it => [
-    #text(fill: xcolor.orange)[#counter(heading).display()] #it.body
+    #block(
+      sticky: true,
+      [#text(fill: xcolor.orange)[#counter(heading).display()] #it.body]
+    )
   ]
 
   doc

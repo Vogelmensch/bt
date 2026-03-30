@@ -12,7 +12,6 @@
 #codly-enable()
 
 #set math.equation(numbering: "(1)")
-
 == Longest Common Subsequence <lcs>
 
 A subsequence $s_"sub"$ of a string $s$ is a string that can be derived from $s$ by deleting some or no letters without changing the order of the remaining letters @survey_of_lcs. A subsequence common to two strings $s_1$ and $s_2$ is a subsequence that both strings have in common. For example, if 
@@ -395,4 +394,12 @@ To access carried values, we simply replace all occurences of `recurring.lcs` in
 
 === Backtracking
 
-TODO: backtracking wurde nicht gemessen. Hier trotzdem erwähnt wegen Vollständigkeit.
+The actual query we used for backtracking is long and uninteresting for us. We still explain the idea behind it for the sake of completeness.
+
+To construct all longest common subsequences from the filled dynamic programming table, we start in the lower-right corner and follow the arrows. Whenever we encounter a diagonal arrow, we write down the corresponding letter (which is the same on both axis), constructing the word backwards. Should we encounter a cell with more than one arrow, we copy the current word as many times, and follow each path individually, continuing one copy each. 
+
+Applying this to @lcs_example yields the final result
+
+$
+  lcs("BEAR", "HERE") = "ER".
+$

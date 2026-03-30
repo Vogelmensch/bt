@@ -60,7 +60,6 @@ We encode the graph as one table. An example is shown in @graph_example. Every r
 
 #figure(
   kind: image,
-  placement: none,
   caption: [Example graph (left) and the first rows of its table representation (right).],
   grid(
     rows: 1,

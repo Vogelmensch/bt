@@ -33,6 +33,7 @@
 
 #show: mainmatter
 
+#set figure(placement: auto)
 
 #include "chapters/introduction.typ"
 #include "chapters/basics.typ"
