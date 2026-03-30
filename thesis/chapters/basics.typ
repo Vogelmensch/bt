@@ -173,15 +173,15 @@ First, the results of each iteration are always appended to the union table `(5)
 
 Secondly, the recursive step `(3)` only ever queries the working table, never the union table. This is an important feature, as continuous access to the union table would drastically impact performance due to its potentially rapid growth @recursive_relations. However, by denying access to the union table, we can only ever access the results of the immediately preceding iteration. To work around this limitation, we are forced to manually carry result rows through the iteration process. Both readability of the code and performance suffer greatly from this behaviour.
 
-Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, i.e. to guarantee that the iteration stops as soon as possible, the `recursive_step` needs to be monotonic. Under these circumstances, the following operations are prohibited in the recursive step: negations, `INTERCEPT/EXCEPT`, outer joins, duplicate row elimination via `DISTINCT`, grouping and aggregation @hirn2023fix. 
+Furthermore, in order to guarantee the existence and uniqueness of the least fixpoint, i.e. to guarantee termination, the `recursive_step` needs to be monotonic. Under these circumstances, the following operations are prohibited in the recursive step: negations, `INTERSECT/EXCEPT`, outer joins, duplicate row elimination via `DISTINCT`, grouping and aggregation @hirn2023fix. 
 
 == USING KEY: A dictionary we can reference <using-key_chapter>
 
-To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive with as *classic*.
+To solve the problems described in @problems, Hirn and Grust @hirn2023fix proposed a new CTE variant that operates the union table like a keyed dictionary. The implementation in DuckDB followed shortly after by Bamberg, Hirn and Grust @bamberg2025duckdb. From here on, we refer to this new CTE variant as *using-key*, while refering to traditional CTEs as explained in @with_recursive as *classic*.
 
-@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. We explain the functionality of using-key in detail below; in a nutshell, by defining list of columns to be the key of the query, the schema gets divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of appending the new row to the union table, the old row is overwritten in the recurring table.
+@using-key shows the general outline of using-key, together with an example. In comparison to @cte_recursive, the `USING KEY` clause, followed by a key `(k1, k2, ...)`, has been added. We explain the functionality of using-key in detail below; in a nutshell, by defining a list of columns to be the key of the query, the schema gets divided into key columns and payload columns. Whenever the CTE produces a row, and the values in the key columns have already been produced in a previous iteration, instead of appending the new row to the union table, the old row is overwritten in the recurring table.
 
-The example in @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we introduced in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and thus `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` consists of this one row only.
+The example in @using-key demonstrates this with the `pow2` query. Additionally to the columns `n` and `x` that we introduced in @cte_recursive, we define the column `c`. The `USING KEY (c)` clause then defines `c` to be a key column, and thus `n` and `x` to be payload columns. In the CTE, we always select `0` for the key column `c` with the effect that old values are constantly being overwritten. The result table `pow2` then consists of this one row only.
 
 #codly(number-format: numbering.with("1"))
 
@@ -224,7 +224,7 @@ The example in @using-key demonstrates this with the `pow2` query. Additionally 
   )
 ) <using-key>
 
-Internally, the union table is replaced by the so-called *recurring table*. While the union table in classic is expanded in every iteration the iteration's solution, the recurring table acts like a keyed dictionary: let $i = (k_1, ..., k_m, "col"_1, ..., "col"_n)$ be a row produced in an arbitrary iteration. If the recurring table $u$ does not yet contain a row with the exact key values $(k_1, ..., k_m)$, then $i$ is simply appended to $u$ as usual. However, if $u$ _does_ contain a row $r$ with the exact key values $(k_1, ..., k_m)$, then $r$ is replaced by $i$ in $u$.
+Internally, the union table is replaced by the so-called *recurring table*. While the union table in classic is expanded in every iteration by the iteration's solution, the recurring table acts like a keyed dictionary: let $i = (k_1, ..., k_m, "col"_1, ..., "col"_n)$ be a row produced in an arbitrary iteration. If the recurring table $u$ does not yet contain a row with the exact key values $(k_1, ..., k_m)$, then $i$ is simply appended to $u$ as usual. However, if $u$ _does_ contain a row $r$ with the exact key values $(k_1, ..., k_m)$, then $r$ is replaced by $i$ in $u$.
 
 Hirn and Grust formulate this behaviour with the $"upsert"$ operation,
 
@@ -239,9 +239,6 @@ where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ de
 
 @using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate figure in @visualize_using-key.
 We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply `upsert(recurring, intermediate)` to update rows with existing keys and insert rows with novel keys as explained above. 
-
-TODO: Hier ist ne dicke Lücke. Außerdem nutzt das Beispiel unten nicht recurring.pow2. Vielleicht wäre ein weiteres Beispiel angemessen :D
-
 
 #figure(
   caption: [Internal evaluation of using-key as pseudocode (left) and comments (right) to explain and reference the associated line.],
@@ -293,3 +290,12 @@ TODO: Hier ist ne dicke Lücke. Außerdem nutzt das Beispiel unten nicht recurri
   )
 ) <visualize_using-key>
 
+
+This approach allows us to tacke the problems described in @problems.
+Instead of keeping outdated intermediate results in the union table, the recurring table discards them at run time. Thus, the recurring table in has a natural size limit: the domain of key values. 
+This size limitation allows us to access intermediate results from arbitrary iterations, rendering carrying results manually through the iteration process obsolete. 
+Also, in using-key, the `recursive_step` is not required to be monotonic, lifting the mentioned syntactic restrictions.
+
+As a last example, let us take a qualitative look at an arbitrary graph algorithm. In the graph, every node has a unique id, `node_id`; we choose `node_id` as key in using-key. When comparing classic recursive CTEs to using-key, we can make the following general observations:
+- The union table's size in classic in unbounded, while the recurring table in using-key can never grow larger than the number of nodes in the graph.
+- In classic, we cannot easily access previously calculated values for any node whose values were calculated more than one iteration ago, while in using-key, we have access to the intermediate values of all previously visited nodes.

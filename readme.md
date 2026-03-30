@@ -2,19 +2,29 @@
 
 Queries for testing DuckDB's revolutionary new approach for writing recursive CTEs.
 
-# Usage
+## Prerequisites
 
-## Installation
-1. Clone the repository
-2. Install the DuckDB Python package via `pip install duckdb`
-3. In the root directory, use the provided `.py`-files to run the queries
+Get [DuckDB 1.4.4](https://duckdb.org/) via 
+
+```
+curl https://install.duckdb.org | DUCKDB_VERSION=1.4.4 sh
+```
+
+There are known issues with `DuckDB 1.5` and later versions; when using those, you're on your own.
+
+Make sure to add the correct version of DuckDB to your `PATH`.
+
+You also need [Python](https://www.python.org/).
 
 
-# Queries
+## Queries
+
+The queries are located in `queries/`. You can examine the pure SQL right there.
+To use our testing-suite, run the respective Python-File in the repo's root-directory: `astar.py`, `lcs.py`, `needleman.py` and `bishop.py`. 
 
 Every query implements the following flags.
 ```
-  -h, --help            show this help message and exit
+  -h, --help            show help message and exit
   -u, --using_key       USING KEY
   -c, --classic         use classic CTE
   -t, --time            measure process time for query execution
@@ -23,23 +33,19 @@ Every query implements the following flags.
                         suppress print of solution
   -f, --file [FILE]     store measured data into FILE
   --repeat, --repeats REPEAT
-                        Repeat the entire query
+                        repeat the entire query
+  --timeout TIMEOUT     timeout for each query in seconds
+  --script, --scripts [SCRIPT ...]
+                        manually provide script to read from
 ```
 
-Besides those, every query implements individual flags. The explanations below only show the required inputs. For a full list of arguments, use the option `-h` to display the help document for a query.
+Every query uses additional, individual flags. The explanations below only show the *required* inputs. For a full list of arguments, use the option `-h` to display the help document for a query.
 
-Algorithms for the following problems have been implemented as queries: 
-- A* Search Algorithm
-- Longest Common Subsequence
-- Drunken Bishop 
-- Needleman-Wunsch
-- Knapsack
-
-## A* Search Algorithm
+## A*
 Find the shortest path between two nodes in a graph. It expands Dijkstra's Algorithm by using a heuristic function to estimate the distance to the goal node.
 
 ```
-python astar.py db graph start goal [heuristic] [OPTIONS]
+python astar.py db graph start goal
 ```
 
 The `graph` has to be defined in a DuckDB-`.db`-file, provided as `db`. It has to implement the following schema:
@@ -52,14 +58,12 @@ CREATE TABLE graph (
 );
 ```
 
-In the `h`-column, all values remain `0`. 
-
 Example:
 ```
-> python astar.py example.db simple 0 6
+> python astar.py graphs/graphs.db simple 0 6
 using-key.sql
 -------------
-Path: 0 -> 1 -> 3 -> 5 -> 6 (5 nodes)
+Path: 0 -> 1 -> 3 -> 4 -> 5 -> 6 (6 nodes)
 Total Weight: 5
 7 nodes expanded
 7 items in final table
@@ -67,7 +71,7 @@ Total Weight: 5
 
 ## Longest Common Subsequence (LCS)
 
-Find the longest substring common to two input strings.
+Find the longest subsequence common to two input strings.
 
 ```
 python lcs.py [-s STRINGS [STRINGS ...] | -r RANDOM [RANDOM ...]]

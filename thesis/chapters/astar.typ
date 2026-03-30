@@ -48,7 +48,7 @@
       edge(C, G, $10$)
 })
 
-== A\* search <astar>
+== A\* <astar>
 
 The A\* search algorithm @astar_paper solves the shortest path problem for weighted graphs. It can be seen as an extension of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* extends Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
 

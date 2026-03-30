@@ -457,3 +457,7 @@ To access carried values, we replace all occurences of `recurring.needleman` in 
     WHERE (SELECT count(*) FROM needleman) < (SELECT count(*) FROM letters)
     ```
 ) <needleman_recursive_classic>
+
+=== Backtracking
+
+TODO
