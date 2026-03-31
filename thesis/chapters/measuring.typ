@@ -1,18 +1,13 @@
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
-#show: codly-init.with()
-#codly(
-  languages: (
-    sql: (name: "SQL", icon: "🦆", )
-  )
-)
 #codly-enable()
+#import "definitions.typ": *
 
 = Measurements <measuring>
 
 For all algorithms presented in this thesis, we measured execution time and memory consumption of both CTE variants, using-key and classic. In this chapter, we explain our methods and present and interpret the results using comparative plots.
 
-To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by semicolons. The timer can be turned on by calling the dot command `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time. We always present the sum of user time and system time in our results,
+To measure execution time, we used DuckDBs internal SQL timer, which measures execution time for statements separated by semicolons. The timer can be turned on by calling the dot command #jb `.timer on` @duckdb_timer. For each statement, the timer returns real time, user time and system time. We always present the sum of user time and system time in our results,
 
 $
   "Execution time" = "user time" + "system time".
@@ -26,7 +21,7 @@ To measure memory consumption, we used the GNU Project's `time` command,
 )
 The option `-f %M` returns the "Maximum resident set size (RSS) of the process during its lifetime" @gnu_time, which is the amount of memory held in RAM @rss.
 
-All measurements were taken on the same machine, the specifications for which are shown in @specs.
+All measurements were taken on the same machine, the specifications for which are shown in @specs. The scripts we wrote for measuring and plotting can be found on GitHub @github.
 
 #figure(
   caption: [Specifications of the machine the measurements were taken on.],
@@ -53,7 +48,7 @@ We chose two graphs of US cities from the "9th DIMACS Implementation Challenge"@
 A graph representing a physical map is an obvious choice for testing A\* because we can use the physical distance between a node and the goal node as the heuristic function. Naturally, we chose the distance graph for our measurements. 
 
 First, we took the graph of New York City.
-As the start node, we chose `node_id = 189104`, which lies within central park. From there, we selected all nodes within a $3 "km"$ radius as goal nodes, $1526$ in number.  We ran A\* on these pairings, measuring execution time and memory consumption. @central_park_facts shows an overview over this subgraph to get a rough picture of the region. 
+As start node, we chose `node_id = 189104`, which lies within central park. From there, we selected all nodes within a $3 "km"$ radius as goal nodes, $1430$ in number.  We ran A\* on these pairings, measuring execution time and memory consumption. @central_park_facts shows an overview over this subgraph to get a rough picture of the region. 
 
 #figure(
   kind: image,
@@ -79,7 +74,7 @@ As the start node, we chose `node_id = 189104`, which lies within central park. 
   )
 ) <central_park_facts>
 
-Then, we took the graph of California and Nevada and chose `node_id = 1791103` as the start node, which lies within Las Vegas. For each distance $d in {500, 1000, 1500, ..., 10000}$, we randomly selected five points with h-values close the the respective distance as goal nodes, resulting in 100 goal nodes. @vegas_facts shows an overview over this subgraph.
+Then, we took the graph of California and Nevada and chose `node_id = 1791103` as start node, which lies within Las Vegas. For each distance $d in {500, 1000, 1500, ..., 10000}$, we randomly selected five points with h-values close the the respective distance as goal nodes, resulting in 100 goal nodes. @vegas_facts shows an overview over this subgraph.
 
 #figure(
   kind: image,
@@ -107,10 +102,10 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
 
 === Heuristic function for air distance <heuristic>
 
-@map_heuristic shows the macro we used to create heuristic values for the graphs. As mentioned above, the physical distance to the goal node is an intuitive choice for a heuristic that also meets both desired properties of heuristc functions explained in @astar_basics. Because of the earth's curvature, we need to use spherical geometry, which the `spatial` extension provides @spatial. The function `st_point(lat, long)` creates "geometry points" from coordinates `lat` and `long`. `st_distance_spheroid` then calculates the distance between those points using "an ellipsoidal model of the earths surface". We cast the resulting `DOUBLE` to `INTEGER` for performance reasons. 
+@map_heuristic shows the macro we used to create heuristic values for the graphs. As mentioned above, the physical distance to the goal node is an intuitive choice for a heuristic that also meets both desired properties of heuristc functions explained in @astar_basics. Because of the earth's curvature, we need to use spherical geometry, which the `spatial` extension provides @spatial. The function `st_point(lat, long)` creates "geometry points" from coordinates `lat` and `long`. `st_distance_spheroid` then calculates the distance between these points using "an ellipsoidal model of the earths surface". We cast the resulting `DOUBLE` to `INTEGER` for performance reasons. 
 
 #figure(
-  caption: [Heuristic function we used on map graphs for our measurements.],
+  caption: [Heuristic function on map graphs for our measurements.],
   [
     ```sql
     CREATE MACRO h(x) AS (
@@ -130,15 +125,11 @@ Then, we took the graph of California and Nevada and chose `node_id = 1791103` a
 
 === Results
 
-We plot the number of expanded nodes on the x-axis.
-
 @astar_nyc shows the results for time and memory measurements on the graph of New York City. We can clearly see that the execution time follows a linear distribution for both queries, with the values for using-key increasing more slowly.
-It is noticeable that measured times separate into two distinct branches. While we do not have a definitive explanation for this behaviour, we suspect the nature of the graph to be the reason for it. The graph is dominated by two large empty regions, one of which being central park, the other being the East River. Nodes lying beyond those regions may take longer to be reached because A\* first has to go "around" the regions.
-
+Notably, the time measurements diverge into two distinct branches; the underlying cause of this separation remains unclear.
 As for memory usage, using-key is linear with a slight incline, while classic neatly follows a quadratic distribution.
 
-@astar_vegas shows the results for the graph of Las Vegas. Again, execution time is linear for both queries, with using-key being slightly faster for all goals. The phenomenon of distinct branches for each query does not occur here. 
-
+@astar_vegas shows the results for the graph of Las Vegas. Again, execution time is linear for both queries, with using-key being slightly faster for all goals. The phenomenon of diverging branches for each query does not occur here. 
 Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_fit shows the coefficients for the fits on the memory meausrements.
 
 #figure(
@@ -176,12 +167,11 @@ Memory usage on Las Vegas also neatly follows a quadratic distribution. @astar_f
 
 
 
-== LCS <measure_lcs>
+== Longest Common Subsequence <measure_lcs>
 
 === Setup
 
-We wrote a random string generator to provide input for LCS. The generator used all 26 lower-case characters from the english alphabet. For each measurement, we generated two independent strings of equal lengths $l in {10, 20, 30, ..., 200}$, applied LCS in both CTE variants and measured execution time and memory usage. We repeated the measurement ten times.
-
+We wrote a random string generator to provide input for LCS. The generator uses all 26 lower-case characters from the english alphabet. For each string length $l in {10, 20, ..., 200}$, we generated two independent strings of equal lengths, applied LCS in both CTE variants and measured execution time and memory usage. We repeated the measurement ten times.
 To limit the total runtime of the experiment, we defined a timeout of $5 "minutes"$ (real time) for each measurement. This limit has been reached for classic, twice for $l = 180$ and once for $l = 190$.
 
 
@@ -216,14 +206,13 @@ These results show using-key's performance to be both, better on average, and le
 
 === Setup
 
-For each measurement, we generated a random string consisting of the characters A, C, G and T, to mimic a DNA sequence. This string was directly used as the first argument. To get the second argument, we copied the first argument character-wise; however, with a probability of $30%$, a copying error would occur, selecting one random character from the available set. Because the same character could be selected with a probability of $25%$, the overall expected difference between the arguments is $75% dot 30% = 22.5%$.
+For each measurement, we generated a random string consisting of the characters A, C, G and T, to mimic a DNA sequence. These strings were directly used as first arguments. To get the second arguments, we copied the first arguments character-wise; however, with a probability of $30%$, a copying error would occur, selecting one random character from the available set. Because the same character could be selected with a probability of $25%$, the overall expected difference between the arguments is $75% dot 30% = 22.5%$.
 
-The strings were of lengths $l in {10, 20, 30, ..., 300}$. For each length, ten pairs of strings were generated. We solved the alignment problem of each string pair using our two variants of the needleman-wunsch-algorithm, using a timeout of 60 seconds (real).
+The strings were of lengths $l in {10, 20, ..., 300}$. For each length, ten string pairs were generated. We solved the alignment problem for each string pair using our two variants of the Needleman-Wunsch-algorithm with a timeout of 60 seconds (real).
 
 === Results
 
 @needleman_timeouts lists the timeouts we encountered. We did not represent them in the result plots in @needleman_results.
-
 For each query, both execution time and memory usage appear to follow a "main curve" on which most values are located. Looking at these main curves, both values increase more rapidly for classic than for using-key. We also observe a handful of values falling above the main curves, especially for longer strings, and mostly for classic. However, no values fall under the main curves, suggesting a lower limit. We applied fits on the minimal values of each string length to model the shape of this lower limit. @needleman_fit shows the coefficients of these fits.
 @needleman_stats shows mean $mu$ and standard deviation $sigma$ of the measurements.
 
@@ -244,7 +233,7 @@ For each query, both execution time and memory usage appear to follow a "main cu
 ) <needleman_timeouts>
 
 #figure(
-  caption: [Measured time (left) and memory consumption (right) for Needleman-Wunsch.],
+  caption: [Execution time (left) and memory usage (right) for Needleman-Wunsch.],
   grid(
     columns: 2,
     image("images/needleman_march_time.svg"),
@@ -286,13 +275,13 @@ For each query, both execution time and memory usage appear to follow a "main cu
 
 === Setup
 
-We randomly generated arrays of hexadecimal numbers with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, giving images of dimension $51 times 27$. 
+We randomly generated arrays of hexadecimal numbers with array length $l in {200, 400, ..., 5000}$. For each length, ten arrays were generated. Because the usual image dimensions of $17 times 9$ are too small for the generated array lengths, we scaled the image by a factor of $3$, resulting in images of dimension $51 times 27$. 
 
 Additionally to the two queries specifically explained in @bishop_classic_chapter and @bishop_using-key_chapter, we measured each variant using the bit-pair representation of the respective other to demonstrate the significance of the representation. We set a timeout of $10$ seconds (real).
 
 === Results
 
-@bishop_scale3 shows the resulting plots as mean and standard deviation for each fingerprint length. With some uncertainty, all measurements follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
+@bishop_scale3 shows the resulting plots as mean and standard deviation. With some uncertainty, all measurements follow linear distributions, except for using-key with bitlists, which quickly exceeds the scope of the measurement.
 @bishop_slopes shows the slopes of linear fits for the other three queries.
 We can see how classic outperforms using-key. Also, while the influence of the bit-pair representation on memory usage of classic seems minor, the impact on runtime is rather apparent.
 

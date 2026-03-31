@@ -22,3 +22,5 @@
 )
 
 #let e = t("", false, false, false, white)
+
+#let jb = linebreak(justify: true)

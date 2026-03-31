@@ -1,11 +1,5 @@
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
-#show: codly-init.with()
-#codly(
-  languages: (
-    sql: (name: "SQL", icon: emoji.duck, )
-  )
-)
 
 #set math.equation(numbering: "(1)")
 #set figure(placement: auto)

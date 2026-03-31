@@ -13,14 +13,12 @@ Over time, CTEs in the way they were introduced in 1999 - we call them *classic*
 + use syntax elements such as, among others, negations in the inner query.
 
 The absence of these features resulted in queries that are inefficient and unnecessarily complicated. 
-+ In order to access results from any iteration, queries are forced to manually carry intermediate results from iteration to iteration, often in array-like structures;
-+ keeping an ever-growing result set leads to unnecessarily high memory usage, and
-+ the syntactic restrictions often lead to unwieldy workarounds.
++ In order to access results from any iteration, queries are forced to manually carry intermediate results from iteration to iteration, often in array-like structures.
++ Keeping an ever-growing result set leads to unnecessarily high memory usage.
++ The syntactic restrictions often lead to unwieldy workarounds.
 
 In 2025, the Database Research Group at University of Tübingen suggested and implemented a new variant of recursive CTEs, which, due to its syntax, we call *using-key* throughout this thesis @hirn2023fix @bamberg2025duckdb. 
-
-using-key approaches the problems listed above by replacing the union table used in classic CTEs with the so-called recurring table. In classic, the *union table* collects all rows generated in every iteration until the query reaches its fixpoint. It cannot be accessed during iteration for performance reasons and holds on to early intermediate results for the entirety of the iteration, even if they are not needed anymore. In contrast, using-key's *recurring table* works like a keyed dictionary. Every time using-key produces a row with a key that is already present in the recurring table, the row holding this key gets replaced by the new row. This simple difference allows using-key to fulfill the abilities listed above.
-
+Using-key approaches the problems listed above by replacing the union table used in classic CTEs with the so-called recurring table. In classic, the union table collects all rows generated in every iteration until the query reaches its fixpoint. It cannot be accessed during iteration for performance reasons and holds on to early intermediate results for the entirety of the iteration, even if they are not needed anymore. In contrast, using-key's recurring table works like a keyed dictionary. Every time using-key produces a row with a key that is already present in the recurring table, the row holding this key is replaced by the new row. This simple difference allows using-key to fulfill the abilities listed above.
 In @basics, we examine the core ideas behind using-key and its implementation in depth, all the while comparing it to classic. 
 
 == Four algorithms in two variants
@@ -33,7 +31,7 @@ In @lcs, we find the *longest common subsequence* between two strings. Our appro
 
 In @needleman-wunsch, we compare DNA strings using the *Needleman-Wunsch algorithm*, which works similarly to LCS and benefits from similar advantages.
 
-In @drunken-bishop, we draw SSH fingerprint images using the *Drunken Bishop algorithm*. In contrast to the other algorithms, accessing previous results other than the immediately preceding one is not required here, which makes using-key's query more complicated.
+In @drunken-bishop, we draw SSH fingerprint images using the *Drunken Bishop algorithm*. In contrast to the other algorithms, accessing previous results other than the immediately preceding one is not required here. Using-key is more complicated here.
 
 
 == USING KEY: lightweight and fast?

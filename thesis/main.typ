@@ -1,6 +1,13 @@
 #import "simple.typ": *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
-
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  languages: (
+    sql: (name: "SQL", icon: text(size: 7pt, [🦆]),)
+  )
+)
 #set raw(syntaxes: "custom_sql.sublime-syntax")
 
 #show: doc => template(

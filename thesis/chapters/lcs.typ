@@ -1,20 +1,14 @@
-#import "definitions.typ": orange, t, e
+#import "definitions.typ": *
 #let lcs = "LCS"
 
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
-#show: codly-init.with()
-#codly(
-  languages: (
-    sql: (name: "SQL", icon: emoji.duck)
-  )
-)
 #codly-enable()
 
 #set math.equation(numbering: "(1)")
 == Longest Common Subsequence <lcs>
 
-A subsequence $s_"sub"$ of a string $s$ is a string that can be derived from $s$ by deleting some or no letters without changing the order of the remaining letters @survey_of_lcs. A subsequence common to two strings $s_1$ and $s_2$ is a subsequence that both strings have in common. For example, if 
+A subsequence of a string $s$ is a string that can be derived from $s$ by deleting some or no letters without changing the order of the remaining letters @survey_of_lcs. A subsequence common to two strings $s_1$ and $s_2$ is a subsequence that both strings have in common. For example, if 
 $ s_1 = "\"Never gonna give you up\"," $
 and 
 $ s_2 = "\"Never gonna let you down\"," $
@@ -26,18 +20,18 @@ Note that the longest common subsequence is not equal to the longest common _sub
 
 === Filling the dynamic programming table
 
-We solve LCS by implementing the "traditional technique" first proposed by Wagner and Fischer @string_to_string @survey_of_lcs. This approach breaks the problem down by finding the longest common subsequence for all combinations of prefixes of the input strings. The goal of this chapter is to find a recurrence relation from which we can derive the queries. To do this,
+We solve LCS by implementing the "traditional technique" first proposed by Wagner and Fischer @string_to_string @survey_of_lcs. This approach breaks the problem down by finding the longest common subsequence for all prefix combinations of the input strings. The goal of this chapter is to find a recurrence relation from which we can derive the queries. To do this,
 we observe two properties of the longest common subsequence, both of which depend on the last character of the respective input string.
 
 Let $Sigma$ be an alphabet and $Sigma^*$ the set of all words over $Sigma$, with arbitrary letters $a, b in Sigma, a != b$, and two strings $s_1, s_2 in Sigma^*$. Also, let $+$ be the concatenation operator.
 The first property states that 
 $ lcs(s_1 + a, s_2 + a) = lcs(s_1, s_2) + a. $ <prop1>
-In words, if two strings end with the same letter, then the LCS of those strings also ends with that letter. As an example, when solving $lcs("FAR", "BAR")$, we can clearly see that the solution must also end with the letter $"R"$.
+In words, if two strings end with the same letter, then the LCS of these strings also ends with that letter. As an example, when solving $lcs("FAR", "BAR")$, we can clearly see that the solution must also end with the letter $"R"$.
 
 The second property states that 
 $ lcs(s_1 + a, s_2 + b) = max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%), $ <prop2>
 where $max(s_1, s_2)$ returns the longest string of its arguments.
-In words, the second property states that, if two strings end with different letters, then the solution cannot contain both letters. One of the letters, either $a$ or $b$, must be discarded; we choose to discard the one that leads to a shorter subsequence when comparing the remaining strings. As an example, the last letters of the strings $s_1 = "BEAR"$ and $s_2 = "HERE"$ are not equal, $"R" != "E"$. One of these letters must be discarded in order for the search to continue, 
+In words, the second property states that, if two strings end with different letters, then the solution cannot contain both letters. At least one of the letters, either $a$ or $b$, must be discarded; we choose to discard the one that leads to a shorter subsequence when comparing the remaining strings. As an example, the last letters of the strings #jb $s_1 = "BEAR"$ and $s_2 = "HERE"$ are not equal, $"R" != "E"$. One of these letters must be discarded in order for the search to continue, 
 
 $
   lcs("BEAR", "HERE") = max lr([lcs("BEAR", "HER"), lcs("BEA", "HERE")], size: #200%).
@@ -52,13 +46,12 @@ $ lcs(s_1 + a, s_2 + b) = cases(
 ) $ <lcs_rec_relation>
 
 Keep in mind that we are examining the last letter of the respective string. Thus, if $a = epsilon$, it follows that $s_1 = epsilon$, because if $s_1 != epsilon$, a last letter $a != epsilon$ would also exist. 
-
 @lcs_rec_relation helps us understand the queries.
-We visualize the solution process by iteratively filling out @lcs_table_empty. As a running example, we solve the example introduced above, $lcs("BEAR", "HERE")$.
+We visualize the solution process by iteratively filling out the dynamic programming table, see @lcs_table_empty. As a running example, we solve the example introduced above, $lcs("BEAR", "HERE")$.
 
 #figure(
     kind: image,
-    caption: [Empty dynamic programming table.],
+    caption: [Empty dynamic programming table for LCS.],
     table(
         rows: 6,
         columns: 6,
@@ -116,10 +109,9 @@ First, we define macros `s1()` and `s2()` to hold our two input strings. We then
 
 @lcs_layout shows the layout of the queries for both CTE variants. The first four columns of `lcs`, namely `xsym`, `xidx`, `ysym` and `yidx`, are equivalent to the columns of `letters`: they define the coordinates and their respective letter-combination for the dynamic programming table.
 
-@lcs_rec_relation takes strings as inputs and returns strings as results. While strings help us understand the relation in a mathematical sense, it would be unwise to use strings during the iterative process in the query. Strings can become quite large data structures and the operation of string concatenation is more complex than, say, incrementing an integer or changing a boolean value. Thus, to ensure better performance, we only store the lengths that result from the recurrence relation and follow a backtracking strategy on the result table afterwards.
+@lcs_rec_relation takes strings as inputs and returns strings as results. While strings help us understand the relation in a mathematical sense, it would be unwise to use strings during the iterative process in the query. Strings can become quite large data structures and the operation of string concatenation is more complex than, say, incrementing an integer or changing a boolean value. Thus, to ensure better performance, we only store the lengths that result from the recurrence relation and follow a backtracking strategy on the result table afterwards (@lcs_backtracking).
 
 We fill the dynamic programming table with the following data: For every symbol `xsym` at `xidx` of `s1()` and every symbol `ysym` at `yidx` of `s2()`, we calculate the length `len` of the lcs, and provide the direction we need to follow when backtracking afterwards, `from_left`, `from_up`, or `from_diag`.
-
 With using-key, we gain the ability to access previously calculated values in the table. We identify a value in the table by its indices; it is only reasonable to choose `(xidx, yidx)` as key.
 
 #figure(
@@ -168,7 +160,7 @@ With using-key, we gain the ability to access previously calculated values in th
 
 === Base case
 
-@lcs_base_case shows the base case, which corresponds to the first case of @lcs_rec_relation. For the empty letters at the beginning of the strings, `len = 0`. When backtracking later, this will be an endpoint: `from_left = from_up = from_diag = false`. 
+@lcs_base_case shows the base case, which corresponds to the first case of @lcs_rec_relation. For the empty letters at the beginning of the strings, `len = 0`. These are the endpoints for backtracking: #jb `from_left = from_up = from_diag = false`. 
 
 #figure(
     caption: [Base case of LCS (left) and the dynamic programming table after its execution (right).],
@@ -204,20 +196,19 @@ With using-key, we gain the ability to access previously calculated values in th
 === Recursive step: using-key
 
 Similar to A\*, the recursive step of classic contains the recursive step of using-key, which is why we start with the latter.
-
 The recursive step corresponds to the other two cases in @lcs_rec_relation. In the query, we simply separate the cases with a `UNION`. In the code at @lcs_recursive_using_key, we marked the cases using comments. You can follow along with the example at @lcs_example.
 
-Case `(1)`: Letters are equal, corresponding to the second case of the @lcs_rec_relation. We select the `letters` we want to compare, and two times from the recurring table, `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. 
-In order for `this` to be selectable in the current iteration, two condition, defined in the `WHERE` clause, must be fulfilled: first, `this` must not have been selected in any previous iteration, `this.len IS NULL` (notice the `LEFT OUTER JOIN` we use on `this`); secondly, the letters must be equal, `ltrs.xsym = ltrs.ysym`. 
+Case `(1)`: Letters are equal, corresponding to the second case of @lcs_rec_relation. We select the `letters` we want to compare, and two times from the recurring table, `recurring.lcs`; once to get the diagonal element `diag`, and once to get the element we are currently filling out, `this`. 
+In order for `this` to be selectable in the current iteration, two condition, defined in the `WHERE` clause, must be fulfilled: first, `this` must not have been selected in any previous iteration, `this.len IS NULL` (notice the #jb`LEFT OUTER JOIN` we use on `this`); secondly, the letters must be equal, `ltrs.xsym = ltrs.ysym`. 
 
-We `SELECT` the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx, ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the lcs's length increases by one, `diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
+We `SELECT` the following values: First, we take the symbols and ids of the letters, `ltrs.xsym, ltrs.xidx, ltrs.ysym, ltrs.yidx`. Because of the matching symbols, the LCS's length increases by one, #jb`diag.len + 1`. Finally, we need to mark the path for backtracking later, `false, false, true`, corresponding to the diagonal path.
 
-Case `(2)`: Letters are unequal, corresponding to the third case in @lcs_rec_relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path; in the case of equality, we select both.
+Case `(2)`: Letters are unequal, corresponding to the third case of @lcs_rec_relation. The `FROM` clause is similar to the previous case, the difference being that we inspect the left and upper elements of the recurring table, `l` and `u`, instead of the diagonal one. In the `WHERE` clause, we define that the letters must be unequal. Finally, in the `SELECT` clause, we also select the symbols and indices of the considered letters. From the two elements `l` and `u`, we only want to select the one of greater length, and mark the corresponding path; in the case of equality, we select both.
 
-Both case `(1)` and case `(2)` automatically terminate as soon as no empty table element is left, i.e. when `this.len IS NULL` returns `false` for all elements.
+Both case `(1)` and case `(2)` automatically terminate as soon as no empty table element is left, i.e., when `this.len IS NULL` returns `false` for all elements.
 
 #figure(
-    caption: [Recursive step of lcs for using-key.],
+    caption: [Recursive step of LCS for using-key.],
     [
         ```sql
         -- Case (1): Letters are equal
@@ -228,12 +219,12 @@ Both case `(1)` and case `(2)` automatically terminate as soon as no empty table
             false, false, true
         FROM 
             letters                       AS ltrs 
-            JOIN recurring.lcs            AS diag ON ltrs.xidx = diag.xidx+1 and 
+            JOIN recurring.lcs            AS diag ON ltrs.xidx = diag.xidx+1 AND 
                                                      ltrs.yidx = diag.yidx+1 
-            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and 
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx   AND 
                                                      ltrs.yidx = this.yidx
         WHERE 
-            this.len IS NULL and    
+            this.len IS NULL AND    
             ltrs.xsym = ltrs.ysym   
 
         UNION
@@ -246,14 +237,14 @@ Both case `(1)` and case `(2)` automatically terminate as soon as no empty table
             l.len >= u.len, u.len >= l.len, false
         FROM 
             letters                       AS ltrs 
-            JOIN recurring.lcs            AS l    ON ltrs.xidx = l.xidx+1 and 
+            JOIN recurring.lcs            AS l    ON ltrs.xidx = l.xidx+1  AND 
                                                      ltrs.yidx = l.yidx 
-            JOIN recurring.lcs            AS u    ON ltrs.xidx = u.xidx and 
+            JOIN recurring.lcs            AS u    ON ltrs.xidx = u.xidx    AND 
                                                      ltrs.yidx = u.yidx+1
-            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx and 
+            LEFT OUTER JOIN recurring.lcs AS this ON ltrs.xidx = this.xidx AND 
                                                      ltrs.yidx = this.yidx    
         WHERE 
-            this.len IS NULL and    
+            this.len IS NULL AND    
             ltrs.xsym != ltrs.ysym 
         ```
     ]
@@ -261,7 +252,7 @@ Both case `(1)` and case `(2)` automatically terminate as soon as no empty table
 
 #figure(
     kind: image,
-    caption: [Dynamic programming table in various iterations, in reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
+    caption: [Dynamic programming table for LCS in various iterations, in reading order. The arrows represent the boolean flags `from_left`, `from_up` and `from_diag`. The numbers represent the `len`-value. Marked in green are the elements that are being added in the respective iteration. In the last table, the final path is marked in orange.],
     grid(
         rows: 4,
         columns: 3,
@@ -374,12 +365,12 @@ Both case `(1)` and case `(2)` automatically terminate as soon as no empty table
 
 === Recursive step: classic
 
-As mentioned above, classic lcs contains the using-key variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step. To guarantee termination, in the `WHERE` clause, we check whether the number of elements in the working table exceeds the number of elements in `letters`, which is the natural limit.
+As mentioned above, classic LCS contains the using-key variant. However, in classic, we cannot access the recurring table, which we repeatedly do within using-key. We thus need to manually carry all calculated values by selecting the entire table `lcs` and unionizing it with the results of each recursive step. To guarantee termination, in the `WHERE` clause, we check whether the number of elements in the working table exceeds the number of elements in `letters`, which is the natural limit.
 
 To access carried values, we simply replace all occurences of `recurring.lcs` in @lcs_recursive_using_key with `lcs`. The difference between the two variants then boils down to a few additional lines shown in @lcs_recursive_classic.
 
 #figure(
-    caption: [Recursive step of lcs for classic.],
+    caption: [Recursive step of LCS for classic.],
     [
         ```sql
         <using-key recursive step>
@@ -392,12 +383,11 @@ To access carried values, we simply replace all occurences of `recurring.lcs` in
     ]
 ) <lcs_recursive_classic>
 
-=== Backtracking
+=== Backtracking <lcs_backtracking>
 
 The actual query we used for backtracking is long and uninteresting for us. We still explain the idea behind it for the sake of completeness.
 
 To construct all longest common subsequences from the filled dynamic programming table, we start in the lower-right corner and follow the arrows. Whenever we encounter a diagonal arrow, we write down the corresponding letter (which is the same on both axis), constructing the word backwards. Should we encounter a cell with more than one arrow, we copy the current word as many times, and follow each path individually, continuing one copy each. 
-
 Applying this to @lcs_example yields the final result
 
 $

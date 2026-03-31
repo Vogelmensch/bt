@@ -1,14 +1,10 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
-#import "definitions.typ": orange
+#import "definitions.typ": *
 
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
-#show: codly-init.with()
-#codly(
-  languages: (
-    sql: (name: "SQL", icon: "🦆", )
-  )
-)
+
+
 #codly-enable()
 
 #set math.equation(numbering: "(1.1)")
@@ -50,13 +46,13 @@
 
 == A\* <astar>
 
-The A\* search algorithm @astar_paper solves the shortest path problem for weighted graphs. It can be seen as an extension of Dijkstra's algorithm, wich is guaranteed to finds the optimal solution in minimal time on graphs with non-negative edge weights. A\* extends Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
+The A\* search algorithm @astar_paper solves the shortest path problem for weighted graphs with non-negative edge weights. It can be seen as an extension of Dijkstra's algorithm, wich is guaranteed to find the optimal solution in minimal time. A\* extends Dijkstra by adding a heuristic function to the cost function. If this heuristic function meets certain criteria (explained in @astar_basics), A\* always returns an optimal solution under optimal runtime.
 
 === Dijkstra's algorithm and a heuristic function <astar_basics>
 
-Dijkstra's algorithm @dijkstra2022note solves the shortest path problem for a graph with non-negative edge weights. Given a starting node, the algorithm returns the shortest path and its distance for every node in the graph. Of course, one can also limit the algorithm to halt once a given goal node has been found. This is the approach we want to follow.
+Dijkstra's algorithm @dijkstra2022note solves the shortest path problem for a graph with non-negative edge weights. Given a start node, the algorithm returns the shortest path and its distance for every node in the graph. Of course, one can also limit the algorithm to halt once a given goal node has been found. This is the approach we want to follow.
 
-We encode the graph as one table. An example is shown in @graph_example. Every row in the table represents one edge. Columns `node_from` and `node_to` encode the nodes this edge connects and `weight` encodes this edge's weight value. The column `h` encodes the heuristic values; they depend on the goal node of the concrete problem. In @graph_example, we chose `h = 0` for all rows for simplicity. This graph serves as a running example to explain Dijkstra's algorithm first before expanding it to A\*.
+We encode the graph as one table. An example is shown in @graph_example. Every row in the table represents one edge. Columns `node_from` and `node_to` encode the nodes an edge connects and `weight` encodes edge weights. The column `h` encodes the heuristic values; they depend on the goal node of the concrete problem. For simplicity, we set `h = 0` for all rows in @graph_example. This graph serves as a running example to explain Dijkstra's algorithm first before expanding it to A\*.
 
 #figure(
   kind: image,
@@ -91,11 +87,11 @@ We encode the graph as one table. An example is shown in @graph_example. Every r
   ),
 ) <graph_example>
 
-We explain the algorithm in detail in the following sections. In a nutshell, in order to find the shortest path to the goal node, we keep a record of all paths we have already taken from the start node to any other node in the graph. Then, in every iteration, we have to decide which node to visit next, out of all nodes we have not visited yet. In Dijkstra's algorithm, from all candidate nodes, we visit the node with the shortest overall path. We now explain how the A\* search algorithm expands this idea with a simple addition.
+We explain the algorithm in detail in the following sections. In a nutshell, in order to find the shortest path to the goal node, we keep a record of all shortest paths we find from the start node to any other node in the graph. In each iteration, out of all nodes we have not visited yet, we have to decide which node to visit next. In Dijkstra's algorithm, from all candidate nodes, we visit the node with the shortest overall path. We now explain how the A\* search algorithm expands this idea with a simple addition.
 
 In Dijkstra's algorithm, the only information we have about the goal node is its `node_id`. In many use cases, however, information is available about the direction in which the goal is located. 
 A vivid example is that of route planning. When travelling, say, via train, we can depict the railway network as a graph, with stations as nodes, railroads as edges and travel times or distances as edge weights. We then want to find the fastest route from our current location, the start node, to our destination, the goal node. 
-Dijkstra's algorithm approaches this problem by searching in _every_ direction until it finds the destination. While it always finds the best solution, the runtime is not optimal, as we constantly calculate shortest paths for stations which we know to be in the wrong direction.
+Dijkstra's algorithm approaches this problem by searching in _every_ direction until it finds the destination. While it always finds the best solution, we also constantly calculate shortest paths for stations which we know to be in the wrong direction.
 
 This problem can be addressed by using a _heuristic function_. In our example of train travel, a heuristic $h$ for a node $n$ (a station) could simply be the air-line distance between this station $n$ and the destination $"goal_node"$,
 
@@ -126,7 +122,7 @@ We define macros `start_node()` and `goal_node()` for the ids of start- and goal
     columns: 2,
     column-gutter: 20pt,
     [
-      ```SQL
+      ```sql
       WITH RECURSIVE astar (
         node_id,
         dist,
@@ -144,7 +140,7 @@ We define macros `start_node()` and `goal_node()` for the ids of start- and goal
       ```
     ],
     [
-      ```SQL
+      ```sql
       WITH RECURSIVE astar (
         node_id,
         dist,
@@ -171,12 +167,12 @@ The layouts of the queries are shown in @astar_init. Both variants use the same 
 - `prev`, the `node_id` for the node that leads back to `start_node()` on the fastest currently known path, and
 - `visited`, a boolean flag stating whether the node has already been visited. 
 
-During runtime, the values `dist`, `f` and `prev` and constantly being updated as A\* keeps finding shorter paths through the graph. Only when a node is `visited` we know its values to be optimal. Thus, for the using-key version of the query, we use `node_id` as key, in order to access and update values for previously selected nodes.
+During runtime, the values `dist`, `f` and `prev` are constantly being updated as A\* keeps finding shorter paths through the graph. Only when a node is `visited` can we guarantee its values to be optimal. Thus, for the using-key version of the query, we use `node_id` as key in order to access and update values for previously selected nodes.
 
 
 === Base Case
 
-@astar_base_case shows the base case. The only node currently known is `start_node()`, with a distance from `start_node()` of `dist = 0`; the f-value is the heuristic function's value for this node, `f = h(start_node())`; no previous node could lead to itself, `prev = NULL`; the visited flag is set to `visited = false`.
+@astar_base_case shows the base case. The only known node in the beginning is `start_node()`, with a distance from `start_node()` of `dist = 0`; the f-value is the heuristic function's value for this node, #jb `f = h(start_node())`; no previous node could lead to itself, `prev = NULL`; the visited flag is set to #jb`visited = false`.
 
 #figure(
   caption: [Base case for A\*.],
@@ -199,27 +195,27 @@ To follow along, @astar_example illustrates each step for our running example in
 
 `(2)` We now mark `min_node` as `visited` for future iterations. If `min_node` turns out to be the `goal_node()`, we end the iteration, as defined by the condtion `node_id != goal_node()` in this and the next step.
 
-`(3)` The goal of this step is to take all neighbors of `min_node` and update their values for `dist`, `f` and `prev`, if it turns out that the path over `min_node` is shorter than the shortest path found so far. We explain this step in the following paragraphs.
+`(3)` The goal of this step is to take all neighbors of `min_node` and update their values for `dist`, `f` and `prev`, if it turns out that the path via `min_node` is shorter than the shortest path known so far. The following paragraphs explain this step in detail.
 
 First, notice that @astar_recursive:30, @astar_recursive:34 and @astar_recursive:35 are identical to `(2)`, the only difference being that we bind `min_node` to the name `sml` (standing for "smallest") here. @astar_recursive:31 binds the `graph` to the name `nbs` ("neighbors"), on the condition `sml.node_id = nbs.node_from`. With this, we can select the `node_id`s of all neighbors of `min_node` by selecting `nbs.node_to`. We immediately use this in @astar_recursive:32, where we bind the recurring table to the name `old`, on the conidtion `nbs.node_to = old.node_id`. With this, we have access to the values of `min_nodes`' neighbors, by selecting from `old`. Notice the `LEFT OUTER JOIN` we use on `old`, which returns `NULL`-values for neighbors that are not part of the recurring table yet.
 
-With this preparation, we are able to understand @astar_recursive:36. This line is the heart of Dijkstra's algorithm. It defines the final condition on which values are being selected. @coalesce shows the `coalesce`-function in mathematical notation: It selects a value only if it is not `NULL`, and provides an alternative otherwise.
+With this preparation, we are able to understand @astar_recursive:36. This line is the heart of Dijkstra's algorithm: it defines the condition that a new path must fulfill in order to replace an old path. It uses `coalesce(old.dist, 'inf' :: FLOAT)`, which selects its first argument only if it is not `NULL`, and uses the second argument otherwise,
 
 $ 
   "coalesce"(a, b) = cases(
     a "if" a != "NULL",
-    b "else"
+    b "else".
   )
 $ <coalesce>
 
-`old.dist` is  `NULL` if `old` has not been selected before. In this case, the condition is `true` by default, as $x < infinity, forall x in RR$. Otherwise, we evaluate the condition `sml.dist + nbs.weight < old.dist`. Only nodes for which this condition is `true`, i.e. nodes for which the path over `min_node` is shorter than their currently known shortest path, are selected in this step.
+`old.dist` is  `NULL` if `old` has not been selected before. In this case, the condition is `true` by default, as #jb $x < infinity, forall x in RR$. Otherwise, we evaluate the condition `sml.dist + nbs.weight < old.dist`. Only nodes for which this condition is `true` (i.e., nodes for which the path via `min_node` is shorter than their currently known shortest path) are selected in this step.
 
-Finally, we examine the `SELECT`-clause. With the conditions explained above, we just found a set of neighbors which either have never been selected before, or for which we found a shorter path by going over `min_node`. We upsert these neighbors into the recurring table:
+Finally, we examine the `SELECT`-clause. With the conditions explained above, we just found a set of neighbors which either have never been selected before, or for which we found a shorter path by going via `min_node`. We upsert these neighbors into the recurring table:
 - `nbs.node_to` is the neighbor's `node_id`, as explained above.
-- as `sml.dist + nbs.weight` is the shortest path currently known to reach this neighbor, we set `dist` to this value.
-- we add the heuristic to `dist` to get the `f`-value, `sml.dist + nbs.weight + nbs.h`.
-- as we found this smallest path by going over `min_node`, we set `sml.node_id`, to be the previous node `prev` in the path to reach this neighbor.
-- the neighbor has still not been `visited` yet. 
+- As `sml.dist + nbs.weight` is the shortest currently known path length to reach this neighbor, we set `dist` to this value.
+- We add the heuristic to `dist` to get the `f`-value, `sml.dist + nbs.weight + nbs.h`.
+- As we found this shortest path by going via `min_node`, we set `sml.node_id` to be the previous node `prev` in the path to reach this neighbor.
+- The neighbor has still not been `visited` yet. 
 
 #figure(
   caption: [Recursive step of A\* for using-key.],
@@ -260,14 +256,14 @@ Finally, we examine the `SELECT`-clause. With the conditions explained above, we
         LEFT OUTER JOIN recurring.astar AS old ON nbs.node_to = old.node_id
     WHERE 
         sml.node_id = (SELECT id FROM min_node) AND                             
-        sml.node_id != goal_node() AND 
+        sml.node_id != goal_node()              AND 
         sml.dist + nbs.weight < coalesce(old.dist, 'inf' :: FLOAT)
     ```
   ]
 ) <astar_recursive>
 
 #figure(
-  caption: [Comparison of table sizes for our example graph.],
+  caption: [Comparison of table sizes for our example.],
   table(
     rows: 3,
     columns: 8,
@@ -303,7 +299,7 @@ Finally, we examine the `SELECT`-clause. With the conditions explained above, we
 )
 
 #figure(
-  caption: [Running example of A\* for using-key. Rows outlined in red mark currently visited nodes; orange values are being updated, while green values are being inserted.],
+  caption: [Running example of A\* for using-key. Rows outlined in red mark currently visited nodes; orange values are being updated, green values are being inserted.],
   placement: auto,
   table(
     columns: 4,
@@ -433,11 +429,11 @@ The classic variant of A\* can be viewed as an extension of using-key. We follow
 
 @astar_classic shows the recursive step of the classic query. The using-key variant can be inserted at the marked spot by replacing every occurence of `recurring.table` within @astar_recursive with `filtered_astar`. Additionally, two more code blocks are required.
 
-`(1)`: As multiple occurences of the same key can appear in the union table, we need to specify which one should be selected. This is what the CTE `filtered_astar` does. To decide which values to select and which to discard, we apply aggregates that use the nature of Dijkstra's algorithm:
+`(1)`: As multiple occurences of the same key can appear in the union table, we need to specify which ones should be selected. This is what the CTE `filtered_astar` does. To decide which values to select and which to discard, we apply `node_id`-grouped aggregates that exploit the properties of Dijkstra's algorithm:
 1. A new entry for a given node is only generated if a smaller distance to this node has been found. Thus, we should select `min(dist)` and `argmin(f, dist)`, `argmin(prev, dist)`, respectively.
-2. If a node has been marked as `visited`, it will never be selected again. Thus, if one instance of the node has its `visited`-value set to `true`, we should select `true` overall - which can simply be implemented by `bool_or(visited)`.
+2. If a node has been marked as `visited`, it will never be selected again. Thus, if one instance of the node has its `visited`-value set to `true`, we should select `true` overall, `bool_or(visited)`.
 
-`(2)`: After all other values have been selected, we need to carry to rest of the table in order to not lose any information. For this, we simply select the entire `filtered_astar`-table. The `WHERE`-clause implements the break condition.
+`(2)`: After the updated values have been selected, we need to carry to rest of the table in order not to lose any information. For this, we select the entire `filtered_astar`-table. The `WHERE`-clause implements the break condition known from using-key.
 
 
 
