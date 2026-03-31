@@ -1,5 +1,6 @@
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
+#import "definitions.typ": *
 
 #set math.equation(numbering: "(1)")
 #set figure(placement: auto)
@@ -54,7 +55,7 @@ SQLs way of doing this is called the _common table expression_ (CTE) @sql_standa
 
 In order for SQL to become turing-complete, some kind of iteration mechanism had to be added to the language's standard. Together with CTEs, SQL:1999 @sql:1999, @sql_standard introduced _recursive CTEs_, which expand the general CTE concept by allowing self-reference within the inner query. 
 
-See @cte_recursive for the general layout and an example. A recursive CTE is defined by the keyword `WITH RECURSIVE`, followed by the table name and the list of columns, just as for non-recursive CTEs. The inner query is divided into two parts: the base case and the recursive step, both of which are themselves queries, combined by a `UNION ALL` (or just `UNION`) clause. We explain the functionality of recursive CTEs in detail below; in a nutshell, the base case is evaluated once at the beginning, and the recursive step is evaluated repeatedly. The recursive step can access results from the immediately preceding iteration by selecting from `cte_name` recursively. This iteration stops as soon as a fixpoint is reached, i.e., as soon as the recursive step does not produce any rows. Every row produced during the iteration process can then be accessed in the outer query.
+See @cte_recursive for the general layout and an example. A recursive CTE is defined by the keyword #jb `WITH RECURSIVE`, followed by the table name and the list of columns, just as for non-recursive CTEs. The inner query is divided into two parts: the base case and the recursive step, both of which are themselves queries, combined by a `UNION ALL` (or just `UNION`) clause. We explain the functionality of recursive CTEs in detail below; in a nutshell, the base case is evaluated once at the beginning, and the recursive step is evaluated repeatedly. The recursive step can access results from the immediately preceding iteration by selecting from `cte_name` recursively. This iteration stops as soon as a fixpoint is reached, i.e., as soon as the recursive step does not produce any rows. Every row produced during the iteration process can then be accessed in the outer query.
 
 In the example in @cte_recursive, we define a recursive query to calculate the first ten powers of two, 
 $ x = 2^n, n in {1, ..., 10}. $ <pow2_math> 
@@ -162,7 +163,6 @@ In `(1)` we see how the first iteration is being prepared by evaluating the base
 #codly-enable()
 
 Let us take some notes on recursive CTEs as presented in the previous chapter. 
-
 First, the results of each iteration are always appended to the union table `(5)`. This allows us to access the entire iteration history in the outer query. It turns out, however, that queries often select only few desired result rows and discard the others. Meanwhile, collecting all intermediate results causes the union table to potentially grow very large, so that storage limitations become an issue.
 
 Secondly, the recursive step `(3)` only ever queries the working table, never the union table. This is an important feature, as continuous access to the union table would drastically impact performance due to its potentially rapid growth @recursive_relations. However, by denying access to the union table, we can only ever access the results of the immediately preceding iteration. To work around this limitation, we are forced to manually carry result rows through the iteration process. Both readability of the code and performance suffer greatly from this behaviour.
@@ -232,7 +232,7 @@ $ <upsert>
 where $u$ and $i$ are tables, $delta$ denotes duplicate elimination and $⧔$ denotes left antijoin. In words, if `i` contains two or more rows with equal key values, `upsert` raises a key error; the payload values for these key values would be ambiguous. Else, we update all rows in `u` whose key values are included in `i`. If a key value in `i` is not yet included in `u`, we simply include the respective row.
 
 @using-key_pseudocode shows the evaluation of recursive CTEs in the using-key variant in an imperative style, together with comments linking each line to the appropriate figure in @visualize_using-key.
-We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply `upsert(recurring, intermediate)` to update rows with existing keys and insert rows with novel keys as explained above. 
+We define the initial values of the working table by evaluating the base case and inserting it to the recurring table `(1)`, and then copying the recurring table to the working table `(2)`. As the function call to `upsert` in `(1)` has the empty set as first argument, steps `(1)` and `(2)` directly correspond to the classic case. In `(3)` on the other hand, `recursive_step` takes two arguments instead of one: the working table and the recurring table. In contrast to classic, where we have no access to the union table, we can access the recurring table here. In `(5)`, instead of unionizing the union- and intermediate table, we apply #jb `upsert(recurring, intermediate)` to update rows with existing keys and insert rows with novel keys as explained above. 
 
 #figure(
   caption: [Internal evaluation of using-key as pseudocode (left) and comments (right) to explain and reference the associated line.],
@@ -275,7 +275,7 @@ We define the initial values of the working table by evaluating the base case an
 #codly-disable()
 #figure(
   kind: image,
-  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the fixpoint has been reached.],
+  caption: [Base case (top) and recursive step (bottom) of recursive CTE from @using-key visualized. Steps `(3)` and `(4)` are repeated in a loop (indicated by the looping arrow) until the intermediate table is empty.],
   grid(
     rows: 2,
     gutter: 5pt,
@@ -285,11 +285,11 @@ We define the initial values of the working table by evaluating the base case an
 ) <visualize_using-key>
 
 
-This approach allows us to tacke the problems described in @problems.
-Instead of keeping outdated intermediate results in the union table, the recurring table discards them at run time. Thus, the recurring table in has a natural size limit: the domain of key values. 
+This approach allows us to tackle the problems described in @problems.
+Instead of keeping outdated intermediate results in the union table, the recurring table discards them at run time. Thus, the recurring table has a natural size limit: the domain of key values. 
 This size limitation allows us to access intermediate results from arbitrary iterations, rendering carrying results manually through the iteration process obsolete. 
 Also, in using-key, the `recursive_step` is not required to be monotonic, lifting the mentioned syntactic restrictions.
 
-As a last example, let us take a qualitative look at an arbitrary graph algorithm. In the graph, every node has a unique id, `node_id`; we choose `node_id` as key in using-key. When comparing classic recursive CTEs to using-key, we can make the following general observations:
+As a last example, let us take a qualitative look at an arbitrary graph algorithm, where every node in the graph has a unique id, `node_id`; we choose `node_id` as key in using-key. When comparing classic recursive CTEs to using-key, we can make the following general observations:
 - The union table's size in classic in unbounded, while the recurring table in using-key can never grow larger than the number of nodes in the graph.
-- In classic, we cannot easily access previously calculated values for any node whose values were calculated more than one iteration ago, while in using-key, we have access to the intermediate values of all previously visited nodes.
+- In classic, we cannot easily access previously calculated values for any node whose values were calculated more than one iteration ago, while in using-key, we have access to the intermediate values of all previously selected nodes.
