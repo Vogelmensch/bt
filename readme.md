@@ -14,7 +14,12 @@ There are known issues with `DuckDB 1.5` and later versions; when using those, y
 
 Make sure to add the correct version of DuckDB to your `PATH`.
 
-You also need [Python](https://www.python.org/).
+Furthermore:
+
+- [Python](https://www.python.org/).
+- numpy and matplotlib for plotting.
+- `/usr/bin/time` for memory measurements
+   - if you're not on Linux: 🤷🏻‍♂️
 
 
 ## Queries
