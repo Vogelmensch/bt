@@ -19,7 +19,7 @@ Furthermore:
 - [Python](https://www.python.org/).
 - numpy and matplotlib for plotting.
 - `/usr/bin/time` for memory measurements
-   - if you're not on Linux: 🤷🏻‍♂️
+   - if you're not on Linux, memory measurements will probably not work.
 
 
 ## Queries
