@@ -11,8 +11,13 @@
 = Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 
 #include "theory.typ"
+
 #include "astar.typ"
 #include "astar_tables.typ"
 #include "astar_measure.typ"
 
 #include "lcs.typ"
+#include "lcs_tables.typ"
+#include "lcs_measure.typ"
+
+#include "needleman.typ"
