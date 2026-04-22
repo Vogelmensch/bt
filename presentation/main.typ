@@ -5,17 +5,25 @@
 
 #show: simple-theme.with(aspect-ratio: "16-9")
 
-#show raw: set text(size: 14pt)
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+
+#show raw: set text(size: 12pt)
+
+#set align(center)
 
 
 = Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 
+#codly-disable()
 #include "theory.typ"
 
 #include "astar.typ"
 #include "astar_tables.typ"
 #include "astar_measure.typ"
 
+#codly-enable()
 #include "lcs.typ"
 #include "lcs_tables.typ"
 #include "lcs_measure.typ"

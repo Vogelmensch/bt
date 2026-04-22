@@ -1,3 +1,6 @@
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+
 // dimension for dynamic programming tables
 #let dim = 16pt
 
@@ -135,8 +138,7 @@
       [*R*], [0], e, e, e, e,
       [*E*], [0], e, e, e, e,
   ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -154,8 +156,7 @@
       [*R*], [0], t(0, true, true, false, lime), e, e, e,
       [*E*], [0], e, e, e, e,
   ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -173,8 +174,7 @@
       [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, lime), e, e,
       [*E*], [0], t(0, true, true, false, lime), t(1, false, false, true, lime), e, e,
   ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -192,8 +192,7 @@
     [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, lime), t(2, false, false, true, lime),
     [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), e, e,
   ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -211,8 +210,7 @@
     [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
     [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, lime), e,
   ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -230,8 +228,7 @@
             [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, white),
             [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, lime),
         ),
-  ```sql
-  ```
+  []
 )
 
 == LCS: Letters are equal
@@ -249,6 +246,5 @@
             [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, orange),
             [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, orange),
         ),
-  ```sql
-  ```
+  []
 )
