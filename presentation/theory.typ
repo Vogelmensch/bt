@@ -3,6 +3,9 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 #let fletcher-diagram = touying-reducer.with(reduce: fletcher.diagram, cover: fletcher.hide)
 
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+
 #let tablestroke = 0.5pt
 
 #let cte_table(pos, table_name, ..content) = node(
@@ -45,6 +48,8 @@
 #let arrowtext(content) = text(content, size: 15pt)
 
 == Animation?
+
+#codly-disable()
 
 #align(center + horizon)[
   #fletcher-diagram(

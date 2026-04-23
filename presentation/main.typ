@@ -11,14 +11,12 @@
 
 #show raw: set text(size: 12pt)
 
-#set align(center)
-
-
 = Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 
 #codly-disable()
 #include "theory.typ"
 
+#codly-enable()
 #include "astar.typ"
 #include "astar_tables.typ"
 #include "astar_measure.typ"
@@ -29,3 +27,6 @@
 #include "lcs_measure.typ"
 
 #include "needleman.typ"
+#include "needleman_measure.typ"
+
+#include "bishop.typ"

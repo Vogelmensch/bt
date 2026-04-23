@@ -86,6 +86,8 @@
 
 == Scoring Function
 
+#codly-disable()
+
 $
   "score"(a, b) = cases(
     +1 &"if" a = b &"match",

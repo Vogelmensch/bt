@@ -177,45 +177,21 @@
 )
 
 
-
 == A\*
 
-#uncover(
-4,
 ```sql
-    SELECT
-        nbs.node_to,                   -- node_id                            
-        sml.dist + nbs.weight,         -- dist                  
-        sml.dist + nbs.weight + nbs.h, -- f
-        sml.node_id,                   -- prev                            
-        false                          -- visited                       
-```  
-)    
-```sql
-    FROM
-        recurring.astar                 AS sml
+SELECT
+    nbs.node_to,                   -- node_id                            
+    sml.dist + nbs.weight,         -- dist                  
+    sml.dist + nbs.weight + nbs.h, -- f
+    sml.node_id,                   -- prev                            
+    false                          -- visited                       
+FROM
+    recurring.astar                 AS sml
+    JOIN graph                      AS nbs ON sml.node_id = nbs.node_from 
+    LEFT OUTER JOIN recurring.astar AS old ON nbs.node_to = old.node_id
+WHERE 
+    sml.node_id = (SELECT id FROM min_node) AND                             
+    sml.node_id != goal_node()              AND 
+    sml.dist + nbs.weight < coalesce(old.dist, 'inf' :: FLOAT)
 ```
-#uncover(
-    "2-",
-```sql
-        JOIN graph                      AS nbs ON sml.node_id = nbs.node_from 
-```
-)
-#uncover(
-"3-",
-```sql
-        LEFT OUTER JOIN recurring.astar AS old ON nbs.node_to = old.node_id
-```)
-```sql
-    WHERE 
-        sml.node_id = (SELECT id FROM min_node) AND                             
-        sml.node_id != goal_node()              AND 
-```
-#uncover(
-    "3-",
-```sql
-        sml.dist + nbs.weight < coalesce(old.dist, 'inf' :: FLOAT)
-```)
-
-
-

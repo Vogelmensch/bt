@@ -2,6 +2,8 @@
 #import themes.simple: *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 #let fletcher-diagram = touying-reducer.with(reduce: fletcher.diagram, cover: fletcher.hide)
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
 
 #show raw: set text(size: 12pt)
 #show table: set text(size: 13pt)
@@ -101,6 +103,8 @@
 
 
 == Classic A\*
+
+#codly-disable()
 
 #align(center + horizon, 
         fletcher-diagram(
