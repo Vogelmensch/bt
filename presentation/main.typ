@@ -10,6 +10,7 @@
 #show: codly-init.with()
 
 #show raw: set text(size: 12pt)
+#set raw(syntaxes: "../thesis/custom_sql.sublime-syntax")
 
 = Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 

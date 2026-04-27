@@ -67,19 +67,19 @@
             align: center + horizon,
             [`GTA`], 
             [`GTA`], 
-            alternatives([`GTA`], [`GTA`], [`GTA`], [`GTA`], [`GTA`], [`GTA`], [`GT-A`], ),
+            alternatives([`GTA`], [`GT-A`], ),
 
-            alternatives([`↓`], [`↓`], [`↓`], [`↓`], [`GTC`]),
-            alternatives([`↓`], [`↓`], [`↓`], [`↓`], [`↓`], [`G-A`]),
-            alternatives([`↓`], [`↓`], [`↓`], [`↓`], [`↓`], [`↓`], [`GTGA`]),
+            alternatives([`↓`],[`GTC`]),
+            alternatives([`↓`], [`G-A`]),
+            alternatives([`↓`], [`GTGA`]),
 
-            uncover("2-4", [`GTC`]), 
-            uncover("3-5", [`GA`]), 
-            uncover("4-6", [`GTGA`]),
+            uncover("1", [`GTC`]), 
+            uncover("1", [`GA`]), 
+            uncover("1", [`GTGA`]),
 
-            uncover("2-", "substitution"), 
-            uncover("3-", "deletion"), 
-            uncover("4-", "insertion")
+            uncover("1-2", "substitution"), 
+            uncover("1-2", "deletion"), 
+            uncover("1-2", "insertion")
         )
     )
 }
@@ -173,35 +173,37 @@ $
 
 #align(left, lcs_table(
     align(center,
-    table(
-        rows: 6,
-        columns: 6,
-        stroke: 0.5pt,
-        [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
-        table.hline(stroke: 1pt),
-        [*$epsilon$*], e, e, e, e, e,
-        [*A*], e, e, e, e, e,
-        [*A*], e, e, e, e, e,
-        [*T*], e, e, e, e, e,
-        [*G*], e, e, e, e, e,
-    )),
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], e, e, e, e, e,
+            [*A*], e, e, e, e, e,
+            [*A*], e, e, e, e, e,
+            [*T*], e, e, e, e, e,
+            [*G*], e, e, e, e, e,
+        )),
     []
 ),)
 
 == Needleman: Base Case
 
 #lcs_table(
-    table(
-        rows: 6,
-        columns: 6,
-        stroke: 0.5pt,
-        [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
-        table.hline(stroke: 1pt),
-        [*$epsilon$*], t(0, false, false, false, white), alternatives(e, t(1, true, false, false, white)), alternatives(e, t(2, true, false, false, white)), alternatives(e, t(3, true, false, false, white)), alternatives(e, t(4, true, false, false, white)),
-        [*A*], alternatives(e, e, t(1, false, true, false, white)), e, e, e, e,
-        [*A*], alternatives(e, e, t(2, false, true, false, white)), e, e, e, e,
-        [*T*], alternatives(e, e, t(3, false, true, false, white)), e, e, e, e,
-        [*G*], alternatives(e, e, t(4, false, true, false, white)), e, e, e, e,
+    align(center, 
+        table(
+            rows: 6,
+            columns: 6,
+            stroke: 0.5pt,
+            [], table.vline(stroke: 1pt), [*$epsilon$*], [*G*], [*A*], [*G*], [*A*],
+            table.hline(stroke: 1pt),
+            [*$epsilon$*], t(0, false, false, false, white), alternatives(e, t(1, true, false, false, white)), alternatives(e, t(2, true, false, false, white)), alternatives(e, t(3, true, false, false, white)), alternatives(e, t(4, true, false, false, white)),
+            [*A*], alternatives(e, e, t(1, false, true, false, white)), e, e, e, e,
+            [*A*], alternatives(e, e, t(2, false, true, false, white)), e, e, e, e,
+            [*T*], alternatives(e, e, t(3, false, true, false, white)), e, e, e, e,
+            [*G*], alternatives(e, e, t(4, false, true, false, white)), e, e, e, e,
+        ),
     ),
     alternatives(
     [
@@ -245,6 +247,8 @@ $
 
 
 == Needleman: Recursive Step
+
+#show table: it => align(center, it)
 
 #lcs_table(
     alternatives(

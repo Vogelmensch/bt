@@ -205,3 +205,72 @@
       ```
     ]
   )
+
+  == Drunken Bishop: Recursive Step (classic)
+
+#grid(
+  columns: 2,
+  column-gutter: .5cm,
+  ```sql
+    SELECT
+        CASE 
+            WHEN bitlist[1][2] == '0' 
+            THEN greatest(0, x-1)       
+            ELSE least(width()-1, x+1)
+        END,
+        CASE 
+            WHEN bitlist[1][1] == '0' 
+            THEN greatest(0, y-1)       
+            ELSE least(height()-1, y+1)
+        END,
+        array_pop_front(bitlist),
+        length(bitlist) = 1             
+    FROM bishop
+    WHERE length(bitlist) > 0
+    ```,
+    table(
+      columns: 2,
+      rows: 4,
+      align: center,
+      row-gutter: 5pt,
+      stroke: none,
+      table.header([Bits], [Direction]),
+      table.hline(),
+      [00], [↖],
+      [01], [↗],
+      [10], [↙],
+      [11], [↘]
+    )
+)
+
+== Drunken Bishop: Recursive Step (using-key)
+
+```sql
+    WITH new(idx, x, y, is_end) AS (
+        <classic recursive step>
+    )
+    SELECT 
+        new.idx,
+        new.x,
+        new.y,
+        coalesce(field_to.sym_id + 1, 1),
+        new.is_end
+    FROM 
+        new 
+        LEFT OUTER JOIN recurring.bishop AS field_to ON field_to.x = new.x AND 
+                                                        field_to.y = new.y
+    ```
+
+== Drunken Bishop: Measurements (Methods)
+
+- generated random arrays of hex-numbers
+- length $l in {200, 400, ..., 5000}$
+- ten arrays per length
+
+== Drunken Bishop: Measurements (Results)
+
+#grid(
+    columns: 2,
+    image("../thesis/chapters/images/bishop_0315_all_time.svg"),
+    image("../thesis/chapters/images/bishop_0315_all_memory.svg")
+)

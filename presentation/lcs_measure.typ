@@ -3,7 +3,6 @@
 - generated random strings
 - length $l in {10, 20, ..., 200}$
 - two independent strings $s_1$ and $s_2$ per length
-- applied $"LCS"(s_1, s_2)$ for using-key and classic
 
 == LCS: Measurements (Results)
 

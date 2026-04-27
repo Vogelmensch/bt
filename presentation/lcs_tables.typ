@@ -58,7 +58,7 @@
 )
 
 
-== LCS: Letters are not equal
+== LCS: Letters are unequal
 
 
 #lcs_table(
