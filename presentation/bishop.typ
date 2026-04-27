@@ -35,43 +35,51 @@
 )
 
 == From Fingerprint to List of Directions
-
-#table(
-    columns: 10,
-    rows: 3,
-    row-gutter: 10pt,
-    stroke: none,
-    align: (x, y) => if y > 0 and x > 0 {left} else {center},
-    [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
-    [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
-)
-
-== From Fingerprint to List of Directions
-
-#table(
-    columns: 10,
-    rows: 3,
-    row-gutter: 10pt,
-    stroke: none,
-    align: (x, y) => if y > 0 and x > 0 {left} else {center},
-    [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
-    [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
-)
-
-- Read bytes from left to right
-- Within byte, Read bit-pairs from\ right to left 
+#{
+  set text(size: 22pt)
+  table(
+      columns: 10,
+      rows: 3,
+      row-gutter: 10pt,
+      stroke: none,
+      align: (x, y) => if y > 0 and x > 0 {left} else {center},
+      [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
+      [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
+  )
+}
 
 == From Fingerprint to List of Directions
 
-#table(
-    columns: 10,
-    rows: 3,
-    row-gutter: 10pt,
-    stroke: none,
-    align: (x, y) => if y > 0 and x > 0 {left} else {center},
-    [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
-    [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
-)
+#{
+  set text(size: 22pt)
+  table(
+      columns: 10,
+      rows: 3,
+      row-gutter: 10pt,
+      stroke: none,
+      align: (x, y) => if y > 0 and x > 0 {left} else {center},
+      [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
+      [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
+  )
+}
+
+- Read bytes from left to\ right
+- Within byte, Read bit-\ pairs from right to left 
+
+== From Fingerprint to List of Directions
+
+#{
+  set text(size: 22pt)
+  table(
+      columns: 10,
+      rows: 3,
+      row-gutter: 10pt,
+      stroke: none,
+      align: (x, y) => if y > 0 and x > 0 {left} else {center},
+      [Fingerprint], [7f], [:], [21], [:], [fa] , [:], [...], [:], [d9],
+      [Bits], [01 11 11 11], [:], [00 10 00 01], [:], [11 11 10 10], [:], [...], [:], [11 01 10 01],
+  )
+}
 
 #grid(
   columns: 3,

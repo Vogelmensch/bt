@@ -41,7 +41,7 @@
     [
         #only("2-", "Every species is identifiable by its DNA.")
 
-        #only("3-", [
+        #only("2-", [
         DNA is made up of four molecules:
         - Cytosine (*C*)
         - Guanine (*G*)
@@ -49,7 +49,11 @@
         - Thymine (*T*)
         ])
     ],
-    image("/assets/image.png", width: 70%)
+    [
+    #image("/assets/image-1.png", width: 50%)
+    #text([Source: lifemap.cnrs.fr], size: 14pt)
+
+    ]
 
 )
 

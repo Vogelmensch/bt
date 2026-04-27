@@ -248,3 +248,14 @@
         ),
   []
 )
+
+== LCS: Classic
+
+```sql
+<using-key recursive step>
+
+UNION
+
+FROM lcs
+WHERE (SELECT count(*) FROM lcs) < (SELECT count(*) FROM letters)
+```

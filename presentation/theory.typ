@@ -47,7 +47,78 @@
 
 #let arrowtext(content) = text(content, size: 15pt)
 
-== Animation?
+== Classic recursive CTEs
+
+#codly-enable()
+#grid(
+  columns: (50%, 50%),
+  ```sql
+  WITH RECURSIVE pow2(n, x) AS (
+      -- Base Case
+      SELECT 1, 2
+
+      UNION ALL 
+
+      -- Recursive Step
+      SELECT n+1, x*2
+      FROM pow2
+      WHERE n < 10
+  )
+  FROM pow2;
+  ```,
+  align(center,
+    no-codly(
+    ```
+    ┌───────┬───────┐
+    │   n   │   x   │
+    │ int32 │ int32 │
+    ├───────┼───────┤
+    │     1 │     2 │
+    │     2 │     4 │
+    │     3 │     8 │
+    │     4 │    16 │
+    │     5 │    32 │
+    │     6 │    64 │
+    │     7 │   128 │
+    │     8 │   256 │
+    │     9 │   512 │
+    │    10 │  1024 │
+    ├───────┴───────┤
+    │    10 rows    │
+    └───────────────┘
+    ```
+    )
+  )
+)
+
+== Classic: Base Case
+
+#codly-disable()
+
+
+#align(center+horizon)[
+  #fletcher-diagram(
+    spacing: (0pt, 25pt),
+
+    alternatives(
+      cte_table((-1, 0), "working table", [], []),
+      cte_table((-1, 0), "working table", [1], [2])
+    ),
+    cte_table((0,0), "intermediate table", [], []),
+    cte_table((1, 0), "union table", [1], [2]),
+
+    uncover((1), rec_step([*Base Case*], 
+      ```sql
+      SELECT 1, 2
+      ```)
+    ),
+
+    uncover((1), edge((0, -1), "r", (1, 0), shift: 2pt, "->", arrowtext("appends"))),
+    uncover((2), edge((1, 0), "u,l,l", (-1, 0), shift: 2pt, "->", arrowtext("appends"))),
+  )
+]
+
+== Classic: Recursive Step
 
 #codly-disable()
 
