@@ -16,6 +16,7 @@
 = Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 
 #codly-disable()
+#include "intro.typ"
 #include "theory.typ"
 
 #codly-enable()

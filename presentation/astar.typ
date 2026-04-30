@@ -59,6 +59,66 @@
 
 == A\*
 
+- Finds shortest paths for weighted graphs
+- Only non-negative edge weights
+- Extends Dijkstra's algorithm with a heuristic function
+
+== A\*: Layout
+
+#grid(
+    columns: 2,
+    column-gutter: 20pt,
+    [
+        ```sql
+        WITH RECURSIVE astar (
+        node_id,
+        dist,
+        f,
+        prev,
+        visited
+        ) AS (
+        <base case>
+
+        UNION ALL
+
+        (<recursive step>)
+        )
+        <outer query>
+        ```
+    ],
+    [
+        ```sql
+        WITH RECURSIVE astar (
+        node_id,
+        dist,
+        f,
+        prev,
+        visited
+        ) USING KEY (node_id) AS (
+        <base case>
+
+        UNION 
+
+        (<recursive step>)
+        )
+        <outer query>
+        ```
+    ]
+)
+
+== A\*: Base Case
+
+```sql
+  SELECT 
+      start_node(), 
+      0,
+      h(start_node()),
+      NULL, 
+      false
+  ```
+
+== A\*
+
 
 #grid(
     columns: 2,
