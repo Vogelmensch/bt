@@ -50,3 +50,7 @@ $ lcs(s_1 + a, s_2 + b) = cases(
     ` AR`, `ER`
   )
 )
+
+== LCS: Layout
+
+TODO

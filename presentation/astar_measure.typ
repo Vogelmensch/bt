@@ -1,4 +1,4 @@
-== A\* Measurements (Methods)
+== A\*: Measurements (Methods)
 
 #grid(
     columns: 2,
@@ -10,7 +10,7 @@
     "Las Vegas"
 )
 
-== A\* Measurements (Results for New York)
+== A\*: Measurements (Results for New York)
 
 #grid(
     columns: 2,
@@ -18,7 +18,7 @@
     image("../thesis/chapters/images/astar_nyc_memory.svg")
 )
 
-== A\* Measurements (Results for Las Vegas)
+== A\*: Measurements (Results for Las Vegas)
 
 #grid(
     columns: 2,

@@ -387,7 +387,7 @@ $
     }
 )
 
-== Needleman as classic CTE
+== Needleman: Classic
 
 ```sql
 <using-key recursive step>

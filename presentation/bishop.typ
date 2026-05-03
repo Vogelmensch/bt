@@ -128,7 +128,7 @@
       )
 )
 
-== A Drunken Bishop
+== Bishop's Footprint
 
 #grid(
   columns: (33%, 33%, 33%),
@@ -251,7 +251,7 @@
     )
 )
 
-== Drunken Bishop: Recursive Step (using-key)
+== Drunken Bishop: Recursive Step (USING KEY)
 
 ```sql
     WITH new(idx, x, y, is_end) AS (

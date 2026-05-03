@@ -222,7 +222,7 @@ $=>$ new semantics for recursive CTEs are needed
   )
 )
 
-== Using-Key: Base Case
+== USING KEY: Base Case
 
 #codly-disable()
 
@@ -249,7 +249,7 @@ $=>$ new semantics for recursive CTEs are needed
 ]
 
 
-== Using-key: Recursive Step
+== USING KEY: Recursive Step
 
 #codly-disable()
 
@@ -301,7 +301,7 @@ $=>$ new semantics for recursive CTEs are needed
   )
 ]
 
-== Advantages of Using-Key
+== Advantages of USING KEY
 
 - Recurring table replaces outdated results
   - Size limitation

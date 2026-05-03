@@ -4,10 +4,12 @@
 
 == Introduction
 
+#codly-enable()
+
 #grid(
     columns: 2,
     gutter: .5cm,
-    [classic], [using-key],
+    [classic], [USING KEY],
     [```sql
     WITH RECURSIVE pow2(n, x) AS (
         ...

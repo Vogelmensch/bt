@@ -363,7 +363,7 @@
     )
 )
 
-== Filter the Working Table
+== A\*: Filter the Working Table
 
 #align(center + horizon,
 

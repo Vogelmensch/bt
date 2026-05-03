@@ -34,3 +34,4 @@
 
 #include "bishop.typ"
 
+#include "summary.typ"
