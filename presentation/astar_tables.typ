@@ -99,10 +99,7 @@
 #let arrowtext(content) = text(content, size: 15pt)
 
 
-
-
-
-== Classic A\*
+== A\*: USING KEY
 
 #codly-disable()
 
@@ -111,10 +108,143 @@
         debug: 0,
         spacing: (0pt, 20pt),
 
-        // example graph
-        only((4),
-            node((1.2,-1.2), example_graph(0))
+        // Working Table
+        alternatives(
+            cte_table((-1, 0), "working table", ),
+            cte_table((-1, 0), "working table", [0], [0], [0], [-], [`false`],),
+            cte_table((-1, 0), "working table", [0], [0], [0], [-], [`false`]),
+            cte_table((-1, 0), "working table", [0], [0], [0], [-], [`false`]),
+            cte_table((-1, 0), "working table",
+            [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((-1, 0), "working table",
+            [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((-1, 0), "working table",
+            [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((-1, 0), "working table",
+            [1], [1], [1], [0], [true],
+            [3], [2], [2], [1], [false]
+            ),
         ),
+
+        // Intermediate Table
+        alternatives(
+            cte_table((0,0), "intermediate table", ),
+            cte_table((0,0), "intermediate table", ),
+            cte_table((0,0), "intermediate table", 
+            [0], [0], [0], [-], [`true`]),
+            cte_table((0,0), "intermediate table", 
+            [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((0,0), "intermediate table", 
+            [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((0,0), "intermediate table",
+            [1], [1], [1], [0], [true]),
+            cte_table((0,0), "intermediate table",
+            [1], [1], [1], [0], [true],
+            [3], [2], [2], [1], [false]
+            ),
+        ),
+
+        // Recurring Table
+        alternatives(
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`false`]),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`false`]),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`false`], marked: 1),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`false`]),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`],
+            marked: 2
+            ),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`]
+            ),
+            cte_table((1, 0), "recurring table", [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`true`],
+            [2], [4], [4], [0], [`false`],
+            [3], [2], [2], [1], [false]
+            ),
+        ),
+
+        // QUERIES
+        uncover(1, 
+            rec_step([*Base Case*], 
+            ```sql
+            SELECT start_node(), 0, 
+                h(start_node()), NULL, false
+            ```)
+        ),
+
+        uncover("3,6", 
+            rec_step([*Recursive step (1/2)*], 
+            ```sql
+            SELECT node_id, dist, f, prev, true
+            FROM recurring.astar
+            WHERE node_id = min_node_id
+            ```)
+        ),
+
+        uncover("4,7",
+            rec_step([*Recursive step (2/2)*],
+            ```sql
+            <select neighbors>
+            ```  
+            )
+        ),
+
+        // EDGES
+        uncover(1,
+            edge((0, -1), "r", (1, 0), "->", arrowtext("appends"))),
+
+        uncover(2,
+            edge((1, 0), "u,l,l", (-1, 0), "->", arrowtext("overwrites"), label-side: right)),
+
+        uncover("3-4,6-7",
+            edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%, stroke: .4pt),
+        ),
+        uncover("3-4,6-7",
+            edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%),
+        ),
+        uncover("3-4,6-7",
+            edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
+        ),
+        uncover("5,8",
+            edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("updates and inserts"))
+        ),
+        uncover("5,8",
+            edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
+        )
+    )
+)
+
+
+== A\*: Classic
+
+#codly-disable()
+
+#align(center + horizon, 
+        fletcher-diagram(
+        debug: 0,
+        spacing: (0pt, 20pt),
 
         // Working Table
         alternatives(
@@ -135,7 +265,6 @@
             [1], [1], [1], [0], [`false`],
             [2], [4], [4], [0], [`false`],
             [0], [0], [0], [-], [`false`],
-            marked: 4
             ),
 
         ),
@@ -154,6 +283,13 @@
             [2], [4], [4], [0], [`false`],
             [0], [0], [0], [-], [`false`]
             ),
+            cte_table((0,0), "intermediate table", [0], [0], [0], [-], [`true`],
+            [1], [1], [1], [0], [`false`],
+            [2], [4], [4], [0], [`false`],
+            [0], [0], [0], [-], [`false`]
+            ),
+            cte_table((0,0), "intermediate table", 
+            [-], [-], [-], [-], [-], )
         ),
 
         // Union Table
@@ -268,17 +404,12 @@
     ),
 )
 
-== Classic A\*
+== A\*: Classic
 
 #align(center + horizon, 
     fletcher-diagram(
         debug: 0,
         spacing: (0pt, 20pt),
-
-        // example graph
-        only((2),
-            node((1.2,-1.2), example_graph(1))
-        ),
 
         // Working Table
         alternatives(
@@ -391,4 +522,42 @@
             edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))
         )
     )
+)
+
+== A\*: Classic (Query)
+
+#codly-enable()
+#grid(
+    columns: 2,
+    gutter: .5cm,
+    ```sql
+-- (1) Group equal nodes
+WITH filtered_astar (
+    node_id,
+    dist, f,
+    prev,
+    visited
+) AS (
+    SELECT 
+        node_id,
+        min(dist), argmin(f, dist),
+        argmin(prev, dist),
+        bool_or(visited)
+    FROM astar
+    GROUP BY node_id
+),
+  ```,
+  {
+  codly(offset: 15)
+  ```sql
+<using-key recursive step>
+
+UNION 
+
+-- (2) Carry table
+SELECT *
+FROM filtered_astar
+WHERE (SELECT id FROM min_node) != goal_node()
+  ```
+  }
 )

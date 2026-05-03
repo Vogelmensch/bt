@@ -59,9 +59,16 @@
 
 == A\*
 
-- Finds shortest paths for weighted graphs
-- Only non-negative edge weights
-- Extends Dijkstra's algorithm with a heuristic function
+
+#grid(
+    columns: 2,
+    [
+    - Finds shortest paths for weighted graphs
+    - Only non-negative edge weights
+    - Extends Dijkstra's algorithm with a heuristic function
+    ],
+    example_graph(false)
+)
 
 == A\*: Layout
 
@@ -108,16 +115,32 @@
 
 == A\*: Base Case
 
-```sql
-  SELECT 
-      start_node(), 
-      0,
-      h(start_node()),
-      NULL, 
-      false
-  ```
+#grid(
+    columns: 2,
+    gutter: 1cm,
+    
+    grid(
+        gutter: 1cm,
+        [
+        ```sql
+        SELECT 
+            start_node(), 
+            0,
+            h(start_node()),
+            NULL, 
+            false
+        ```
+        ],
+        dijk(
+            [0], [0], [0], [NULL], [false],
 
-== A\*
+        )
+    ),
+    example_graph(false)
+)
+
+
+== A\*: Find minimal node
 
 
 #grid(
@@ -136,17 +159,17 @@
             ```
         ],
         dijk(
-            [0], [0], [0], [`NULL`], [`true`],
-            [1], [1], [1], [0], [`true`],
-            [2], [4], [4], [0], [`false`],
-            [3], [2], [2], [1], [`false`],
+            [0], [0], [0], [NULL], [true],
+            [1], [1], [1], [0], [true],
+            [2], [4], [4], [0], [false],
+            [3], [2], [2], [1], [false],
 
         )
     ),
     example_graph(false)
 )
 
-== A\*
+== A\*: Find minimal node
 
 
 #grid(
@@ -166,17 +189,17 @@
         ],
         dijk(
             marked: 4,
-            [0], [0], [0], [`NULL`], [`true`],
-            [1], [1], [1], [0], [`true`],
-            [2], [4], [4], [0], [`false`],
-            [3], [2], [2], [1], [`false`],
+            [0], [0], [0], [NULL], [true],
+            [1], [1], [1], [0], [true],
+            [2], [4], [4], [0], [false],
+            [3], [2], [2], [1], [false],
 
-        )
+        ),
     ),
     example_graph(true)
 )
 
-== A\*
+== A\*: Visit minimal node
 
 
 #grid(
@@ -199,45 +222,15 @@
     ],
     dijk(
         marked: 4,
-        [0], [0], [0], [`NULL`], [`true`],
-        [1], [1], [1], [0], [`true`],
-        [2], [4], [4], [0], [`false`],
-        [3], [2], [2], [1], [`false`],
-    )
-)
-
-== A\*
-
-
-#grid(
-    columns: 2,
-    gutter: 1cm,
-    
-    [
-        ```sql
-        SELECT 
-            node_id, 
-            dist, 
-            f,
-            prev, 
-            true
-        FROM recurring.astar
-        WHERE 
-            node_id = (SELECT id FROM min_node) AND 
-            node_id != goal_node()
-        ```
-    ],
-    dijk(
-        marked: 4,
-        [0], [0], [0], [`NULL`], [`true`],
-        [1], [1], [1], [0], [`true`],
-        [2], [4], [4], [0], [`false`],
-        [3], [2], [2], [1], [`true`],
+        [0], [0], [0], [NULL], [true],
+        [1], [1], [1], [0], [true],
+        [2], [4], [4], [0], [false],
+        [3], [2], [2], [1], alternatives("false", "true"),
     )
 )
 
 
-== A\*
+== A\*: Visit Neighbors
 
 ```sql
 SELECT

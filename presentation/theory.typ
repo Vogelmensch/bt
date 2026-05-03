@@ -174,6 +174,19 @@
   )
 ]
 
+== Issues of classic recursive CTEs
+
+- Union table collects results of every iteration
+  - large growth
+  - we cannot access union table at runtime
+  - syntactic restrictions
+
+- workarounds exist
+  - queries are complicated
+  - inefficient execution
+
+$=>$ new semantics for recursive CTEs are needed
+
 
 == USING KEY
 
@@ -280,10 +293,20 @@
 
       uncover((1,3,5), edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%)),
       uncover((1,3,5), edge((0, -1), (0, 0), "->", arrowtext("overwrites"))),
-      uncover((1,3,5), edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%)),
+      uncover((1,3,5), edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%, stroke: .4pt)),
 
       uncover((2,4,6), edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("updates / inserts"))),
       uncover((2,4,6),
       edge((0, 0), "u,l", (-1, 0), shift: -2pt, "->", arrowtext("overwrites"))),
   )
 ]
+
+== Advantages of Using-Key
+
+- Recurring table replaces outdated results
+  - Size limitation
+  - we can access recurring table at runtime
+  - no syntactic restrictions 
+
+- Queries become easer to read
+- Performance improves
