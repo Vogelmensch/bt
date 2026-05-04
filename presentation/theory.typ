@@ -192,6 +192,7 @@ $=>$ new semantics for recursive CTEs are needed
 
 #codly-enable()
 #grid(
+  gutter: 15pt,
   columns: (50%, 50%),
   ```sql
   WITH RECURSIVE pow2(i, n, x) 
@@ -209,17 +210,28 @@ $=>$ new semantics for recursive CTEs are needed
   FROM pow2;
   ```,
   align(center,
-    no-codly(
-    ```
-  ┌───────┬───────┬───────┐
-  │   i   │   n   │   x   │
-  │ int32 │ int32 │ int32 │
-  ├───────┼───────┼───────┤
-  │   0   │  10   │ 1024  │
-  └───────┴───────┴───────┘
-    ```
-    )
-  )
+    [
+      #no-codly(
+      ```
+    ┌───────┬───────┬───────┐
+    │   i   │   n   │   x   │
+    │ int32 │ int32 │ int32 │
+    ├───────┼───────┼───────┤
+    │   0   │  10   │ 1024  │
+    └───────┴───────┴───────┘
+      ```
+      )
+      #pause
+      #grid(
+        align: left,
+        columns: 2,
+        column-gutter: 15pt,
+        row-gutter: 30pt,
+        [classic:], [append only],
+        [USING KEY:], [replace old results if key is equal]
+      )
+    ]
+  ),
 )
 
 == USING KEY: Base Case

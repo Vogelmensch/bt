@@ -158,13 +158,22 @@
             )
             ```
         ],
-        dijk(
-            [0], [0], [0], [-], [true],
-            [1], [1], [1], [0], [true],
-            [2], [4], [4], [0], [false],
-            [3], [2], [2], [1], [false],
-
-        )
+        grid(
+            columns: 2,
+            gutter: 15pt,
+            dijk(
+                [0], [0], [0], [-], [false],
+            ),
+            uncover(
+                2,
+                dijk(
+                    [0], [0], [0], [-], [true],
+                    [1], [1], [1], [0], [true],
+                    [2], [4], [4], [0], [false],
+                    [3], [2], [2], [1], [false],
+                )
+            )
+        ),
     ),
     example_graph(false)
 )
@@ -187,17 +196,24 @@
             )
             ```
         ],
-        dijk(
-            marked: 4,
-            [0], [0], [0], [-], [true],
-            [1], [1], [1], [0], [true],
-            [2], [4], [4], [0], [false],
-            [3], [2], [2], [1], [false],
-
+        grid(
+            columns: 2,
+            gutter: 15pt,
+            dijk(
+                [0], [0], [0], [-], [false],
+            ),
+            dijk(
+                marked: 4,
+                [0], [0], [0], [-], [true],
+                [1], [1], [1], [0], [true],
+                [2], [4], [4], [0], [false],
+                [3], [2], [2], [1], [false],
+            )
         ),
     ),
-    example_graph(true)
+    example_graph(false)
 )
+
 
 == A\*: Visit minimal node
 

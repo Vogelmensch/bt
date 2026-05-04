@@ -225,7 +225,7 @@
             edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%),
         ),
         uncover("3-4,6-7",
-            edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
+            edge((0, -1), (0, 0), "->", arrowtext("overwrites"), label-side: left)
         ),
         uncover("5,8",
             edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("updates and inserts"))
@@ -352,7 +352,7 @@
             edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%),
         ),
         uncover("3-5,7",
-            edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
+            edge((0, -1), (0, 0), "->", arrowtext("overwrites"), label-side: left)
         ),
         uncover(6,
             edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("appends"))
@@ -513,7 +513,7 @@
             edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%),
         ),
         uncover("1-3",
-            edge((0, -1), (0, 0), "->", arrowtext("overwrites"))
+            edge((0, -1), (0, 0), "->", arrowtext("overwrites"), label-side: left)
         ),
         uncover(4,
             edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("appends"))
