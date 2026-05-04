@@ -52,5 +52,43 @@ $ lcs(s_1 + a, s_2 + b) = cases(
 )
 
 == LCS: Layout
+#show raw: set text(size: 12pt)
 
-TODO
+#grid(
+    columns: 2,
+    gutter: 15pt,
+    [
+        ```sql
+        WITH RECURSIVE lcs (
+            xsym, xidx,                     
+            ysym, yidx,                    
+            len,                         
+            from_left, from_up, from_diag   
+        ) AS (
+            <base case>
+
+            UNION ALL
+
+            (<recursive step>)
+        )
+        <outer query>
+        ```
+    ],
+    [
+        ```sql
+        WITH RECURSIVE lcs (
+            xsym, xidx,                    
+            ysym, yidx,                   
+            len,                 
+            from_left, from_up, from_diag  
+        ) USING KEY (xidx, yidx) AS (
+            <base case>
+            
+            UNION
+
+            (<recursive step>)
+        )
+        <outer query>
+        ```
+    ]
+)
