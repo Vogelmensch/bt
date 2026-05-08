@@ -40,7 +40,6 @@
 #include "lcs_tables.typ"
 #include "lcs_measure.typ"
 
-#include "needleman.typ"
 #include "needleman_measure.typ"
 
 #include "bishop.typ"

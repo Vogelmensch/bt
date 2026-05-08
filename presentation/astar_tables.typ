@@ -218,7 +218,7 @@
             edge((1, 0), "u,l,l", (-1, 0), "->", arrowtext("overwrites"), label-side: right)),
 
         uncover("3-4,6-7",
-            edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%, stroke: .4pt),
+            edge((-1, 0), "u", (0, -1), "-->", arrowtext("read by"), label-side: left, label-pos: 60%),
         ),
         uncover("3-4,6-7",
             edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%),

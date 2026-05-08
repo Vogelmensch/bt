@@ -305,7 +305,7 @@ $=>$ new semantics for recursive CTEs are needed
 
       uncover((1,3,5), edge((-1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: left, label-pos: 60%)),
       uncover((1,3,5), edge((0, -1), (0, 0), "->", arrowtext("overwrites"))),
-      uncover((1,3,5), edge((1, 0), "u", (0, -1), "->", arrowtext("read by"), label-side: right, label-pos: 60%, stroke: .4pt)),
+      uncover((1,3,5), edge((1, 0), "u", (0, -1), "-->", arrowtext("read by"), label-side: right, label-pos: 60%)),
 
       uncover((2,4,6), edge((0, 0), "u,r", (1, 0), shift: 2pt, "->", arrowtext("updates / inserts"))),
       uncover((2,4,6),

@@ -1,3 +1,7 @@
+== Findings
+
+TODO: compare all algorithms
+
 == Summary
 
 - Classic recursive CTEs forget previous results.

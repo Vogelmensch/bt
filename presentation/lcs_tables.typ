@@ -123,7 +123,7 @@
   ```
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -141,7 +141,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -159,7 +159,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -177,7 +177,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -195,7 +195,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -213,7 +213,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(
@@ -231,7 +231,7 @@
   []
 )
 
-== LCS: Letters are equal
+== LCS: Example
 
 #lcs_table(
   table(

@@ -1,10 +1,10 @@
-== Needleman: Measurements (Methods)
+== Needleman-Wunsch
 
-- generated random DNA sequences
-- length $l in {10, 20, ..., 300}$
-- 30% chance of copying error in second string
+Compare DNA strings
 
-== Needleman: Measurements (Results)
+Very similar to LCS $=>$ skipped today
+
+== Needleman-Wunsch: Measurements (Results)
 
 #grid(
     columns: 2,
