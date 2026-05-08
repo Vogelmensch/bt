@@ -5,7 +5,6 @@
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
 
-#show raw: set text(size: 12pt)
 #show table: set text(size: 13pt)
 
 #let tablestroke = 1pt
@@ -99,7 +98,7 @@
 #let arrowtext(content) = text(content, size: 15pt)
 
 
-== A\*: USING KEY
+== A\*: `USING KEY`
 
 #codly-disable()
 
@@ -389,7 +388,7 @@
             )    
         ),
         uncover(2, 
-            cte_table((.5, -.2), "filtered_astar", 
+            cte_table((.5, -.2), `filtered_astar`, 
                 [0], [0], [0], [-], [`true`],
                 [1], [1], [1], [0], [`false`],
                 [2], [4], [4], [0], [`false`],
@@ -413,24 +412,24 @@
 
         // Working Table
         alternatives(
-            cte_table((-1, 0), "filtered_astar", 
+            cte_table((-1, 0), `filtered_astar`, 
                 [0], [0], [0], [-], [`true`],
                 [1], [1], [1], [0], [`false`],
                 [2], [4], [4], [0], [`false`],
                 marked: 2
             ),
-            cte_table((-1, 0), "filtered_astar", 
+            cte_table((-1, 0), `filtered_astar`, 
                 [0], [0], [0], [-], [`true`],
                 [1], [1], [1], [0], [`false`],
                 [2], [4], [4], [0], [`false`],
                 marked: 2
             ),
-            cte_table((-1, 0), "filtered_astar", 
+            cte_table((-1, 0), `filtered_astar`, 
                 [0], [0], [0], [-], [`true`],
                 [1], [1], [1], [0], [`false`],
                 [2], [4], [4], [0], [`false`],
             ),
-            cte_table((-1, 0), "filtered_astar", 
+            cte_table((-1, 0), `filtered_astar`, 
                 [1], [1], [1], [0], [`true`],
                 [3], [2], [2], [1], [`false`],
                 [0], [0], [0], [-], [`true`],
@@ -557,7 +556,8 @@ UNION
 -- (2) Carry table
 SELECT *
 FROM filtered_astar
-WHERE (SELECT id FROM min_node) != goal_node()
+WHERE 
+    (SELECT id FROM min_node) != goal_node()
   ```
   }
 )

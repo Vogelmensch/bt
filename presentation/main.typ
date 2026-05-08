@@ -1,3 +1,10 @@
+#import "@preview/codly:1.3.0": *
+#import "@preview/codly-languages:0.1.1": *
+#show: codly-init.with()
+#codly(
+  zebra-fill: luma(220),
+)
+
 #import "@preview/touying:0.7.1": *
 #import themes.simple: *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
@@ -5,15 +12,19 @@
 
 #show: simple-theme.with(aspect-ratio: "16-9")
 
-#import "@preview/codly:1.3.0": *
-#import "@preview/codly-languages:0.1.1": *
-#show: codly-init.with()
-
-#show raw: set text(size: 12pt)
+//#show raw: set text(size: 12pt) 
+#show raw: it => {
+  if it.text != "USING KEY" and it.text != "filtered_astar" {
+    set text(size: 12pt)
+    it
+  } else {
+    it
+  }
+}
 #set raw(syntaxes: "../thesis/custom_sql.sublime-syntax")
 #set text(font: "Open Sans")
 
-= Actually USING KEY: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
+= Actually `USING KEY`: Exploring Practical Applications of DuckDB’s New Recursive CTE Semantics
 
 #codly-disable()
 #include "intro.typ"

@@ -9,21 +9,22 @@
 #grid(
     columns: 2,
     gutter: .5cm,
-    [classic], [USING KEY],
+    [classic], `USING KEY`,
     [```sql
     WITH RECURSIVE pow2(n, x) AS (
         ...
     )
     ```],
     [```sql
-    WITH RECURSIVE pow2(i, n, x) USING KEY (i) AS (
+    WITH RECURSIVE 
+        pow2(i, n, x) USING KEY (i) AS (
         ...
     )
     ```],
     pause,
     [
     How do the two variants compare in practice?
-    - Implementation: What do the queries look like?
+    - Implementation
     - Performance: Runtime and memory usage
     ],
     [

@@ -251,7 +251,7 @@
     )
 )
 
-== Drunken Bishop: Recursive Step (USING KEY)
+== Drunken Bishop: Recursive Step (`USING KEY`)
 
 ```sql
     WITH new(idx, x, y, is_end) AS (

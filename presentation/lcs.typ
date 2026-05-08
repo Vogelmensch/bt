@@ -35,24 +35,25 @@ $ lcs(s_1 + a, s_2 + b) = cases(
     max lr([lcs(s_1 + a, s_2), lcs(s_1, s_2 + b)], size: #200%) &"if" a != b
 ) $
 
-#show raw: set text(size: 20pt)
+#{
+    show raw: set text(size: 20pt)
 
-#align(
-  center,
-  grid(
-    columns: 2,
-    column-gutter: 5cm,
-    row-gutter: 1cm,
-    align: center,
-    [Case 1: Equal Letters], [Case 2: Unequal Letters],
-    `FAR`, `BEAR`,
-    `BAR`, `HERE`,
-    ` AR`, `ER`
-  )
-)
+    align(
+    center,
+    grid(
+        columns: 2,
+        column-gutter: 5cm,
+        row-gutter: 1cm,
+        align: center,
+        [Case 1: Equal Letters], [Case 2: Unequal Letters],
+        `FAR`, `BEAR`,
+        `BAR`, `HERE`,
+        ` AR`, `ER`
+    )
+    )
+}
 
 == LCS: Layout
-#show raw: set text(size: 12pt)
 
 #grid(
     columns: 2,

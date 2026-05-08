@@ -188,7 +188,7 @@
 $=>$ new semantics for recursive CTEs are needed
 
 
-== USING KEY
+== `USING KEY`
 
 #codly-enable()
 #grid(
@@ -228,13 +228,13 @@ $=>$ new semantics for recursive CTEs are needed
         column-gutter: 15pt,
         row-gutter: 30pt,
         [classic:], [append only],
-        [USING KEY:], [replace old results if key is equal]
+        [`USING KEY`:], [replace old results if key is equal]
       )
     ]
   ),
 )
 
-== USING KEY: Base Case
+== `USING KEY`: Base Case
 
 #codly-disable()
 
@@ -261,7 +261,7 @@ $=>$ new semantics for recursive CTEs are needed
 ]
 
 
-== USING KEY: Recursive Step
+== `USING KEY`: Recursive Step
 
 #codly-disable()
 
@@ -313,7 +313,7 @@ $=>$ new semantics for recursive CTEs are needed
   )
 ]
 
-== Advantages of USING KEY
+== Advantages of `USING KEY`
 
 - Recurring table replaces outdated results
   - Size limitation
