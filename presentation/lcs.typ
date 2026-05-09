@@ -41,14 +41,14 @@ $ lcs(s_1 + a, s_2 + b) = cases(
     align(
     center,
     grid(
-        columns: 2,
-        column-gutter: 5cm,
+        columns: 3,
+        column-gutter: 2cm,
         row-gutter: 1cm,
         align: center,
-        [Case 1: Equal Letters], [Case 2: Unequal Letters],
-        `FAR`, `BEAR`,
-        `BAR`, `HERE`,
-        ` AR`, `ER`
+        [], [Case 1: Equal Letters], [Case 2: Unequal Letters],
+        $s_1$, `FAR`, `BEAR`,
+        $s_2$, `BAR`, `HERE`,
+        $lcs(s_1, s_2)$, ` AR`, `ER`
     )
     )
 }

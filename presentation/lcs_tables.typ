@@ -246,7 +246,22 @@
             [*R*], [0], t(0, true, true, false, white), t(1, false, true, false, white), t(1, true, true, false, white), t(2, false, false, true, orange),
             [*E*], [0], t(0, true, true, false, white), t(1, false, false, true, white), t(1, true, true, false, white), t(2, false, true, false, orange),
         ),
-  []
+  {
+    show raw: set text(size: 20pt)
+
+    align(
+    center,
+    grid(
+        columns: 2,
+        column-gutter: 2cm,
+        row-gutter: 1cm,
+        align: center,
+        $s_1$, `BEAR`,
+        $s_2$, `HERE`,
+        $"LCS"(s_1, s_2)$, `ER`
+    )
+    )
+}
 )
 
 == LCS: Classic

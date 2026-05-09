@@ -195,8 +195,8 @@ $=>$ new semantics for recursive CTEs are needed
   gutter: 15pt,
   columns: (50%, 50%),
   ```sql
-  WITH RECURSIVE pow2(i, n, x) 
-  USING KEY (i) AS (
+  WITH RECURSIVE 
+    pow2(i, n, x) USING KEY (i) AS (
       -- Base Case
       SELECT 0, 1, 2
 

@@ -12,9 +12,18 @@
 
 #show: simple-theme.with(aspect-ratio: "16-9")
 
-//#show raw: set text(size: 12pt) 
+// define words that should not obey RAW resizing
 #show raw: it => {
-  if it.text != "USING KEY" and it.text != "filtered_astar" {
+  if not (
+    "USING KEY",
+    "filtered_astar",
+    "FAR",
+    "BAR",
+    " AR",
+    "BEAR",
+    "HERE",
+    "ER"
+  ).contains(it.text) {
     set text(size: 12pt)
     it
   } else {
