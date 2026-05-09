@@ -6,8 +6,8 @@
 #grid(
     columns: 2,
     align: left,
-    inset: 1cm,
-    [A\*], grid.vline(), [Bishop],
+    inset: .8cm,
+    [A\*, LCS, Needleman (Dynamic Programming)], grid.vline(), [Drunken Bishop],
     grid.hline(),
     [
       classic: overhead by manual carry and filtering

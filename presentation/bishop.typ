@@ -10,7 +10,7 @@
     show raw: set text(size: 16pt)
     grid(
       columns: 2,
-      gutter: 20pt,
+      gutter: 3cm,
       [
         `7f:21:fa:08:d6:a6:47:28:a5:d0:ef:71:66:59:32:d9`
       ],
