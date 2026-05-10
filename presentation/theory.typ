@@ -228,7 +228,11 @@ $=>$ new semantics for recursive CTEs are needed
         column-gutter: 15pt,
         row-gutter: 30pt,
         [classic:], [append only],
-        [`USING KEY`:], [replace old results if key is equal]
+        [`USING KEY`:], [
+          keyed dictionary
+          - update row if key is equal
+          - insert otherwise
+        ]
       )
     ]
   ),
